@@ -8,17 +8,17 @@ class MockPrismaService {
   private accounts: any[] = [];
 
   instagramAccount = {
-    deleteMany: jest.fn().mockImplementation(async () => {
+    deleteMany: jest.fn().mockImplementation(() => {
       this.accounts = [];
-      return { count: 0 };
+      return Promise.resolve({ count: 0 });
     }),
-    findMany: jest.fn().mockImplementation(async () => {
-      return this.accounts;
+    findMany: jest.fn().mockImplementation(() => {
+      return Promise.resolve(this.accounts);
     }),
-    findFirst: jest.fn().mockImplementation(async () => {
-      return this.accounts[0] || null;
+    findFirst: jest.fn().mockImplementation(() => {
+      return Promise.resolve(this.accounts[0] || null);
     }),
-    upsert: jest.fn().mockImplementation(async ({ where, create, update }) => {
+    upsert: jest.fn().mockImplementation(({ where, create, update }) => {
       const idx = this.accounts.findIndex(
         (a) => a.instagramUserId === where.instagramUserId,
       );
@@ -28,7 +28,7 @@ class MockPrismaService {
           ...update,
           updatedAt: new Date(),
         };
-        return this.accounts[idx];
+        return Promise.resolve(this.accounts[idx]);
       } else {
         const newAcc = {
           id: '12345678-1234-1234-1234-123456789012',
@@ -37,16 +37,16 @@ class MockPrismaService {
           updatedAt: new Date(),
         };
         this.accounts.push(newAcc);
-        return newAcc;
+        return Promise.resolve(newAcc);
       }
     }),
-    delete: jest.fn().mockImplementation(async ({ where }) => {
+    delete: jest.fn().mockImplementation(({ where }) => {
       const idx = this.accounts.findIndex((a) => a.id === where.id);
       if (idx === -1) {
         throw new Error('Not found');
       }
       const [deleted] = this.accounts.splice(idx, 1);
-      return deleted;
+      return Promise.resolve(deleted);
     }),
   };
 }
@@ -123,44 +123,47 @@ describe('MetaController (e2e)', () => {
     it('completes the code verification flow and redirects back to dashboard successfully', async () => {
       const mockFetch = jest
         .spyOn(global, 'fetch')
-        .mockImplementation(async (url: any) => {
+        .mockImplementation((url: unknown) => {
           const urlStr = String(url);
           if (urlStr.includes('/oauth/access_token')) {
-            return {
+            return Promise.resolve({
               ok: true,
-              json: async () => ({
-                access_token: 'mock-long-lived-token-xyz',
-                expires_in: 3600,
-              }),
-            } as any;
+              json: () =>
+                Promise.resolve({
+                  access_token: 'mock-long-lived-token-xyz',
+                  expires_in: 3600,
+                }),
+            } as any);
           }
           if (urlStr.includes('/me/accounts')) {
-            return {
+            return Promise.resolve({
               ok: true,
-              json: async () => ({
-                data: [
-                  {
-                    id: 'page-123',
-                    name: 'Meta Page One',
-                    access_token: 'page-access-token-123',
-                  },
-                ],
-              }),
-            } as any;
+              json: () =>
+                Promise.resolve({
+                  data: [
+                    {
+                      id: 'page-123',
+                      name: 'Meta Page One',
+                      access_token: 'page-access-token-123',
+                    },
+                  ],
+                }),
+            } as any);
           }
           if (urlStr.includes('/page-123')) {
-            return {
+            return Promise.resolve({
               ok: true,
-              json: async () => ({
-                id: 'page-123',
-                name: 'Meta Page One',
-                instagram_business_account: {
-                  id: 'ig-biz-account-321',
-                },
-              }),
-            } as any;
+              json: () =>
+                Promise.resolve({
+                  id: 'page-123',
+                  name: 'Meta Page One',
+                  instagram_business_account: {
+                    id: 'ig-biz-account-321',
+                  },
+                }),
+            } as any);
           }
-          return { ok: false } as any;
+          return Promise.resolve({ ok: false } as any);
         });
 
       await request(app.getHttpServer())

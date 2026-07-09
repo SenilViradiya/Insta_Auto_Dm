@@ -13,6 +13,7 @@ import {
   Spin,
   message,
 } from "antd";
+import Link from "next/link";
 import {
   InstagramOutlined,
   DisconnectOutlined,
@@ -173,11 +174,25 @@ function DashboardContent() {
             InstaDM Connect
           </Title>
         </div>
+        <div className="flex items-center gap-6">
+          <Link
+            href="/"
+            className="font-semibold text-slate-900 border-b-2 border-indigo-600 py-5 text-sm"
+          >
+            Connections
+          </Link>
+          <Link
+            href="/automations"
+            className="font-semibold text-slate-500 hover:text-slate-800 transition py-5 text-sm"
+          >
+            Automations
+          </Link>
+        </div>
       </Header>
 
       <Content className="p-8 max-w-6xl mx-auto w-full flex flex-col gap-8">
         <Card
-          variant={false}
+          bordered={false}
           className="shadow-sm rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-900 text-white relative overflow-hidden"
         >
           <div className="absolute right-0 top-0 translate-x-20 -translate-y-20 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
@@ -227,7 +242,7 @@ function DashboardContent() {
           />
         ) : (
           <Card
-            variant={false}
+            bordered={false}
             className="shadow-sm rounded-2xl"
             title={
               <div className="flex items-center justify-between w-full py-1">

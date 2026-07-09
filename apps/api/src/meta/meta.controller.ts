@@ -49,8 +49,9 @@ export class MetaController {
         return res.redirect(`${nextUrl}?connected=true`);
       }
       return { success: true };
-    } catch (e: any) {
-      const errMsg = e.message || 'Failed to complete Meta integration';
+    } catch (e) {
+      const errMsg =
+        e instanceof Error ? e.message : 'Failed to complete Meta integration';
       if (res) {
         return res.redirect(`${nextUrl}?error=${encodeURIComponent(errMsg)}`);
       }

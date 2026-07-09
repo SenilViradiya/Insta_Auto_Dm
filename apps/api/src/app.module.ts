@@ -3,6 +3,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MetaModule } from './meta/meta.module';
+import { AutomationModule } from './automation/automation.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { MetaModule } from './meta/meta.module';
       },
     }),
     MetaModule,
+    AutomationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
