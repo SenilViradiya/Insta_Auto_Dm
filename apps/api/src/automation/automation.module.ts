@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { PrismaService } from '../prisma.service';
 import { AutomationController } from './controllers/automation.controller';
+import { HealthController } from './controllers/health.controller';
 import { AutomationRepository } from './repositories/automation.repository';
 import { ExecutionRepository } from './repositories/execution.repository';
 import { ProcessedEventRepository } from './repositories/processed-event.repository';
@@ -12,6 +13,7 @@ import { ActionDispatcher } from './services/action-dispatcher';
 import { IdempotencyService } from './services/idempotency.service';
 import { LockService } from './services/lock.service';
 import { MetricsService } from './services/metrics.service';
+import { AutomationConfig } from './config/automation.config';
 import {
   SendMessageActionHandler,
   WaitActionHandler,
@@ -32,9 +34,10 @@ import { AutomationWorker } from './workers/automation.worker';
       },
     ),
   ],
-  controllers: [AutomationController],
+  controllers: [AutomationController, HealthController],
   providers: [
     PrismaService,
+    AutomationConfig,
     AutomationRepository,
     ExecutionRepository,
     ProcessedEventRepository,
@@ -53,6 +56,7 @@ import { AutomationWorker } from './workers/automation.worker';
     AutomationWorker,
   ],
   exports: [
+    AutomationConfig,
     AutomationService,
     AutomationRepository,
     ExecutionRepository,

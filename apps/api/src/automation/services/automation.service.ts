@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { AutomationRepository } from '../repositories/automation.repository';
 import { ExecutionRepository } from '../repositories/execution.repository';
 import { ConditionService } from './condition.service';
@@ -8,6 +9,7 @@ import { IdempotencyService } from './idempotency.service';
 import { LockService } from './lock.service';
 import { ExecutionStatus } from '@prisma/client';
 import { MetricsService } from './metrics.service';
+import { AutomationConfig } from '../config/automation.config';
 
 @Injectable()
 export class AutomationService {
@@ -21,6 +23,7 @@ export class AutomationService {
     private readonly idempotencyService: IdempotencyService,
     private readonly lockService: LockService,
     private readonly metricsService: MetricsService,
+    private readonly config: AutomationConfig,
   ) {}
 
   async processDomainEvent(event: DomainEvent): Promise<{
@@ -32,7 +35,15 @@ export class AutomationService {
       executionsTriggered: [] as string[],
     };
 
+    // 1. Establish Correlation ID propagation
+    const correlationId = event.metadata?.correlationId || randomUUID();
+    if (!event.metadata) {
+      event.metadata = {};
+    }
+    event.metadata.correlationId = correlationId;
+
     const structuredLogContext = {
+      correlationId,
       eventId: event.eventId,
       instagramAccountId: event.instagramAccountId,
     };
@@ -43,7 +54,7 @@ export class AutomationService {
         JSON.stringify(structuredLogContext),
       );
 
-      // 1. Idempotency Check
+      // 2. Idempotency Check
       const alreadyProcessed = await this.idempotencyService.checkProcessed(
         event.eventId,
       );
@@ -55,7 +66,7 @@ export class AutomationService {
         return response;
       }
 
-      // 2. Acquire Distributed Lock and Run
+      // 3. Acquire Distributed Lock and Run
       const lockKey = `automation:${event.eventId}`;
       const result = await this.lockService.runWithLock(
         lockKey,
@@ -74,7 +85,7 @@ export class AutomationService {
             return [];
           }
 
-          // 3. Find matching triggers & load enabled automations for this tenant account
+          // Find matching triggers & load enabled automations for this tenant account
           const automations = await this.automationRepo.findMatchingAutomations(
             event.eventType,
             event.instagramAccountId,
@@ -91,7 +102,7 @@ export class AutomationService {
           const triggeredAutoIds: string[] = [];
 
           for (const auto of automations) {
-            // 4. Evaluate conditions
+            // Evaluate conditions
             const match = this.conditionService.evaluateConditions(
               auto.conditions,
               event,
@@ -108,7 +119,7 @@ export class AutomationService {
               continue;
             }
 
-            // 5. Create execution record with status QUEUED (instead of PENDING)
+            // Create execution record with status QUEUED (instead of PENDING)
             const execution = await this.executionRepo.createExecution({
               automationId: auto.id,
               eventId: event.eventId,
@@ -117,7 +128,7 @@ export class AutomationService {
 
             triggeredAutoIds.push(execution.id);
 
-            // 6. Store initial execution log
+            // Store initial execution log propagating correlation ID in metadata
             await this.executionRepo.createLog({
               executionId: execution.id,
               level: 'INFO',
@@ -127,9 +138,10 @@ export class AutomationService {
                 eventId: event.eventId,
                 instagramAccountId: event.instagramAccountId,
               },
+              correlationId,
             });
 
-            // 7. Enqueue first action if it exists
+            // Enqueue first action if it exists
             if (auto.actions.length > 0) {
               const firstAction = auto.actions[0];
 
@@ -138,12 +150,14 @@ export class AutomationService {
                 level: 'INFO',
                 message: `Enqueuing first action index: 0 (Type: ${firstAction.actionType})`,
                 metadata: { actionId: firstAction.id },
+                correlationId,
               });
 
               await this.queueService.enqueueExecuteAction({
                 executionId: execution.id,
                 actionId: firstAction.id,
                 event,
+                correlationId,
               });
             } else {
               // If no actions, complete execution immediately
@@ -158,11 +172,24 @@ export class AutomationService {
               );
               this.metricsService.incrementSuccess(duration);
 
+              // Warn on slow processes
+              if (duration > this.config.slowExecutionThresholdMs) {
+                this.logger.warn(
+                  `[SLOW EXECUTION] Execution ${execution.id} took ${duration}ms (Threshold: ${this.config.slowExecutionThresholdMs}ms)`,
+                  JSON.stringify({
+                    ...structuredLogContext,
+                    executionId: execution.id,
+                    duration,
+                  }),
+                );
+              }
+
               await this.executionRepo.createLog({
                 executionId: execution.id,
                 level: 'INFO',
                 message: `Execution completed: no actions to execute.`,
                 metadata: {},
+                correlationId,
               });
             }
           }

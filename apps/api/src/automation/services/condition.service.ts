@@ -1,14 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AutomationCondition } from '@prisma/client';
 import { DomainEvent } from '../interfaces/domain-event.interface';
 import { operatorRegistry } from './condition-operators';
+import { ConditionEvaluationException } from '../errors/automation.errors';
 
 @Injectable()
 export class ConditionService {
   private readonly logger = new Logger(ConditionService.name);
 
   evaluateConditions(
-    conditions: AutomationCondition[],
+    conditions: Array<{ field: string; operator: any; value: string }>,
     event: DomainEvent,
   ): boolean {
     if (conditions.length === 0) return true;
@@ -16,14 +16,23 @@ export class ConditionService {
     for (const condition of conditions) {
       const fieldValue = this.getNestedValue(event, condition.field);
       const expectedValue = condition.value;
-      const operator = operatorRegistry[condition.operator];
+      const operator = (operatorRegistry as any)[condition.operator];
 
       if (!operator) {
-        this.logger.error(`Operator ${condition.operator} is not registered`);
-        return false;
+        throw new ConditionEvaluationException(
+          `Operator ${condition.operator} is not registered`,
+        );
       }
 
-      const match = operator.evaluate(fieldValue, expectedValue);
+      let match = false;
+      try {
+        match = operator.evaluate(fieldValue, expectedValue);
+      } catch (error: any) {
+        throw new ConditionEvaluationException(
+          `Failed to evaluate operator ${condition.operator} on path "${condition.field}": ${error.message}`,
+        );
+      }
+
       this.logger.debug(
         `Evaluating condition on field "${condition.field}". Got: "${fieldValue}", Expected: "${expectedValue}" using ${condition.operator}. Result: ${match}`,
       );

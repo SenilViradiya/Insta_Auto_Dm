@@ -8,11 +8,18 @@ import { QueueService } from '../services/queue.service';
 import { ExecutionStatus } from '@prisma/client';
 import {
   ValidationError,
-  NonRetryableError,
+  NonRetryableException,
+  ExecutionException,
 } from '../errors/automation.errors';
 import { MetricsService } from '../services/metrics.service';
+import { AutomationConfig } from '../config/automation.config';
 
-@Processor('automation')
+const concurrencyValue = parseInt(
+  process.env.AUTOMATION_CONCURRENCY || '10',
+  10,
+);
+
+@Processor('automation', { concurrency: concurrencyValue })
 @Injectable()
 export class ActionWorker extends WorkerHost {
   private readonly logger = new Logger(ActionWorker.name);
@@ -23,6 +30,7 @@ export class ActionWorker extends WorkerHost {
     private readonly automationRepo: AutomationRepository,
     private readonly queueService: QueueService,
     private readonly metricsService: MetricsService,
+    private readonly config: AutomationConfig,
   ) {
     super();
   }
@@ -39,7 +47,7 @@ export class ActionWorker extends WorkerHost {
       return;
     }
 
-    const { executionId, actionId, event } = data;
+    const { executionId, actionId, event, correlationId } = data;
     let targetAuto: any = null;
 
     try {
@@ -50,12 +58,14 @@ export class ActionWorker extends WorkerHost {
       );
 
       if (!targetAuto) {
-        throw new Error(`Automation containing action ${actionId} not found`);
+        throw new ExecutionException(
+          `Automation containing action ${actionId} not found`,
+        );
       }
 
       const action = targetAuto.actions.find((act: any) => act.id === actionId);
       if (!action) {
-        throw new Error(`Action ${actionId} not found`);
+        throw new ExecutionException(`Action ${actionId} not found`);
       }
 
       // Transition execution status to RUNNING
@@ -85,6 +95,7 @@ export class ActionWorker extends WorkerHost {
             level: 'INFO',
             message: `Scheduling next action (index ${nextIndex}) with wait delay: ${delaySeconds}s`,
             metadata: { nextActionId: nextAction.id },
+            correlationId,
           });
 
           // Transition execution status to WAITING
@@ -94,7 +105,7 @@ export class ActionWorker extends WorkerHost {
           );
 
           await this.queueService.enqueueDelayAction(
-            { executionId, actionId: nextAction.id, event },
+            { executionId, actionId: nextAction.id, event, correlationId },
             delaySeconds,
           );
         } else {
@@ -103,12 +114,14 @@ export class ActionWorker extends WorkerHost {
             level: 'INFO',
             message: `Enqueuing next action immediately (index ${nextIndex})`,
             metadata: { nextActionId: nextAction.id },
+            correlationId,
           });
 
           await this.queueService.enqueueExecuteAction({
             executionId,
             actionId: nextAction.id,
             event,
+            correlationId,
           });
         }
       } else {
@@ -127,29 +140,48 @@ export class ActionWorker extends WorkerHost {
 
         this.metricsService.incrementSuccess(duration);
 
+        // Warn on slow processes
+        if (duration > this.config.slowExecutionThresholdMs) {
+          const structuredLogContext = {
+            correlationId,
+            executionId,
+            automationId: targetAuto?.id,
+            eventId: event.eventId,
+            instagramAccountId: event.instagramAccountId,
+            worker: 'ActionWorker',
+            duration,
+          };
+          this.logger.warn(
+            `[SLOW EXECUTION] Execution pipeline completed in ${duration}ms (Threshold: ${this.config.slowExecutionThresholdMs}ms)`,
+            JSON.stringify(structuredLogContext),
+          );
+        }
+
         await this.executionRepo.createLog({
           executionId,
           level: 'INFO',
           message: 'Automation execution pipeline completed successfully.',
           metadata: {},
+          correlationId,
         });
       }
     } catch (error: any) {
       const isValidationError = error instanceof ValidationError;
-      const isNonRetryable = error instanceof NonRetryableError;
+      const isNonRetryable = error instanceof NonRetryableException;
 
-      const attemptsAllowed = job.opts.attempts ?? 3;
+      const attemptsAllowed = job.opts.attempts ?? this.config.retryAttempts;
       const attemptsMade = job.attemptsMade;
 
       const isPermanent =
         isValidationError || isNonRetryable || attemptsMade >= attemptsAllowed;
 
       const structuredLogContext = {
+        correlationId,
         executionId,
         automationId: targetAuto?.id || 'unknown',
         eventId: event.eventId,
         instagramAccountId: event.instagramAccountId,
-        workerName: 'ActionWorker',
+        worker: 'ActionWorker',
         isPermanent,
       };
 
@@ -167,6 +199,7 @@ export class ActionWorker extends WorkerHost {
           failureReason: error.message || String(error),
           retryCount: attemptsMade,
           lastAttemptAt: new Date(),
+          correlationId,
         });
 
         this.metricsService.incrementDlq();
@@ -177,6 +210,7 @@ export class ActionWorker extends WorkerHost {
           level: 'ERROR',
           message: `Action execution failed permanently. Moved to DLQ. Reason: ${error.message}`,
           metadata: { actionId, error: String(error) },
+          correlationId,
         });
 
         await this.executionRepo.updateExecutionStatus(
@@ -193,6 +227,7 @@ export class ActionWorker extends WorkerHost {
           level: 'WARN',
           message: `Action execution failed. Retrying (Attempt ${attemptsMade + 1}/${attemptsAllowed}). Reason: ${error.message}`,
           metadata: { actionId, error: String(error) },
+          correlationId,
         });
 
         throw error;

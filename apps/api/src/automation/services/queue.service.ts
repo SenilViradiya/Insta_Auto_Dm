@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
+import { AutomationConfig } from '../config/automation.config';
 
 @Injectable()
 export class QueueService {
@@ -9,21 +10,23 @@ export class QueueService {
   constructor(
     @InjectQueue('automation') private readonly queue: Queue,
     @InjectQueue('automation-dlq') private readonly dlq: Queue,
+    private readonly config: AutomationConfig,
   ) {}
 
   async enqueueExecuteAction(data: {
     executionId: string;
     actionId: string;
     event: any;
+    correlationId?: string;
   }) {
     this.logger.log(
-      `Enqueuing execute-action job for action: ${data.actionId} (Execution: ${data.executionId})`,
+      `Enqueuing execute-action job for action: ${data.actionId} (Execution: ${data.executionId}, CorrelationId: ${data.correlationId})`,
     );
     return this.queue.add('execute-action', data, {
-      attempts: 3,
+      attempts: this.config.retryAttempts,
       backoff: {
         type: 'exponential',
-        delay: 5000,
+        delay: this.config.retryBackoffDelayMs,
       },
     });
   }
@@ -33,18 +36,19 @@ export class QueueService {
       executionId: string;
       actionId: string;
       event: any;
+      correlationId?: string;
     },
     delaySeconds: number,
   ) {
     this.logger.log(
-      `Enqueuing delay-action job for action: ${data.actionId} with delay: ${delaySeconds}s (Execution: ${data.executionId})`,
+      `Enqueuing delay-action job for action: ${data.actionId} with delay: ${delaySeconds}s (Execution: ${data.executionId}, CorrelationId: ${data.correlationId})`,
     );
     return this.queue.add('delay-action', data, {
       delay: delaySeconds * 1000,
-      attempts: 3,
+      attempts: this.config.retryAttempts,
       backoff: {
         type: 'exponential',
-        delay: 5000,
+        delay: this.config.retryBackoffDelayMs,
       },
     });
   }
@@ -54,6 +58,7 @@ export class QueueService {
     actionId: string;
     event: any;
     error: string;
+    correlationId?: string;
   }) {
     this.logger.log(
       `Enqueuing retry-action job for action: ${data.actionId} (Execution: ${data.executionId})`,
@@ -70,9 +75,10 @@ export class QueueService {
     failureReason: string;
     retryCount: number;
     lastAttemptAt: Date;
+    correlationId?: string;
   }) {
     this.logger.error(
-      `[DLQ TRANSFER] Permanent execution failure. Enqueuing to automation-dlq: Execution: ${data.executionId}, Reason: ${data.failureReason}`,
+      `[DLQ TRANSFER] Permanent execution failure. Enqueuing to automation-dlq: Execution: ${data.executionId}, Reason: ${data.failureReason}, CorrelationId: ${data.correlationId}`,
     );
     return this.dlq.add('failed-execution', data);
   }

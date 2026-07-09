@@ -1,15 +1,49 @@
-export class NonRetryableError extends Error {
+export class AutomationException extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'NonRetryableError';
-    Object.setPrototypeOf(this, NonRetryableError.prototype);
+    this.name = this.constructor.name;
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
-export class ValidationError extends NonRetryableError {
+export class ValidationException extends AutomationException {
   constructor(message: string) {
     super(message);
-    this.name = 'ValidationError';
-    Object.setPrototypeOf(this, ValidationError.prototype);
   }
 }
+
+export class ConditionEvaluationException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class QueueException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class ExecutionException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class InfrastructureException extends AutomationException {
+  code?: string;
+  constructor(message: string, code?: string) {
+    super(message);
+    this.code = code;
+  }
+}
+
+export class NonRetryableException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+// Backward compatible aliases
+export { ValidationException as ValidationError };
+export { NonRetryableException as NonRetryableError };

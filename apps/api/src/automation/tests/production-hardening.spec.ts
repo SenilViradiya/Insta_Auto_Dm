@@ -192,12 +192,18 @@ describe('Production Hardening Service Suite', () => {
         incrementRetry: jest.fn(),
       };
 
+      const mockConfig = {
+        retryAttempts: 3,
+        slowExecutionThresholdMs: 1000,
+      } as any;
+
       actionWorker = new ActionWorker(
         mockActionDispatcher,
         mockExecutionRepo,
         mockAutomationRepo,
         mockQueueService,
         mockMetricsService,
+        mockConfig,
       );
     });
 
