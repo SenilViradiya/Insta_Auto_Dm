@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MetaModule } from './meta/meta.module';
 import { AutomationModule } from './automation/automation.module';
+import { MessagingModule } from './modules/messaging/messaging.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { AutomationModule } from './automation/automation.module';
     }),
     MetaModule,
     AutomationModule,
+    MessagingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

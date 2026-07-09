@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { PrismaService } from '../prisma.service';
 import { AutomationController } from './controllers/automation.controller';
@@ -22,6 +22,8 @@ import {
 } from './services/action-handlers';
 import { ActionWorker } from './workers/action.worker';
 import { AutomationWorker } from './workers/automation.worker';
+import { MessagingModule } from '../modules/messaging/messaging.module';
+import { MessagingService as MsgSvc } from '../modules/messaging/services/messaging.service';
 
 @Module({
   imports: [
@@ -33,6 +35,7 @@ import { AutomationWorker } from './workers/automation.worker';
         name: 'automation-dlq',
       },
     ),
+    MessagingModule,
   ],
   controllers: [AutomationController, HealthController],
   providers: [
@@ -48,6 +51,10 @@ import { AutomationWorker } from './workers/automation.worker';
     IdempotencyService,
     LockService,
     MetricsService,
+    {
+      provide: 'MessagingService',
+      useExisting: MsgSvc,
+    },
     SendMessageActionHandler,
     WaitActionHandler,
     AddTagActionHandler,

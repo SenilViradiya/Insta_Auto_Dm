@@ -1,9 +1,18 @@
-import { Controller, Get, Res, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Res,
+  HttpStatus,
+  Inject,
+  Optional,
+} from '@nestjs/common';
 import { Response } from 'express';
 import { PrismaService } from '../../prisma.service';
 import { LockService } from '../services/lock.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { TokenService } from '../../modules/messaging/token/token.service';
+import { MetaGraphClient } from '../../modules/messaging/clients/meta-graph.client';
 
 @Controller('health')
 export class HealthController {
@@ -11,6 +20,12 @@ export class HealthController {
     private readonly prisma: PrismaService,
     private readonly lockService: LockService,
     @InjectQueue('automation') private readonly queue: Queue,
+    @Optional()
+    @Inject(TokenService)
+    private readonly tokenService?: TokenService,
+    @Optional()
+    @Inject(MetaGraphClient)
+    private readonly graphClient?: MetaGraphClient,
   ) {}
 
   @Get()
@@ -62,6 +77,62 @@ export class HealthController {
     return res
       .status(isHealthy ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE)
       .json({ status: queueStatus });
+  }
+
+  @Get('meta')
+  async getMetaHealth(@Res() res: Response) {
+    const dbStatus = await this.checkDatabase();
+    const redisStatus = await this.checkRedis();
+    let tokenStatus = 'unknown';
+    let graphApiStatus = 'unknown';
+
+    try {
+      if (this.tokenService) {
+        const account = await this.prisma.instagramAccount.findFirst();
+        if (account) {
+          const token = await this.tokenService.getToken(
+            account.instagramUserId,
+          );
+          if (token) {
+            tokenStatus = 'up';
+            if (this.graphClient) {
+              const apiOk = await this.graphClient.healthCheck(token);
+              graphApiStatus = apiOk ? 'up' : 'down';
+            }
+          } else {
+            tokenStatus = 'down';
+          }
+        } else {
+          tokenStatus = 'no_accounts_configured';
+          graphApiStatus = 'skipped';
+        }
+      } else {
+        tokenStatus = 'not_available';
+        graphApiStatus = 'not_available';
+      }
+    } catch (err) {
+      tokenStatus = 'down';
+      graphApiStatus = 'down';
+    }
+
+    const isHealthy =
+      dbStatus === 'up' &&
+      redisStatus === 'up' &&
+      tokenStatus !== 'down' &&
+      graphApiStatus !== 'down';
+
+    return res
+      .status(isHealthy ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE)
+      .json({
+        status: isHealthy ? 'up' : 'down',
+        timestamp: new Date().toISOString(),
+        details: {
+          database: dbStatus,
+          redis: redisStatus,
+          tokenLoading: tokenStatus,
+          graphApi: graphApiStatus,
+        },
+      });
   }
 
   private async checkDatabase(): Promise<'up' | 'down'> {

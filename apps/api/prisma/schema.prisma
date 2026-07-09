@@ -143,3 +143,39 @@ model ProcessedEvent {
 
   @@index([instagramAccountId])
 }
+
+enum OutboundMessageStatus {
+  QUEUED
+  SENDING
+  SENT
+  DELIVERED
+  FAILED
+  RETRYING
+  CANCELLED
+}
+
+model OutboundMessage {
+  id                     String                @id @default(uuid())
+  instagramAccountId     String
+  automationExecutionId  String?
+  recipientInstagramId   String
+  messageType            String                @default("TEXT")
+  messageText            String
+  metaMessageId          String?
+  status                 OutboundMessageStatus @default(QUEUED)
+  errorCode              String?
+  errorMessage           String?
+  retryCount             Int                   @default(0)
+  correlationId          String?
+  sentAt                 DateTime?
+  deliveredAt            DateTime?
+  failedAt               DateTime?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+
+  @@index([instagramAccountId])
+  @@index([recipientInstagramId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([automationExecutionId])
+}

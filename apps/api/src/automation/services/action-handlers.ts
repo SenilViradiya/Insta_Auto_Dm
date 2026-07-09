@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
 import { AutomationAction } from '@prisma/client';
 import { DomainEvent } from '../interfaces/domain-event.interface';
 import { ExecutionRepository } from '../repositories/execution.repository';
@@ -16,7 +16,12 @@ export interface AutomationActionHandler {
 export class SendMessageActionHandler implements AutomationActionHandler {
   private readonly logger = new Logger(SendMessageActionHandler.name);
 
-  constructor(private readonly executionRepo: ExecutionRepository) {}
+  constructor(
+    private readonly executionRepo: ExecutionRepository,
+    @Optional()
+    @Inject('MessagingService')
+    private readonly messagingService?: any,
+  ) {}
 
   async execute(
     action: AutomationAction,
@@ -26,7 +31,6 @@ export class SendMessageActionHandler implements AutomationActionHandler {
     const payload = normalizePayload(action.actionType, action.payload);
     const messageText = payload.data.text || payload.data.message || '';
 
-    // Log detail without displaying the raw message content (unless debug logging is on)
     const secureLogText =
       process.env.DEBUG_LOGGING === 'true'
         ? `"${messageText}"`
@@ -36,12 +40,45 @@ export class SendMessageActionHandler implements AutomationActionHandler {
       `[SendMessageActionHandler] Sending message to ${event.senderId}: ${secureLogText}`,
     );
 
-    await this.executionRepo.createLog({
-      executionId: context.executionId,
-      level: 'INFO',
-      message: `Dispatched message to recipient "${event.senderId}": ${secureLogText}`,
-      metadata: { actionId: action.id, payload },
-    });
+    if (this.messagingService) {
+      const result = await this.messagingService.send({
+        instagramAccountId: event.instagramAccountId,
+        recipientInstagramId: event.senderId,
+        messageText,
+        messageType: 'TEXT',
+        automationExecutionId: context.executionId,
+        correlationId: event.metadata?.correlationId,
+      });
+
+      await this.executionRepo.createLog({
+        executionId: context.executionId,
+        level: result.success ? 'INFO' : 'ERROR',
+        message: result.success
+          ? `Message sent successfully via MessagingService (metaMessageId: ${result.metaMessageId}, duration: ${result.durationMs}ms)`
+          : `Message send failed: ${result.errorCode} — ${result.errorMessage}`,
+        metadata: {
+          actionId: action.id,
+          messageId: result.messageId,
+          metaMessageId: result.metaMessageId,
+          durationMs: result.durationMs,
+          success: result.success,
+        },
+      });
+
+      if (!result.success) {
+        throw new Error(
+          `MessagingService failed: ${result.errorCode} — ${result.errorMessage}`,
+        );
+      }
+    } else {
+      // Fallback stub when MessagingModule is not loaded (e.g. unit tests)
+      await this.executionRepo.createLog({
+        executionId: context.executionId,
+        level: 'INFO',
+        message: `[STUB] Dispatched message to recipient "${event.senderId}": ${secureLogText}`,
+        metadata: { actionId: action.id, payload },
+      });
+    }
   }
 }
 
