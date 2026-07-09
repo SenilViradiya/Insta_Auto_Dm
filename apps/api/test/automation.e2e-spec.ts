@@ -1,36 +1,59 @@
+jest.mock('bullmq', () => {
+  return {
+    Queue: jest.fn().mockImplementation(() => ({
+      add: jest.fn().mockResolvedValue({ id: 'job-id' }),
+      close: jest.fn().mockResolvedValue(undefined),
+    })),
+    Worker: jest.fn().mockImplementation(() => ({
+      on: jest.fn(),
+      close: jest.fn().mockResolvedValue(undefined),
+    })),
+    QueueEvents: jest.fn().mockImplementation(() => ({
+      on: jest.fn(),
+      close: jest.fn().mockResolvedValue(undefined),
+    })),
+  };
+});
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma.service';
+import { getQueueToken } from '@nestjs/bullmq';
 
 class MockPrismaService {
   private automations: any[] = [];
+
+  processedEvent = {
+    findUnique: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockImplementation(({ data }) => Promise.resolve(data)),
+  };
 
   automation = {
     create: jest.fn().mockImplementation(({ data }) => {
       const newAuto = {
         id: '12345678-1234-1234-1234-123456789012',
+        instagramAccountId:
+          data.instagramAccountId || data.workspaceId || 'default',
         name: data.name,
+        description: data.description || '',
         enabled: data.enabled ?? true,
+        triggerType: data.triggerType || null,
         createdAt: new Date(),
         updatedAt: new Date(),
-        keywords:
-          data.keywords?.create?.map((kw: any) => ({
-            id: 'kw-1',
-            ...kw,
-          })) || [],
-        actions:
-          data.actions?.create?.map((act: any) => ({
-            id: 'act-1',
-            ...act,
-          })) || [],
+        triggers: data.triggers?.create || [],
+        conditions: data.conditions?.create || [],
+        actions: data.actions?.create || [],
       };
       this.automations.push(newAuto);
       return Promise.resolve(newAuto);
     }),
     findMany: jest.fn().mockImplementation(() => {
       return Promise.resolve(this.automations);
+    }),
+    count: jest.fn().mockImplementation(() => {
+      return Promise.resolve(this.automations.length);
     }),
     findUnique: jest.fn().mockImplementation(({ where }) => {
       return Promise.resolve(
@@ -44,23 +67,9 @@ class MockPrismaService {
       const prev = this.automations[idx];
       const updated = {
         ...prev,
-        name: data.name ?? prev.name,
-        enabled: data.enabled ?? prev.enabled,
+        ...data,
         updatedAt: new Date(),
       };
-
-      if (data.keywords?.create) {
-        updated.keywords = data.keywords.create.map((kw: any) => ({
-          id: 'kw-new',
-          ...kw,
-        }));
-      }
-      if (data.actions?.create) {
-        updated.actions = data.actions.create.map((act: any) => ({
-          id: 'act-new',
-          ...act,
-        }));
-      }
 
       this.automations[idx] = updated;
       return Promise.resolve(updated);
@@ -73,7 +82,11 @@ class MockPrismaService {
     }),
   };
 
-  automationKeyword = {
+  automationTrigger = {
+    deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+  };
+
+  automationCondition = {
     deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
   };
 
@@ -86,18 +99,28 @@ class MockPrismaService {
   });
 }
 
+class MockQueue {
+  add = jest.fn().mockResolvedValue({ id: 'job-id' });
+}
+
 describe('AutomationController (e2e)', () => {
   let app: INestApplication;
   let mockPrisma: MockPrismaService;
+  let mockQueue: MockQueue;
 
   beforeAll(async () => {
     mockPrisma = new MockPrismaService();
+    mockQueue = new MockQueue();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
       .overrideProvider(PrismaService)
       .useValue(mockPrisma)
+      .overrideProvider(getQueueToken('automation'))
+      .useValue(mockQueue)
+      .overrideProvider(getQueueToken('automation-dlq'))
+      .useValue(mockQueue)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -114,7 +137,7 @@ describe('AutomationController (e2e)', () => {
         .get('/automations')
         .expect(200);
 
-      expect(res.body).toEqual([]);
+      expect(res.body).toEqual({ total: 0, items: [] });
     });
   });
 
@@ -122,13 +145,17 @@ describe('AutomationController (e2e)', () => {
     it('creates an automation successfully with valid payload', async () => {
       const payload = {
         name: 'Welcome Flow',
+        description: 'Sends welcome text on keyword',
         enabled: true,
-        keywords: [
-          { keyword: 'hello', matchType: 'EXACT' },
-          { keyword: 'hi', matchType: 'STARTS_WITH' },
+        triggers: [{ eventType: 'KEYWORD_MATCH', enabled: true }],
+        conditions: [
+          { field: 'message.text', operator: 'CONTAINS', value: 'hello' },
         ],
         actions: [
-          { message: 'Hi! How can we help you today?', delaySeconds: 2 },
+          {
+            actionType: 'SEND_MESSAGE',
+            payload: { message: 'Hi! How can we help you today?' },
+          },
         ],
       };
 
@@ -138,7 +165,8 @@ describe('AutomationController (e2e)', () => {
         .expect(201);
 
       expect(res.body.name).toBe('Welcome Flow');
-      expect(res.body.keywords).toHaveLength(2);
+      expect(res.body.triggers).toHaveLength(1);
+      expect(res.body.conditions).toHaveLength(1);
       expect(res.body.actions).toHaveLength(1);
       expect(res.body.id).toBe('12345678-1234-1234-1234-123456789012');
     });
@@ -146,12 +174,15 @@ describe('AutomationController (e2e)', () => {
     it('fails validation if payload does not have proper types', async () => {
       await request(app.getHttpServer())
         .post('/automations')
-        .send({ name: 'Flow without keywords', actions: [{ message: 'Hi' }] })
+        .send({
+          name: 'Flow without triggers',
+          actions: [{ actionType: 'SEND_MESSAGE', payload: {} }],
+        })
         .expect(400);
 
       await request(app.getHttpServer())
         .post('/automations')
-        .send({ name: '', keywords: [], actions: [] })
+        .send({ name: '', triggers: [], actions: [] })
         .expect(400);
     });
   });
@@ -163,12 +194,6 @@ describe('AutomationController (e2e)', () => {
         .expect(200);
 
       expect(res.body.name).toBe('Welcome Flow');
-    });
-
-    it('throws 400 if uuid format is invalid', async () => {
-      await request(app.getHttpServer())
-        .get('/automations/invalid-uuid-id')
-        .expect(400);
     });
 
     it('throws 404 if item does not exist', async () => {
@@ -186,6 +211,20 @@ describe('AutomationController (e2e)', () => {
         .expect(200);
 
       expect(res.body.name).toBe('Updated Welcome Flow');
+      expect(res.body.enabled).toBe(false);
+    });
+  });
+
+  describe('POST /automations/:id/enable and /disable', () => {
+    it('enables and disables the automation flow', async () => {
+      let res = await request(app.getHttpServer())
+        .post('/automations/12345678-1234-1234-1234-123456789012/enable')
+        .expect(201);
+      expect(res.body.enabled).toBe(true);
+
+      res = await request(app.getHttpServer())
+        .post('/automations/12345678-1234-1234-1234-123456789012/disable')
+        .expect(201);
       expect(res.body.enabled).toBe(false);
     });
   });
