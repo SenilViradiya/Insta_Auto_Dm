@@ -33,6 +33,8 @@ import Link from "next/link";
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
 const MatchTypeEnum = z.enum(["EXACT", "CONTAINS", "STARTS_WITH"]);
 
 const formSchema = z.object({
@@ -72,7 +74,7 @@ function EditAutomationContent() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["automation", id],
     queryFn: async () => {
-      const response = await fetch(`http://localhost:3001/automations/${id}`);
+      const response = await fetch(`${API_URL}/automations/${id}`);
       if (!response.ok) {
         throw new Error("Failed to load automation details");
       }
@@ -141,7 +143,7 @@ function EditAutomationContent() {
 
   const mutation = useMutation({
     mutationFn: async (payload: FormValues) => {
-      const response = await fetch(`http://localhost:3001/automations/${id}`, {
+      const response = await fetch(`${API_URL}/automations/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

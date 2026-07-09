@@ -26,6 +26,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
 interface InstagramAccount {
   id: string;
   instagramUserId: string;
@@ -62,7 +64,7 @@ function DashboardContent() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["meta-status"],
     queryFn: async () => {
-      const response = await fetch("http://localhost:3001/meta/status");
+      const response = await fetch(`${API_URL}/meta/status`);
       if (!response.ok) {
         throw new Error("Failed to fetch connection status from API");
       }
@@ -73,7 +75,7 @@ function DashboardContent() {
   // Mutate disconnect
   const disconnectMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch("http://localhost:3001/meta/disconnect", {
+      const response = await fetch(`${API_URL}/meta/disconnect`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
@@ -95,7 +97,7 @@ function DashboardContent() {
   });
 
   const handleConnect = () => {
-    window.location.href = "http://localhost:3001/meta/login";
+    window.location.href = `${API_URL}/meta/login`;
   };
 
   const columns = [

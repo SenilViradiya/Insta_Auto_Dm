@@ -30,6 +30,8 @@ import { useRouter } from "next/navigation";
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
 interface Keyword {
   id: string;
   keyword: string;
@@ -60,7 +62,7 @@ function AutomationsContent() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["automations"],
     queryFn: async () => {
-      const response = await fetch("http://localhost:3001/automations");
+      const response = await fetch(`${API_URL}/automations`);
       if (!response.ok) {
         throw new Error("Failed to fetch automations");
       }
@@ -71,7 +73,7 @@ function AutomationsContent() {
   // Toggle switch enabled/disabled
   const toggleMutation = useMutation({
     mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
-      const response = await fetch(`http://localhost:3001/automations/${id}`, {
+      const response = await fetch(`${API_URL}/automations/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled }),
@@ -93,7 +95,7 @@ function AutomationsContent() {
   // Delete automation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`http://localhost:3001/automations/${id}`, {
+      const response = await fetch(`${API_URL}/automations/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) {
