@@ -1,6 +1,7 @@
 {
   "extends": "@repo/tsconfig/nestjs.json",
   "compilerOptions": {
+    "outDir": "./dist",
     "declaration": true,
     "removeComments": true,
     "incremental": true,
