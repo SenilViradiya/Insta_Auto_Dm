@@ -1,0 +1,25 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+}
+
+model InstagramAccount {
+  id                   String    @id @default(uuid())
+  instagramUserId      String    @unique
+  pageId               String
+  pageName             String
+  accessTokenEncrypted String
+  tokenExpiresAt       DateTime?
+  connectedAt          DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
