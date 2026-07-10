@@ -25,10 +25,12 @@ import {
   SaveOutlined,
   ThunderboltOutlined,
   LoadingOutlined,
+  InstagramOutlined,
 } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { mapBackendToFrontend, mapFrontendToBackend } from "../../mapping-utils";
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
@@ -67,10 +69,33 @@ type FormValues = z.infer<typeof formSchema>;
 function EditAutomationContent() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params.id as string;
   const [messageApi, contextHolder] = message.useMessage();
 
-  // Fetch existing details
+  // Retrieve active selected account from query or localStorage
+  const activeAccountId =
+    searchParams.get("instagramAccountId") ||
+    localStorage.getItem("selected_instagram_account_id") ||
+    "default";
+
+  // Fetch accounts list to display the details of the locked account context
+  const { data: statusData } = useQuery({
+    queryKey: ["meta-status"],
+    queryFn: async () => {
+      const response = await fetch(`${API_URL}/meta/status`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch connection status");
+      }
+      return response.json() as Promise<{ accounts: Array<{ instagramUserId: string; pageName: string }> }>;
+    },
+  });
+
+  const activeAccount = statusData?.accounts?.find(
+    (acc) => acc.instagramUserId === activeAccountId
+  );
+
+  // Fetch existing details, mapped dynamically to frontend structure
   const { data, isLoading, error } = useQuery({
     queryKey: ["automation", id],
     queryFn: async () => {
@@ -78,7 +103,8 @@ function EditAutomationContent() {
       if (!response.ok) {
         throw new Error("Failed to load automation details");
       }
-      return response.json();
+      const raw = await response.json();
+      return mapBackendToFrontend(raw);
     },
     enabled: !!id,
   });
@@ -143,10 +169,15 @@ function EditAutomationContent() {
 
   const mutation = useMutation({
     mutationFn: async (payload: FormValues) => {
+      const mappedPayload = mapFrontendToBackend(payload);
+
       const response = await fetch(`${API_URL}/automations/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+          "x-instagram-account-id": activeAccountId,
+        },
+        body: JSON.stringify(mappedPayload),
       });
 
       if (!response.ok) {
@@ -238,15 +269,26 @@ function EditAutomationContent() {
       </Header>
 
       <Content className="p-8 max-w-3xl mx-auto w-full flex flex-col gap-6">
-        <div className="flex items-center gap-2">
-          <Button
-            type="text"
-            icon={<LeftOutlined />}
-            onClick={() => router.push("/automations")}
-          />
-          <Title level={3} style={{ margin: 0 }}>
-            Edit Automation Flow
-          </Title>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              type="text"
+              icon={<LeftOutlined />}
+              onClick={() => router.push("/automations")}
+            />
+            <Title level={3} style={{ margin: 0 }}>
+              Edit Automation Flow
+            </Title>
+          </div>
+
+          {activeAccount && (
+            <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-2">
+              <InstagramOutlined className="text-indigo-650" />
+              <span className="text-xs font-bold text-indigo-750">
+                Scope: {activeAccount.pageName}
+              </span>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
@@ -459,7 +501,7 @@ function EditAutomationContent() {
             htmlType="submit"
             icon={<SaveOutlined />}
             loading={mutation.isPending}
-            className="bg-indigo-600 border-none font-bold"
+            className="bg-indigo-600 border-none font-bold rounded-xl h-12 shadow-sm"
           >
             Save Changes
           </Button>
