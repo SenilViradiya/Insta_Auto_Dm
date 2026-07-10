@@ -72,3 +72,27 @@ export class TriggerMatchException extends AutomationException {
 export { ValidationException as ValidationError };
 export { NonRetryableException as NonRetryableError };
 
+export class ConditionException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class ActionException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class VariableResolutionException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class RetryException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+

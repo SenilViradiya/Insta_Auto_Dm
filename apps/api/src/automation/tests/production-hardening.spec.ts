@@ -148,14 +148,14 @@ describe('Production Hardening Service Suite', () => {
 
   describe('Retry Policy & Dead Letter Queue (DLQ)', () => {
     let actionWorker: ActionWorker;
-    let mockActionDispatcher: any;
+    let mockExecutionEngine: any;
     let mockExecutionRepo: any;
     let mockAutomationRepo: any;
     let mockQueueService: any;
     let mockMetricsService: any;
 
     beforeEach(() => {
-      mockActionDispatcher = { dispatch: jest.fn() };
+      mockExecutionEngine = { executeStep: jest.fn() };
       mockExecutionRepo = {
         updateExecutionStatus: jest.fn(),
         createLog: jest.fn(),
@@ -195,7 +195,7 @@ describe('Production Hardening Service Suite', () => {
       } as any;
 
       actionWorker = new ActionWorker(
-        mockActionDispatcher,
+        mockExecutionEngine,
         mockExecutionRepo,
         mockAutomationRepo,
         mockQueueService,
@@ -205,7 +205,7 @@ describe('Production Hardening Service Suite', () => {
     });
 
     it('sends execution to DLQ on non-retryable ValidationError immediately', async () => {
-      mockActionDispatcher.dispatch.mockRejectedValue(
+      mockExecutionEngine.executeStep.mockRejectedValue(
         new ValidationError('Invalid structure'),
       );
       const mockJob: any = {
@@ -214,7 +214,7 @@ describe('Production Hardening Service Suite', () => {
         data: {
           executionId: 'exe-1',
           actionId: 'act-1',
-          event: { eventId: 'evt-1', instagramAccountId: 'acc-1' },
+          event: { eventId: 'evt-1', instagramAccountId: 'acc-1', metadata: {} },
         },
         attemptsMade: 1,
         opts: { attempts: 3 },
@@ -223,7 +223,7 @@ describe('Production Hardening Service Suite', () => {
       await expect(actionWorker.process(mockJob)).resolves.not.toThrow();
 
       expect(mockQueueService.enqueueDlq).toHaveBeenCalledWith({
-        automationId: 'auto-1',
+        automationId: 'evt-1',
         executionId: 'exe-1',
         eventId: 'evt-1',
         failureReason: 'Invalid structure',
@@ -239,7 +239,7 @@ describe('Production Hardening Service Suite', () => {
     });
 
     it('sends execution to DLQ after exhausting attempts', async () => {
-      mockActionDispatcher.dispatch.mockRejectedValue(
+      mockExecutionEngine.executeStep.mockRejectedValue(
         new Error('Network error'),
       );
       const mockJob: any = {
@@ -248,7 +248,7 @@ describe('Production Hardening Service Suite', () => {
         data: {
           executionId: 'exe-1',
           actionId: 'act-1',
-          event: { eventId: 'evt-1', instagramAccountId: 'acc-1' },
+          event: { eventId: 'evt-1', instagramAccountId: 'acc-1', metadata: {} },
         },
         attemptsMade: 3,
         opts: { attempts: 3 },
@@ -257,7 +257,7 @@ describe('Production Hardening Service Suite', () => {
       await expect(actionWorker.process(mockJob)).resolves.not.toThrow();
 
       expect(mockQueueService.enqueueDlq).toHaveBeenCalledWith({
-        automationId: 'auto-1',
+        automationId: 'evt-1',
         executionId: 'exe-1',
         eventId: 'evt-1',
         failureReason: 'Network error',
@@ -267,7 +267,7 @@ describe('Production Hardening Service Suite', () => {
     });
 
     it('logs warning and lets job propagate error to retry if attempts remains', async () => {
-      mockActionDispatcher.dispatch.mockRejectedValue(
+      mockExecutionEngine.executeStep.mockRejectedValue(
         new Error('Network error'),
       );
       const mockJob: any = {
@@ -276,7 +276,7 @@ describe('Production Hardening Service Suite', () => {
         data: {
           executionId: 'exe-1',
           actionId: 'act-1',
-          event: { eventId: 'evt-1', instagramAccountId: 'acc-1' },
+          event: { eventId: 'evt-1', instagramAccountId: 'acc-1', metadata: {} },
         },
         attemptsMade: 1,
         opts: { attempts: 3 },

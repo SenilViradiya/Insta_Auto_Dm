@@ -2,12 +2,19 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { PrismaService } from '../prisma.service';
 import { AutomationController } from './controllers/automation.controller';
+import { ExecutionController } from './controllers/execution.controller';
 import { HealthController } from './controllers/health.controller';
 import { AutomationRepository } from './repositories/automation.repository';
 import { ExecutionRepository } from './repositories/execution.repository';
 import { ProcessedEventRepository } from './repositories/processed-event.repository';
 import { AutomationService } from './services/automation.service';
 import { ConditionService } from './services/condition.service';
+import { ConditionEngine } from './services/condition-engine';
+import { VariableResolver } from './services/variable-resolver';
+import { ExecutionEngine } from './services/execution-engine';
+import { ActionStrategyResolver } from './services/action-strategy.resolver';
+import { SendMessageActionStrategy } from './strategies/send-message-action.strategy';
+import { WaitActionStrategy } from './strategies/wait-action.strategy';
 import { QueueService } from './services/queue.service';
 import { ActionDispatcher } from './services/action-dispatcher';
 import { IdempotencyService } from './services/idempotency.service';
@@ -46,7 +53,7 @@ import { StoryMentionTriggerStrategy } from './strategies/story-mention.strategy
     ),
     MessagingModule,
   ],
-  controllers: [AutomationController, HealthController],
+  controllers: [AutomationController, ExecutionController, HealthController],
   providers: [
     PrismaService,
     AutomationConfig,
@@ -55,6 +62,12 @@ import { StoryMentionTriggerStrategy } from './strategies/story-mention.strategy
     ProcessedEventRepository,
     AutomationService,
     ConditionService,
+    ConditionEngine,
+    VariableResolver,
+    ExecutionEngine,
+    ActionStrategyResolver,
+    SendMessageActionStrategy,
+    WaitActionStrategy,
     QueueService,
     ActionDispatcher,
     IdempotencyService,
@@ -89,6 +102,10 @@ import { StoryMentionTriggerStrategy } from './strategies/story-mention.strategy
     MetricsService,
     TriggerRegistry,
     TriggerResolver,
+    ConditionEngine,
+    VariableResolver,
+    ExecutionEngine,
+    ActionStrategyResolver,
   ],
 })
 export class AutomationModule {}
