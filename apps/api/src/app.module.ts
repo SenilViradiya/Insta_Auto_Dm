@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { MetaModule } from './meta/meta.module';
 import { AutomationModule } from './automation/automation.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
+import { AssetsModule } from './modules/assets/assets.module';
 
 import { getRedisConfig } from './config/redis.config';
 
@@ -31,6 +32,7 @@ import { getRedisConfig } from './config/redis.config';
     MetaModule,
     AutomationModule,
     MessagingModule,
+    AssetsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
