@@ -6,7 +6,7 @@ This document describes the production-grade, highly reliable, and fault-toleran
 
 ## 1. Trigger-Driven Architecture (V2)
 
-The Automation Engine has been redesigned to be trigger-driven. This allows the platform to launch automations from various event sources (Reel Comments, Feed Comments, Direct Messages, Story Replies, Story Mentions, etc.) using a unified, extensible schema.
+The Automation Engine uses a polymorphic trigger-driven strategy framework. This allows the platform to launch automations from various event sources (Reel Comments, Feed Comments, Direct Messages, Story Replies, Story Mentions, etc.) using a clean, pluggable architecture.
 
 ```
        [ Webhook / Event Agent ]
@@ -22,164 +22,113 @@ The Automation Engine has been redesigned to be trigger-driven. This allows the 
   (e.g., DIRECT_MESSAGE, REEL_COMMENT, etc.)
                    │
                    ▼
-         Evaluate Conditions
+  [ Loop through candidate automations ]
                    │
                    ▼
-          Create Execution
+       TriggerResolver.resolve
                    │
                    ▼
-            [ QUEUED State ]
-                   │
-                   ▼
-            [ RUNNING State ]
+      TriggerRegistry Strategy Match
+   (Matches event based on Config properties)
                    │
          ┌─────────┴─────────┐
          ▼                   ▼
-    Wait Action        SEND_MESSAGE / etc.
+     [Matched]         [Not Matched]
          │                   │
          ▼                   ▼
-  [ WAITING State ]   [ SUCCESS State ] (Final)
+ Evaluate Conditions      Skip Automation
          │
          ▼
-   Enqueue Delay
+  Create Execution (QUEUED State)
+         │
+         ▼
+ Execute Action Pipeline
 ```
 
-### Trigger Configuration Schema
+---
 
-To avoid creating a new database table for each new trigger type, triggers and their options are stored directly on the `Automation` model:
-- `triggerType` (enum): Specifies the trigger event class (e.g. `DIRECT_MESSAGE`, `REEL_COMMENT`, `POST_COMMENT`, `STORY_REPLY`, `STORY_MENTION`).
-- `triggerConfig` (JSON): Stores provider-agnostic parameters for the specified trigger. 
+## 2. Trigger Strategy Registry & Resolution
 
-#### Schema Structures:
+To decouple core execution flow from specific Instagram triggers, candidate automations delegate evaluation to trigger strategy classes.
 
-1. **DIRECT_MESSAGE**
-   - Mode: `ANY_MESSAGE` or `KEYWORD`
-   - Example (Keyword Mode):
-     ```json
-     {
-       "mode": "KEYWORD",
-       "keywords": ["price", "catalog"]
-     }
-     ```
+### The Trigger Framework Flow
 
-2. **REEL_COMMENT** / **POST_COMMENT**
-   - Media Scope: `ALL_REELS` / `ALL_POSTS` or `SPECIFIC_REEL` / `SPECIFIC_POST`
-   - Match Type: `ANY_COMMENT` or `KEYWORD`
-   - Example:
-     ```json
-     {
-       "mediaScope": "SPECIFIC_REEL",
-       "mediaId": "1789...",
-       "matchType": "KEYWORD",
-       "keywords": ["price", "link"],
-       "publicReply": "Check your DM 😊"
-     }
-     ```
-
-3. **STORY_REPLY**
-   - Story Scope: `ANY`
-   - Example:
-     ```json
-     {
-       "storyScope": "ANY"
-     }
-     ```
-
-4. **STORY_MENTION**
-   - Empty configuration: `{}`
+1. **TriggerContext**: Contains all metadata required for a strategy to make matching decisions:
+   - `automation`: The configuration model instance.
+   - `event`: The raw event data payload.
+   - `currentTime`: Evaluated timestamp.
+   - `workspaceId`: The scope identifier.
+2. **TriggerMatchResult**: Contains execution matching findings:
+   - `matched`: Boolean indicating if conditions are met.
+   - `reason`: Human-readable description of match success or failure.
+   - `matchedConditions`: Specific conditions matching (e.g. keywords).
+3. **TriggerRegistry**: Registers active strategies during application initialization via NestJS Dependency Injection.
+4. **TriggerResolver**: Resolves strategies based on the incoming `TriggerType` in $O(1)$ time containing no switch blocks, throwing an `UnknownTriggerException` if the strategy doesn't exist.
 
 ---
 
-## 2. Validation Registry
+## 3. Supported Trigger Strategies
 
-To adhere to the Open-Closed Principle, Validation uses a polymorphic registry pattern. Rather than using switch statements, each `TriggerType` maps to a registered `TriggerValidator`:
-
-- `TriggerValidator` interface defines a single `validate(config: any): any` function.
-- Multiple validator schemas (using Zod) validate constraints based on the trigger class rules.
-- Register functions permit adding future trigger support (e.g., `INSTAGRAM_LIVE_COMMENT`, `FOLLOW_EVENT`, `WHATSAPP_MESSAGE`) list-wide without altering existing validator code.
-
----
-
-## 3. Execution Lifecycle
-
-An event transitions through distinct phases with strict validation to prevent invalid state jumps:
-
-- **Status Values**:
-  - `QUEUED`: Allocated for dispatching.
-  - `RUNNING`: Actively executing an action strategy.
-  - `WAITING`: Delayed by a `WAIT` operation step.
-  - `SUCCESS`: Completed all actions without blocking errors.
-  - `FAILED`: Stopped due to non-retryable errors or exhausted retries.
-  - `CANCELLED`: Aborted processing.
+1. **DIRECT_MESSAGE** (`DirectMessageTriggerStrategy`)
+   - Matches: Normalizes direct message texts and matches based on mode:
+     - `ANY_MESSAGE`: Triggers on all messages.
+     - `KEYWORD`: Triggers if text matches a case-insensitive array of keywords.
+2. **REEL_COMMENT** (`ReelCommentTriggerStrategy`)
+   - Matches:
+     - `mediaScope`: `ALL_REELS` or `SPECIFIC_REEL` (matching specific comment event `media_id`).
+     - `matchType`: `ANY_COMMENT` or `KEYWORD` (case-insensitive keyword list matching).
+3. **POST_COMMENT** (`PostCommentTriggerStrategy`)
+   - Matches:
+     - `mediaScope`: `ALL_POSTS` or `SPECIFIC_POST` (matching specific comment event `media_id`).
+     - `matchType`: `ANY_COMMENT` or `KEYWORD` (case-insensitive keyword list matching).
+4. **STORY_REPLY** (`StoryReplyTriggerStrategy`)
+   - Matches: Triggered by any story reply matching config scope.
+5. **STORY_MENTION** (`StoryMentionTriggerStrategy`)
+   - Matches: Triggered by any story mention.
 
 ---
 
-## 4. Queue Lifecycle & DLQ Flow
+## 4. SOLID & Open-Closed Principle Compliance
+
+The Trigger Strategy Framework has been engineered with strict adherence to SOLID design principles:
+
+### A. Open-Closed Principle (OCP)
+The system is **open for extension but closed for modification**:
+* Adding support for a future trigger (e.g., `WHATSAPP_MESSAGE` or `FACEBOOK_COMMENT`) requires only:
+  1. Creating a new strategy class implementing the generic `TriggerStrategy` interface.
+  2. Declaring and injecting it as a provider into NestJS.
+* Traditional approaches require modifying core dispatchers, switch blocks, and `AutomationService`. Under our strategy framework, the existing `AutomationService` and `TriggerResolver` remain completely untouched.
+
+### B. Single Responsibility Principle (SRP)
+* `AutomationService` is only responsible for executing the workflow lifecycle (idempotency checking, locking, enqueuing, and managing status transitions). It knows nothing about keyword parsing, media IDs, or comments.
+* Each strategy class is only responsible for declaring and evaluating the match rules for a single trigger type.
+
+### C. Dependency Inversion Principle (DIP)
+* `AutomationService` depends on the abstract `TriggerStrategy` interface instead of concrete implementations (`DirectMessageTriggerStrategy`, etc.). All runtime dependencies are inverted and managed via NestJS Dependency Injection.
+
+### D. Liskov Substitution Principle (LSP)
+* Any class implementing `TriggerStrategy` can be subbed seamlessly inside the `TriggerResolver` and `AutomationService` without causing unexpected compile errors or runtime failures.
+
+---
+
+## 5. Queue Lifecycle & DLQ Flow
 
 BullMQ coordinates async executions:
-
-1. **Job Enqueue**: Initial steps generate `execute-action` tasks with a retry configuration defined in the dynamic configuration component (defaults: **3 attempts**, utilizing **exponential backoff with a 5s base delay**).
-2. **Delayed Steps**: A delay action schedules `delay-action` using BullMQ's native timer capability.
-3. **Dead Letter Queue (DLQ)**: If a job fails permanently (i.e. validation faults, non-retryable exceptions, or exhausted retries):
-   - An action worker transfers task details (`automationId`, `executionId`, `eventId`, `failureReason`, `retryCount`, `lastAttemptAt`, and the related `correlationId`) into the **`automation-dlq`** queue.
-   - Execution status transitions to `FAILED`.
-   - Internal failure and DLQ metrics increments.
+- **Attempts**: Dynamic options defaults to 3 attempts with exponential backoff.
+- **DLQ**: Transfers permanently failed or unrecoverable items to the `automation-dlq` queue with detailed diagnostics metrics.
 
 ---
 
-## 5. Centralized Configuration Layer
+## 6. Centralized Configuration Layer
 
-A centralized `AutomationConfig` service manages operational parameters:
-
-- **Worker Concurrency**: Set via `AUTOMATION_CONCURRENCY` environments or derived dynamically from `NODE_ENV` parameters (Production default: `50`, Staging: `20`, Dev/Local: `5`).
-- **Retry Limits**: Configurable attempts threshold (`AUTOMATION_RETRY_ATTEMPTS`).
-- **Backoff Delays**: Configurable exponential delays (`AUTOMATION_RETRY_BACKOFF_DELAY`).
-- **Performance Warnings**: Detects slow actions exceeding `AUTOMATION_SLOW_THRESHOLD` (Default: `1000`ms) and raises warning details.
+Operational parameters (worker concurrency, retry count, slow threshold, etc.) are managed dynamically from the environment.
 
 ---
 
-## 6. Idempotency & Distributed Locking
+## 7. Database Optimization (Indexes)
 
-To prevent race conditions, duplicate processing, and multiple dispatches in clustered worker replicas:
-
-- **Locking Strategy**:
-  - Key format: `automation:{eventId}`.
-  - The lock is acquired atomically via Redis (`SET ... PX ttlms NX`) inside `LockService`.
-  - Lock automatically expires after timeout protection limits (15 seconds) to avoid deadlocks.
-  - Released inside a `finally` block immediately when event handler processing completes.
-- **Idempotency Strategy**:
-  - Dedicated `ProcessedEvent` repository using unique database indexes on `eventId`.
-  - Checked before execution matches.
-  - Handled inside the distributed lock via database writes. Database unique constraint violation (error code `P2002`) guarantees atomic exclusion.
-
----
-
-## 7. Observability (Correlation IDs & Metrics)
-
-- **Correlation IDs**:
-  - Unique ID created on event reception and propagated through domains, queues, database logs, and services.
-  - Included in structured log contexts along with execution, tenant, and timing details.
-- **Metrics Service**:
-  - Calculates average execution latency, rolling P95, and P99 metrics window distributions.
-  - Groups execution counters from database entries to ensure consistency across multiple clustering instances.
-- **Health Checks**:
-  - Provides operational endpoints: `/health`, `/health/database`, `/health/redis`, and `/health/queue`.
-
----
-
-## 8. Database Optimization (Indexes)
-
-To prevent full table scans and build blazing fast Lookups, the schema has explicit index parameters:
-
-- `Automation`:
-  - `@@index([enabled])`
-  - `@@index([instagramAccountId])`
-- `AutomationExecution`:
-  - `@@index([eventId])`
-  - `@@index([automationId])`
-  - `@@index([status])`
-- `AutomationLog`:
-  - `@@index([executionId])`
-- `ProcessedEvent`:
-  - `@@unique([eventId])` (Unique index)
-  - `@@index([instagramAccountId])`
+To prevent full table scans, structural keys are indexed:
+- Autms: `@@index([enabled])`, `@@index([instagramAccountId])`
+- Execs: `@@index([eventId])`, `@@index([automationId])`, `@@index([status])`
+- Logs: `@@index([executionId])`
+- Processed: `@@unique([eventId])`, `@@index([instagramAccountId])`

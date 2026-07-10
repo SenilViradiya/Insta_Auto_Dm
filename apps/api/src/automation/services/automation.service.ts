@@ -10,6 +10,7 @@ import { LockService } from './lock.service';
 import { ExecutionStatus } from '@prisma/client';
 import { MetricsService } from './metrics.service';
 import { AutomationConfig } from '../config/automation.config';
+import { TriggerResolver } from './trigger.resolver';
 
 @Injectable()
 export class AutomationService {
@@ -24,6 +25,7 @@ export class AutomationService {
     private readonly lockService: LockService,
     private readonly metricsService: MetricsService,
     private readonly config: AutomationConfig,
+    private readonly triggerResolver: TriggerResolver,
   ) {}
 
   async processDomainEvent(event: DomainEvent): Promise<{
@@ -102,6 +104,48 @@ export class AutomationService {
           const triggeredAutoIds: string[] = [];
 
           for (const auto of automations) {
+            // Evaluate trigger strategy
+            if (!auto.triggerType) {
+              this.logger.warn(
+                `Automation ${auto.id} has no triggerType set. Skipping.`,
+                JSON.stringify({
+                  ...structuredLogContext,
+                  automationId: auto.id,
+                }),
+              );
+              continue;
+            }
+
+            try {
+              const strategy = this.triggerResolver.resolve(auto.triggerType as any);
+              const triggerResult = strategy.matchesEvent({
+                automation: auto,
+                event,
+                currentTime: new Date(),
+                workspaceId: auto.workspaceId,
+              });
+
+              if (!triggerResult.matched) {
+                this.logger.log(
+                  `Automation ${auto.id} trigger did not match. Reason: ${triggerResult.reason}`,
+                  JSON.stringify({
+                    ...structuredLogContext,
+                    automationId: auto.id,
+                  }),
+                );
+                continue;
+              }
+            } catch (err: any) {
+              this.logger.error(
+                `Error evaluating trigger strategy for automation ${auto.id}: ${err.message}`,
+                JSON.stringify({
+                  ...structuredLogContext,
+                  automationId: auto.id,
+                }),
+              );
+              continue;
+            }
+
             // Evaluate conditions
             const match = this.conditionService.evaluateConditions(
               auto.conditions,
