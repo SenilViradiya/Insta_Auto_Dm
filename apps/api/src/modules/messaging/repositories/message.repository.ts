@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma.service';
 import { OutboundMessageEntity } from '../entities/outbound-message.entity';
-import { OutboundMessageStatus } from '@prisma/client';
+import { OutboundMessageStatus, OutboundMessage } from '@prisma/client';
 
 @Injectable()
 export class MessageRepository {
@@ -9,7 +9,7 @@ export class MessageRepository {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  private mapToEntity(record: any): OutboundMessageEntity {
+  private mapToEntity(record: OutboundMessage): OutboundMessageEntity {
     return {
       id: record.id,
       instagramAccountId: record.instagramAccountId,

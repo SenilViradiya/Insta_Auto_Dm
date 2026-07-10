@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
-import { ExecutionStatus } from '@prisma/client';
+import { ExecutionStatus, Prisma } from '@prisma/client';
 import { AutomationExecutionModel } from '../interfaces/repository.interfaces';
 import { InfrastructureException } from '../errors/automation.errors';
 
@@ -33,10 +33,10 @@ export class ExecutionRepository {
         completedAt: record.completedAt,
         durationMs: record.durationMs,
       };
-    } catch (error: any) {
+    } catch (error) {
       this.logger.error(`Database failure in createExecution:`, error);
       throw new InfrastructureException(
-        `Failed to create execution record: ${error.message}`,
+        `Failed to create execution record: ${(error as Error).message}`,
       );
     }
   }
@@ -48,31 +48,33 @@ export class ExecutionRepository {
     durationMs?: number,
   ): Promise<AutomationExecutionModel> {
     try {
-      const record = await this.prisma.$transaction(async (tx: any) => {
-        const current = await tx.automationExecution.findUnique({
-          where: { id },
-        });
+      const record = await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          const current = await tx.automationExecution.findUnique({
+            where: { id },
+          });
 
-        if (current) {
-          const currentStatus = current.status as ExecutionStatus;
-          if (
-            currentStatus === ExecutionStatus.SUCCESS ||
-            currentStatus === ExecutionStatus.FAILED ||
-            currentStatus === ExecutionStatus.CANCELLED
-          ) {
-            return current;
+          if (current) {
+            const currentStatus = current.status;
+            if (
+              currentStatus === ExecutionStatus.SUCCESS ||
+              currentStatus === ExecutionStatus.FAILED ||
+              currentStatus === ExecutionStatus.CANCELLED
+            ) {
+              return current;
+            }
           }
-        }
 
-        return tx.automationExecution.update({
-          where: { id },
-          data: {
-            status,
-            completedAt,
-            durationMs,
-          },
-        });
-      });
+          return tx.automationExecution.update({
+            where: { id },
+            data: {
+              status,
+              completedAt,
+              durationMs,
+            },
+          });
+        },
+      );
 
       return {
         id: record.id,
@@ -83,10 +85,10 @@ export class ExecutionRepository {
         completedAt: record.completedAt,
         durationMs: record.durationMs,
       };
-    } catch (error: any) {
+    } catch (error) {
       this.logger.error(`Database failure in updateExecutionStatus:`, error);
       throw new InfrastructureException(
-        `Failed to update execution status: ${error.message}`,
+        `Failed to update execution status: ${(error as Error).message}`,
       );
     }
   }
@@ -95,12 +97,14 @@ export class ExecutionRepository {
     executionId: string;
     level: string;
     message: string;
-    metadata: any;
+    metadata: unknown;
     correlationId?: string;
   }): Promise<void> {
     try {
       const metadata = {
-        ...data.metadata,
+        ...(typeof data.metadata === 'object' && data.metadata !== null
+          ? data.metadata
+          : {}),
         correlationId: data.correlationId,
       };
 
@@ -112,10 +116,10 @@ export class ExecutionRepository {
           metadata: metadata || {},
         },
       });
-    } catch (error: any) {
+    } catch (error) {
       this.logger.error(`Database failure in createLog:`, error);
       throw new InfrastructureException(
-        `Failed to persist automation execution log: ${error.message}`,
+        `Failed to persist automation execution log: ${(error as Error).message}`,
       );
     }
   }

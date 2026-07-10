@@ -36,7 +36,7 @@ export class AutomationService {
     };
 
     // 1. Establish Correlation ID propagation
-    const correlationId = event.metadata?.correlationId || randomUUID();
+    const correlationId = String(event.metadata?.correlationId || randomUUID());
     if (!event.metadata) {
       event.metadata = {};
     }

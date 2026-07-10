@@ -21,9 +21,9 @@ export class IdempotencyService {
         `Successfully logged idempotency key for eventId ${eventId}`,
       );
       return true;
-    } catch (error: any) {
+    } catch (error) {
       // Prisma code for unique key violation is P2002
-      if (error && error.code === 'P2002') {
+      if (error && (error as { code?: string }).code === 'P2002') {
         this.logger.warn(
           `Attempted duplicate processing for already logged eventId ${eventId}`,
         );

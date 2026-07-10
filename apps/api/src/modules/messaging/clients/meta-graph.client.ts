@@ -67,14 +67,14 @@ export class MetaGraphClient {
         recipientId: payload.recipient_id || recipientId,
         messageId: payload.message_id || '',
       };
-    } catch (error: any) {
+    } catch (error) {
       clearTimeout(timeoutId);
 
       if (error instanceof MessagingException) {
         throw error;
       }
 
-      if (error.name === 'AbortError') {
+      if ((error as Error).name === 'AbortError') {
         throw new NetworkException(
           `Meta API request timed out after ${this.config.httpTimeoutMs}ms`,
         );

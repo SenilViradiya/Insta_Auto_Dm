@@ -94,7 +94,7 @@ export class MessagingService {
       );
 
       // 6. Send via Meta Graph API with retries
-      let lastError: any = null;
+      let lastError: unknown = null;
       for (let attempt = 0; attempt <= this.config.retryAttempts; attempt++) {
         try {
           const result = await this.graphClient.sendMessage(
@@ -132,7 +132,7 @@ export class MessagingService {
             metaMessageId: result.messageId,
             durationMs,
           };
-        } catch (err: any) {
+        } catch (err: unknown) {
           lastError = err;
 
           // Non-retryable errors — bail immediately
@@ -170,23 +170,23 @@ export class MessagingService {
       return {
         success: false,
         messageId: message.id,
-        errorCode: lastError?.name || 'UNKNOWN',
-        errorMessage: lastError?.message || 'Unknown error',
+        errorCode: (lastError as Error)?.name || 'UNKNOWN',
+        errorMessage: (lastError as Error)?.message || 'Unknown error',
         durationMs,
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       const durationMs = Date.now() - startTime;
       this.metrics.incrementFailed();
 
       this.logger.error(
-        `Message send failed: ${err.message}`,
+        `Message send failed: ${(err as Error).message}`,
         JSON.stringify(logContext),
       );
 
       return {
         success: false,
-        errorCode: err?.name || 'UNKNOWN',
-        errorMessage: err?.message || 'Unknown error',
+        errorCode: (err as Error)?.name || 'UNKNOWN',
+        errorMessage: (err as Error)?.message || 'Unknown error',
         durationMs,
       };
     }
@@ -194,7 +194,7 @@ export class MessagingService {
 
   private async handleFailure(
     messageId: string,
-    error: any,
+    error: unknown,
     startTime: number,
     logContext: Record<string, any>,
   ): Promise<void> {
@@ -204,16 +204,16 @@ export class MessagingService {
       messageId,
       OutboundMessageStatus.FAILED,
       {
-        errorCode: error?.name || 'UNKNOWN',
-        errorMessage: error?.message
-          ? error.message.substring(0, 500)
+        errorCode: (error as Error)?.name || 'UNKNOWN',
+        errorMessage: (error as Error)?.message
+          ? (error as Error).message.substring(0, 500)
           : 'Unknown error',
         failedAt: new Date(),
       },
     );
 
     this.logger.error(
-      `Message ${messageId} failed: ${error?.message || 'Unknown'}`,
+      `Message ${messageId} failed: ${(error as Error)?.message || 'Unknown'}`,
       JSON.stringify(logContext),
     );
   }

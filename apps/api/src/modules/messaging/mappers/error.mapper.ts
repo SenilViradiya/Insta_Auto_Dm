@@ -3,7 +3,6 @@ import {
   TokenExpiredException,
   RateLimitException,
   NetworkException,
-  DeliveryException,
   MessagingException,
 } from '../exceptions/messaging.exceptions';
 
@@ -94,14 +93,15 @@ export function mapMetaError(
   };
 }
 
-export function mapNetworkError(error: any): MessagingException {
-  if (error && error.code === 'ECONNABORTED') {
+export function mapNetworkError(error: unknown): MessagingException {
+  const err = error as { code?: string; message?: string };
+  if (err && err.code === 'ECONNABORTED') {
     return new NetworkException('Meta API request timed out');
   }
-  if (error && (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED')) {
-    return new NetworkException(`Meta API unreachable: ${error.code}`);
+  if (err && (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED')) {
+    return new NetworkException(`Meta API unreachable: ${err.code}`);
   }
   return new NetworkException(
-    `Network failure: ${error?.message || String(error)}`,
+    `Network failure: ${err?.message || String(error)}`,
   );
 }

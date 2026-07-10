@@ -11,7 +11,7 @@ export type ActionPayloadDto = z.infer<typeof ActionPayloadSchema>;
 
 export function normalizePayload(
   actionType: ActionType,
-  rawPayload: any,
+  rawPayload: unknown,
 ): ActionPayloadDto {
   if (rawPayload && typeof rawPayload === 'object' && 'version' in rawPayload) {
     const result = ActionPayloadSchema.safeParse(rawPayload);
@@ -29,6 +29,6 @@ export function normalizePayload(
   return {
     version: 1,
     type: actionType,
-    data: rawPayload || {},
+    data: (rawPayload as Record<string, unknown>) || {},
   };
 }

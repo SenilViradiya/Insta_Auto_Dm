@@ -108,17 +108,7 @@ describe('Action Dispatcher & Handlers', () => {
   let mockWait: any;
   let mockAddTag: any;
   let mockCallWebhook: any;
-  let executionLogs: any[] = [];
-
-  const mockExecutionRepo = {
-    createLog: jest.fn().mockImplementation((log) => {
-      executionLogs.push(log);
-      return Promise.resolve(log);
-    }),
-  } as any;
-
   beforeEach(() => {
-    executionLogs = [];
     mockSendMessage = { execute: jest.fn() };
     mockWait = { execute: jest.fn() };
     mockAddTag = { execute: jest.fn() };

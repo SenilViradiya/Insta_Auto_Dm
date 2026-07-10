@@ -110,7 +110,7 @@ export class HealthController {
         tokenStatus = 'not_available';
         graphApiStatus = 'not_available';
       }
-    } catch (err) {
+    } catch {
       tokenStatus = 'down';
       graphApiStatus = 'down';
     }
@@ -146,7 +146,11 @@ export class HealthController {
 
   private async checkRedis(): Promise<'up' | 'down'> {
     try {
-      const client = (this.lockService as any).redis;
+      const client = (
+        this.lockService as unknown as {
+          redis: { status: string; ping: () => Promise<string> };
+        }
+      ).redis;
       if (client && client.status === 'ready') {
         return 'up';
       }
@@ -160,7 +164,11 @@ export class HealthController {
   private async checkQueue(): Promise<'up' | 'down'> {
     try {
       if (this.queue) {
-        const client = (this.queue as any).client;
+        const client = (
+          this.queue as unknown as {
+            client?: { ping?: () => Promise<unknown> };
+          }
+        ).client;
         if (client && typeof client.ping === 'function') {
           await client.ping();
         }

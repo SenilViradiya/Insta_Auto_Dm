@@ -12,8 +12,9 @@ export class ProcessedEventRepository {
         where: { eventId },
       });
       return record !== null;
-    } catch (error: any) {
-      throw new InfrastructureException(error.message, error.code);
+    } catch (error) {
+      const err = error as Error & { code?: string };
+      throw new InfrastructureException(err.message, err.code);
     }
   }
 
@@ -25,8 +26,9 @@ export class ProcessedEventRepository {
           instagramAccountId,
         },
       });
-    } catch (error: any) {
-      throw new InfrastructureException(error.message, error.code);
+    } catch (error) {
+      const err = error as Error & { code?: string };
+      throw new InfrastructureException(err.message, err.code);
     }
   }
 }

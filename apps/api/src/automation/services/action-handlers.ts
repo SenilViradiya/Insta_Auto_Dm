@@ -3,6 +3,7 @@ import { AutomationAction } from '@prisma/client';
 import { DomainEvent } from '../interfaces/domain-event.interface';
 import { ExecutionRepository } from '../repositories/execution.repository';
 import { normalizePayload } from '../dto/action-payload.validator';
+import { MessagingService } from '../../modules/messaging/services/messaging.service';
 
 export interface AutomationActionHandler {
   execute(
@@ -20,7 +21,7 @@ export class SendMessageActionHandler implements AutomationActionHandler {
     private readonly executionRepo: ExecutionRepository,
     @Optional()
     @Inject('MessagingService')
-    private readonly messagingService?: any,
+    private readonly messagingService?: MessagingService,
   ) {}
 
   async execute(
@@ -29,7 +30,13 @@ export class SendMessageActionHandler implements AutomationActionHandler {
     context: { executionId: string },
   ): Promise<void> {
     const payload = normalizePayload(action.actionType, action.payload);
-    const messageText = payload.data.text || payload.data.message || '';
+    const data = payload.data as Record<string, unknown>;
+    const messageText =
+      typeof data.text === 'string'
+        ? data.text
+        : typeof data.message === 'string'
+          ? data.message
+          : '';
 
     const secureLogText =
       process.env.DEBUG_LOGGING === 'true'
@@ -47,7 +54,7 @@ export class SendMessageActionHandler implements AutomationActionHandler {
         messageText,
         messageType: 'TEXT',
         automationExecutionId: context.executionId,
-        correlationId: event.metadata?.correlationId,
+        correlationId: event.metadata?.correlationId as string | undefined,
       });
 
       await this.executionRepo.createLog({
@@ -94,7 +101,9 @@ export class WaitActionHandler implements AutomationActionHandler {
     context: { executionId: string },
   ): Promise<void> {
     const payload = normalizePayload(action.actionType, action.payload);
-    const delaySeconds = payload.data.delaySeconds || 0;
+    const data = payload.data as Record<string, unknown>;
+    const delaySeconds =
+      typeof data.delaySeconds === 'number' ? data.delaySeconds : 0;
     this.logger.log(`[WaitActionHandler] Waiting for ${delaySeconds} seconds`);
 
     await this.executionRepo.createLog({
@@ -118,7 +127,8 @@ export class AddTagActionHandler implements AutomationActionHandler {
     context: { executionId: string },
   ): Promise<void> {
     const payload = normalizePayload(action.actionType, action.payload);
-    const tag = payload.data.tag || '';
+    const data = payload.data as Record<string, unknown>;
+    const tag = typeof data.tag === 'string' ? data.tag : '';
     this.logger.log(
       `[AddTagActionHandler] Adding tag "${tag}" for user ${event.senderId}`,
     );
@@ -144,7 +154,8 @@ export class CallWebhookActionHandler implements AutomationActionHandler {
     context: { executionId: string },
   ): Promise<void> {
     const payload = normalizePayload(action.actionType, action.payload);
-    const webhookUrl = payload.data.url || '';
+    const data = payload.data as Record<string, unknown>;
+    const webhookUrl = typeof data.url === 'string' ? data.url : '';
     this.logger.log(
       `[CallWebhookActionHandler] Triggering webhook callback to: ${webhookUrl}`,
     );

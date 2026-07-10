@@ -2,13 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DomainEvent } from '../interfaces/domain-event.interface';
 import { operatorRegistry } from './condition-operators';
 import { ConditionEvaluationException } from '../errors/automation.errors';
+import { Operator } from '@prisma/client';
 
 @Injectable()
 export class ConditionService {
   private readonly logger = new Logger(ConditionService.name);
 
   evaluateConditions(
-    conditions: Array<{ field: string; operator: any; value: string }>,
+    conditions: Array<{ field: string; operator: string; value: string }>,
     event: DomainEvent,
   ): boolean {
     if (conditions.length === 0) return true;
@@ -16,7 +17,7 @@ export class ConditionService {
     for (const condition of conditions) {
       const fieldValue = this.getNestedValue(event, condition.field);
       const expectedValue = condition.value;
-      const operator = (operatorRegistry as any)[condition.operator];
+      const operator = operatorRegistry[condition.operator as Operator];
 
       if (!operator) {
         throw new ConditionEvaluationException(
@@ -27,9 +28,9 @@ export class ConditionService {
       let match = false;
       try {
         match = operator.evaluate(fieldValue, expectedValue);
-      } catch (error: any) {
+      } catch (error) {
         throw new ConditionEvaluationException(
-          `Failed to evaluate operator ${condition.operator} on path "${condition.field}": ${error.message}`,
+          `Failed to evaluate operator ${condition.operator} on path "${condition.field}": ${(error as Error).message}`,
         );
       }
 
@@ -45,7 +46,7 @@ export class ConditionService {
     return true;
   }
 
-  private getNestedValue(obj: any, path: string): string {
+  private getNestedValue(obj: unknown, path: string): string {
     if (!obj || !path) return '';
 
     // Normalize old path schemes to new content scheme for schema backward compatibility
@@ -57,18 +58,29 @@ export class ConditionService {
     }
 
     const parts = normalizedPath.split('.');
-    let current = obj;
+    let current: unknown = obj;
     for (const part of parts) {
-      if (current === null || current === undefined) {
+      if (
+        current === null ||
+        current === undefined ||
+        typeof current !== 'object'
+      ) {
         return '';
       }
-      current = current[part];
+      current = (current as Record<string, unknown>)[part];
     }
     if (current === null || current === undefined) {
       return '';
     }
-    return typeof current === 'object'
-      ? JSON.stringify(current)
-      : String(current);
+    if (typeof current === 'string') {
+      return current;
+    }
+    if (typeof current === 'number' || typeof current === 'boolean') {
+      return String(current);
+    }
+    if (typeof current === 'object') {
+      return JSON.stringify(current);
+    }
+    return '';
   }
 }

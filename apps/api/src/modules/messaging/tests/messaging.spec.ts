@@ -1,8 +1,6 @@
-import { MessagingConfig } from '../config/messaging.config';
 import { MetaGraphClient } from '../clients/meta-graph.client';
 import { TokenService } from '../token/token.service';
 import { MetaRateLimiterService } from '../rate-limit/rate-limiter.service';
-import { MessageRepository } from '../repositories/message.repository';
 import { MessagingMetricsService } from '../metrics/messaging-metrics.service';
 import { MessagingService } from '../services/messaging.service';
 import { mapMetaError, mapNetworkError } from '../mappers/error.mapper';
@@ -259,10 +257,11 @@ describe('MetaGraphClient', () => {
   it('parses successful response', async () => {
     const mockResponse = {
       ok: true,
-      json: async () => ({
-        recipient_id: 'user-1',
-        message_id: 'mid.123',
-      }),
+      json: () =>
+        Promise.resolve({
+          recipient_id: 'user-1',
+          message_id: 'mid.123',
+        }),
     };
     global.fetch = jest.fn().mockResolvedValue(mockResponse) as any;
 
@@ -274,9 +273,14 @@ describe('MetaGraphClient', () => {
   it('throws TokenExpiredException for Meta code 190', async () => {
     const mockResponse = {
       ok: false,
-      json: async () => ({
-        error: { message: 'Token expired', type: 'OAuthException', code: 190 },
-      }),
+      json: () =>
+        Promise.resolve({
+          error: {
+            message: 'Token expired',
+            type: 'OAuthException',
+            code: 190,
+          },
+        }),
     };
     global.fetch = jest.fn().mockResolvedValue(mockResponse) as any;
 
@@ -288,13 +292,14 @@ describe('MetaGraphClient', () => {
   it('throws MetaApiException for Meta code 10 (permission)', async () => {
     const mockResponse = {
       ok: false,
-      json: async () => ({
-        error: {
-          message: 'Permission denied',
-          type: 'OAuthException',
-          code: 10,
-        },
-      }),
+      json: () =>
+        Promise.resolve({
+          error: {
+            message: 'Permission denied',
+            type: 'OAuthException',
+            code: 10,
+          },
+        }),
     };
     global.fetch = jest.fn().mockResolvedValue(mockResponse) as any;
 

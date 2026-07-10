@@ -4,7 +4,6 @@ import { PrismaService } from '../../../prisma.service';
 import { MessagingConfig } from '../config/messaging.config';
 import { TokenExpiredException } from '../exceptions/messaging.exceptions';
 import { decryptToken } from '../../../meta/crypto.utils';
-import { TokenInfo } from '../interfaces/messaging.interfaces';
 
 @Injectable()
 export class TokenService {

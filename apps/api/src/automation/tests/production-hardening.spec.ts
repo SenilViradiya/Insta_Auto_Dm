@@ -3,10 +3,7 @@ import { LockService } from '../services/lock.service';
 import { ExecutionRepository } from '../repositories/execution.repository';
 import { ActionWorker } from '../workers/action.worker';
 import { ExecutionStatus, ActionType } from '@prisma/client';
-import {
-  NonRetryableError,
-  ValidationError,
-} from '../errors/automation.errors';
+import { ValidationError } from '../errors/automation.errors';
 
 describe('Production Hardening Service Suite', () => {
   describe('Idempotency Checking', () => {

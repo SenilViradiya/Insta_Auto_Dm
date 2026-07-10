@@ -11,13 +11,22 @@ export class AutomationWorker extends WorkerHost {
     super();
   }
 
-  async process(job: Job<any, any, string>): Promise<any> {
+  process(job: Job<unknown, unknown, string>): Promise<unknown> {
     const { name, data } = job;
+    const typedData = data as
+      | {
+          executionId?: string;
+          automationId?: string;
+          event?: { eventId?: string; instagramAccountId?: string };
+        }
+      | null
+      | undefined;
+
     const structuredLogContext = {
-      executionId: data?.executionId,
-      automationId: data?.automationId,
-      eventId: data?.event?.eventId,
-      instagramAccountId: data?.event?.instagramAccountId,
+      executionId: typedData?.executionId,
+      automationId: typedData?.automationId,
+      eventId: typedData?.event?.eventId,
+      instagramAccountId: typedData?.event?.instagramAccountId,
       workerName: 'AutomationWorker',
     };
 
@@ -25,6 +34,6 @@ export class AutomationWorker extends WorkerHost {
       `[AutomationWorker] Monitoring execution job: ${name} (id: ${job.id})`,
       JSON.stringify(structuredLogContext),
     );
-    return { status: 'logged', name };
+    return Promise.resolve({ status: 'logged', name });
   }
 }
