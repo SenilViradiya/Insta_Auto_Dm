@@ -24,10 +24,10 @@ model InstagramAccount {
 }
 
 enum TriggerType {
-  MESSAGE_RECEIVED
-  COMMENT_CREATED
-  KEYWORD_MATCH
-  FIRST_MESSAGE
+  DIRECT_MESSAGE
+  REEL_COMMENT
+  POST_COMMENT
+  STORY_REPLY
   STORY_MENTION
 }
 
@@ -60,30 +60,20 @@ enum ExecutionStatus {
 model Automation {
   id                 String                @id @default(uuid())
   instagramAccountId String                @default("default")
+  workspaceId        String?
   name               String
   description        String?
   enabled            Boolean               @default(true)
-  triggerType        TriggerType?
+  triggerType        TriggerType?          @default(DIRECT_MESSAGE)
+  triggerConfig      Json?                 @default("{}")
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @updatedAt
-  triggers           AutomationTrigger[]
   conditions         AutomationCondition[]
   actions            AutomationAction[]
   executions         AutomationExecution[]
 
   @@index([enabled])
   @@index([instagramAccountId])
-}
-
-model AutomationTrigger {
-  id           String      @id @default(uuid())
-  automationId String
-  automation   Automation  @relation(fields: [automationId], references: [id], onDelete: Cascade)
-  eventType    TriggerType
-  enabled      Boolean     @default(true)
-
-  @@index([eventType])
-  @@index([automationId])
 }
 
 model AutomationCondition {

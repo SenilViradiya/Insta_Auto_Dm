@@ -81,7 +81,7 @@ export class WebhookController {
             eventId: messageId,
             instagramAccountId: recipientId,
             platform: 'instagram',
-            eventType: TriggerType.MESSAGE_RECEIVED,
+            eventType: TriggerType.DIRECT_MESSAGE,
             senderId,
             recipientId: eventRecipientId,
             content: {

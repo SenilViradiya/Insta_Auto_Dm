@@ -8,17 +8,14 @@ import { InfrastructureException } from '../errors/automation.errors';
 interface AutomationRecord {
   id: string;
   instagramAccountId: string;
+  workspaceId: string | null;
   name: string;
   description: string | null;
   enabled: boolean;
   triggerType: TriggerType | null;
+  triggerConfig: any;
   createdAt: Date;
   updatedAt: Date;
-  triggers?: Array<{
-    id: string;
-    eventType: TriggerType;
-    enabled: boolean;
-  }>;
   conditions?: Array<{
     id: string;
     field: string;
@@ -40,17 +37,14 @@ export class AutomationRepository {
     return {
       id: record.id,
       instagramAccountId: record.instagramAccountId,
+      workspaceId: record.workspaceId,
       name: record.name,
       description: record.description,
       enabled: record.enabled,
       triggerType: record.triggerType,
+      triggerConfig: record.triggerConfig || {},
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
-      triggers: (record.triggers || []).map((t) => ({
-        id: t.id,
-        eventType: t.eventType,
-        enabled: t.enabled,
-      })),
       conditions: (record.conditions || []).map((c) => ({
         id: c.id,
         field: c.field,
@@ -69,6 +63,7 @@ export class AutomationRepository {
     instagramAccountId?: string;
     workspaceId?: string;
     enabled?: boolean;
+    triggerType?: TriggerType;
     search?: string;
     page?: number;
     limit?: number;
@@ -78,19 +73,32 @@ export class AutomationRepository {
         instagramAccountId,
         workspaceId,
         enabled,
+        triggerType,
         search,
         page = 1,
         limit = 10,
       } = filters;
       const skip = (page - 1) * limit;
 
-      const accountId = instagramAccountId || workspaceId || 'default';
-      const where: Prisma.AutomationWhereInput = {
-        instagramAccountId: accountId,
-      };
+      const where: Prisma.AutomationWhereInput = {};
+
+      if (instagramAccountId) {
+        where.instagramAccountId = instagramAccountId;
+      }
+      if (workspaceId) {
+        where.workspaceId = workspaceId;
+      }
+      
+      // Keep backward compatibility defaults if none supplied
+      if (!instagramAccountId && !workspaceId) {
+        where.instagramAccountId = 'default';
+      }
 
       if (enabled !== undefined) {
         where.enabled = enabled;
+      }
+      if (triggerType !== undefined) {
+        where.triggerType = triggerType;
       }
       if (search) {
         where.name = { contains: search, mode: 'insensitive' };
@@ -101,7 +109,6 @@ export class AutomationRepository {
         this.prisma.automation.findMany({
           where,
           include: {
-            triggers: true,
             conditions: true,
             actions: true,
           },
@@ -127,7 +134,6 @@ export class AutomationRepository {
       const record = await this.prisma.automation.findUnique({
         where: { id },
         include: {
-          triggers: true,
           conditions: true,
           actions: true,
         },
@@ -147,26 +153,54 @@ export class AutomationRepository {
     description?: string;
     enabled?: boolean;
     triggerType?: TriggerType;
-    triggers: Array<{ eventType: TriggerType; enabled?: boolean }>;
+    triggerConfig?: any;
+    triggers?: Array<{ eventType: any; enabled?: boolean }>;
     conditions: Array<{ field: string; operator: Operator; value: string }>;
     actions: Array<{ actionType: ActionType; payload: any }>;
   }): Promise<AutomationModel> {
     try {
-      const accountId =
-        data.instagramAccountId || data.workspaceId || 'default';
+      const accountId = data.instagramAccountId || 'default';
+      const workspaceId = data.workspaceId || null;
+
+      // Extract trigger Type and custom config
+      let triggerType = data.triggerType;
+      let triggerConfig = data.triggerConfig || {};
+
+      // Fallback for legacy controllers/payloads that specify "triggers" array
+      if (!triggerType && data.triggers && data.triggers.length > 0) {
+        const primaryTrigger = data.triggers[0];
+        const oldType = primaryTrigger.eventType as any;
+        if (oldType === 'MESSAGE_RECEIVED' || oldType === 'KEYWORD_MATCH' || oldType === 'FIRST_MESSAGE') {
+          triggerType = TriggerType.DIRECT_MESSAGE;
+          triggerConfig = { mode: 'ANY_MESSAGE' };
+        } else if (oldType === 'COMMENT_CREATED') {
+          triggerType = TriggerType.REEL_COMMENT;
+          triggerConfig = { mediaScope: 'ALL_REELS', matchType: 'ANY_COMMENT' };
+        } else if (oldType === 'STORY_MENTION') {
+          triggerType = TriggerType.STORY_MENTION;
+          triggerConfig = {};
+        } else {
+          triggerType = oldType;
+        }
+      }
+
+      // Default fallback
+      if (!triggerType) {
+        triggerType = TriggerType.DIRECT_MESSAGE;
+        triggerConfig = { mode: 'ANY_MESSAGE' };
+      }
 
       const created = await this.prisma.$transaction(
         async (tx: Prisma.TransactionClient) => {
           return tx.automation.create({
             data: {
               instagramAccountId: accountId,
+              workspaceId,
               name: data.name,
               description: data.description,
               enabled: data.enabled ?? true,
-              triggerType: data.triggerType,
-              triggers: {
-                create: data.triggers,
-              },
+              triggerType,
+              triggerConfig: triggerConfig as Prisma.InputJsonValue,
               conditions: {
                 create: data.conditions,
               },
@@ -178,7 +212,6 @@ export class AutomationRepository {
               },
             },
             include: {
-              triggers: true,
               conditions: true,
               actions: true,
             },
@@ -201,20 +234,17 @@ export class AutomationRepository {
       description?: string;
       enabled?: boolean;
       triggerType?: TriggerType;
-      triggers?: Array<{ eventType: TriggerType; enabled?: boolean }>;
+      triggerConfig?: any;
+      triggers?: Array<{ eventType: any; enabled?: boolean }>;
       conditions?: Array<{ field: string; operator: Operator; value: string }>;
       actions?: Array<{ actionType: ActionType; payload: any }>;
+      workspaceId?: string | null;
     },
   ): Promise<AutomationModel> {
     try {
       const updated = await this.prisma.$transaction(
         async (tx: Prisma.TransactionClient) => {
           // Replace items atomically if provided
-          if (data.triggers) {
-            await tx.automationTrigger.deleteMany({
-              where: { automationId: id },
-            });
-          }
           if (data.conditions) {
             await tx.automationCondition.deleteMany({
               where: { automationId: id },
@@ -235,21 +265,51 @@ export class AutomationRepository {
               }
             : undefined;
 
+          let triggerType = data.triggerType;
+          let triggerConfig = data.triggerConfig;
+
+          // Legacy mapping
+          if (!triggerType && data.triggers && data.triggers.length > 0) {
+            const primaryTrigger = data.triggers[0];
+            const oldType = primaryTrigger.eventType as any;
+            if (oldType === 'MESSAGE_RECEIVED' || oldType === 'KEYWORD_MATCH' || oldType === 'FIRST_MESSAGE') {
+              triggerType = TriggerType.DIRECT_MESSAGE;
+              triggerConfig = { mode: 'ANY_MESSAGE' };
+            } else if (oldType === 'COMMENT_CREATED') {
+              triggerType = TriggerType.REEL_COMMENT;
+              triggerConfig = { mediaScope: 'ALL_REELS', matchType: 'ANY_COMMENT' };
+            } else if (oldType === 'STORY_MENTION') {
+              triggerType = TriggerType.STORY_MENTION;
+              triggerConfig = {};
+            } else {
+              triggerType = oldType;
+            }
+          }
+
+          const updateData: Prisma.AutomationUpdateInput = {
+            name: data.name,
+            description: data.description,
+            enabled: data.enabled,
+            conditions: data.conditions
+              ? { create: data.conditions }
+              : undefined,
+            actions: actionsCreate,
+          };
+
+          if (triggerType !== undefined) {
+            updateData.triggerType = triggerType;
+          }
+          if (triggerConfig !== undefined) {
+            updateData.triggerConfig = triggerConfig as Prisma.InputJsonValue;
+          }
+          if (data.workspaceId !== undefined) {
+            updateData.workspaceId = data.workspaceId;
+          }
+
           return tx.automation.update({
             where: { id },
-            data: {
-              name: data.name,
-              description: data.description,
-              enabled: data.enabled,
-              triggerType: data.triggerType,
-              triggers: data.triggers ? { create: data.triggers } : undefined,
-              conditions: data.conditions
-                ? { create: data.conditions }
-                : undefined,
-              actions: actionsCreate,
-            },
+            data: updateData,
             include: {
-              triggers: true,
               conditions: true,
               actions: true,
             },
@@ -270,7 +330,6 @@ export class AutomationRepository {
       const deleted = await this.prisma.automation.delete({
         where: { id },
         include: {
-          triggers: true,
           conditions: true,
           actions: true,
         },
@@ -292,15 +351,9 @@ export class AutomationRepository {
         where: {
           instagramAccountId,
           enabled: true,
-          triggers: {
-            some: {
-              eventType,
-              enabled: true,
-            },
-          },
+          triggerType: eventType,
         },
         include: {
-          triggers: true,
           conditions: true,
           actions: true,
         },

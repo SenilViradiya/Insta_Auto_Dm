@@ -17,6 +17,8 @@ interface Automation {
   createdAt: string;
   keywords: Keyword[];
   actions: Action[];
+  triggerType?: string | null;
+  triggerConfig?: any;
 }
 
 export function mapBackendToFrontend(backendAuto: any): Automation {
@@ -90,6 +92,8 @@ export function mapBackendToFrontend(backendAuto: any): Automation {
     createdAt: backendAuto.createdAt,
     keywords: keywords.length > 0 ? keywords : [{ keyword: "", matchType: "EXACT" }],
     actions,
+    triggerType: backendAuto.triggerType,
+    triggerConfig: backendAuto.triggerConfig,
   };
 }
 
@@ -99,8 +103,12 @@ export function mapFrontendToBackend(values: {
   keywords: Array<{ keyword: string; matchType: "EXACT" | "CONTAINS" | "STARTS_WITH" }>;
   actions: Array<{ message: string; delaySeconds: number }>;
 }) {
-  // 1. triggers
-  const triggers = [{ eventType: "MESSAGE_RECEIVED", enabled: true }];
+  // 1. triggers (V2: triggerType and triggerConfig)
+  const hasKeywords = (values.keywords || []).some(k => k.keyword && k.keyword.trim() !== "");
+  const triggerType = "DIRECT_MESSAGE";
+  const triggerConfig = hasKeywords 
+    ? { mode: "KEYWORD", keywords: values.keywords.filter(k => k.keyword.trim() !== "").map(k => k.keyword) }
+    : { mode: "ANY_MESSAGE" };
 
   // 2. conditions (keywords)
   const conditions = (values.keywords || []).map((kw) => {
@@ -146,7 +154,8 @@ export function mapFrontendToBackend(values: {
   return {
     name: values.name,
     enabled: values.enabled,
-    triggers,
+    triggerType,
+    triggerConfig,
     conditions,
     actions,
   };
