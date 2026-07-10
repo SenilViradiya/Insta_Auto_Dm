@@ -7,6 +7,8 @@ import { MetaModule } from './meta/meta.module';
 import { AutomationModule } from './automation/automation.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
 
+import { getRedisConfig } from './config/redis.config';
+
 @Module({
   imports: [
     LoggerModule.forRoot({
@@ -24,11 +26,7 @@ import { MessagingModule } from './modules/messaging/messaging.module';
       },
     }),
     BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST ?? 'localhost',
-        port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
-        password: process.env.REDIS_PASSWORD || undefined,
-      },
+      connection: getRedisConfig(),
     }),
     MetaModule,
     AutomationModule,

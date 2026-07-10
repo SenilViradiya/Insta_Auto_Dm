@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import Redis from 'ioredis';
+import { createRedisClient } from '../../config/redis.config';
 
 @Injectable()
 export class LockService implements OnModuleDestroy {
@@ -7,10 +8,7 @@ export class LockService implements OnModuleDestroy {
   private readonly redis: Redis;
 
   constructor() {
-    this.redis = new Redis({
-      host: process.env.REDIS_HOST ?? 'localhost',
-      port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
-      password: process.env.REDIS_PASSWORD || undefined,
+    this.redis = createRedisClient({
       maxRetriesPerRequest: null,
     });
   }

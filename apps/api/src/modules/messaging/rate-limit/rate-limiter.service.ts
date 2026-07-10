@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
 import { MessagingConfig } from '../config/messaging.config';
 import { RateLimitException } from '../exceptions/messaging.exceptions';
+import { createRedisClient } from '../../../config/redis.config';
 
 @Injectable()
 export class MetaRateLimiterService {
@@ -9,10 +10,7 @@ export class MetaRateLimiterService {
   private readonly redis: Redis;
 
   constructor(private readonly config: MessagingConfig) {
-    this.redis = new Redis({
-      host: process.env.REDIS_HOST ?? 'localhost',
-      port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
-      password: process.env.REDIS_PASSWORD || undefined,
+    this.redis = createRedisClient({
       lazyConnect: true,
     });
   }
