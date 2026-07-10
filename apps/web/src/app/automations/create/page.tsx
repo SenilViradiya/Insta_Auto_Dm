@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,6 +16,8 @@ import {
   Row,
   Col,
   Spin,
+  Alert,
+  Badge,
 } from "antd";
 import {
   PlusOutlined,
@@ -23,10 +25,12 @@ import {
   LeftOutlined,
   SaveOutlined,
   ThunderboltOutlined,
+  InstagramOutlined,
 } from "@ant-design/icons";
-import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { mapFrontendToBackend } from "../mapping-utils";
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
@@ -64,7 +68,30 @@ type FormValues = z.infer<typeof formSchema>;
 
 function CreateAutomationContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [messageApi, contextHolder] = message.useMessage();
+
+  // Retrieve default selected account from query or localStorage
+  const activeAccountId =
+    searchParams.get("instagramAccountId") ||
+    localStorage.getItem("selected_instagram_account_id") ||
+    "default";
+
+  // Fetch accounts list to display the details of the locked account context
+  const { data: statusData } = useQuery({
+    queryKey: ["meta-status"],
+    queryFn: async () => {
+      const response = await fetch(`${API_URL}/meta/status`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch connection status");
+      }
+      return response.json() as Promise<{ accounts: Array<{ instagramUserId: string; pageName: string }> }>;
+    },
+  });
+
+  const activeAccount = statusData?.accounts?.find(
+    (acc) => acc.instagramUserId === activeAccountId
+  );
 
   const {
     control,
@@ -100,10 +127,16 @@ function CreateAutomationContent() {
 
   const mutation = useMutation({
     mutationFn: async (payload: FormValues) => {
+      // Map payload structure
+      const mappedPayload = mapFrontendToBackend(payload);
+
       const response = await fetch(`${API_URL}/automations`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+          "x-instagram-account-id": activeAccountId,
+        },
+        body: JSON.stringify(mappedPayload),
       });
 
       if (!response.ok) {
@@ -160,15 +193,26 @@ function CreateAutomationContent() {
       </Header>
 
       <Content className="p-8 max-w-3xl mx-auto w-full flex flex-col gap-6">
-        <div className="flex items-center gap-2">
-          <Button
-            type="text"
-            icon={<LeftOutlined />}
-            onClick={() => router.push("/automations")}
-          />
-          <Title level={3} style={{ margin: 0 }}>
-            Create Automation Flow
-          </Title>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              type="text"
+              icon={<LeftOutlined />}
+              onClick={() => router.push("/automations")}
+            />
+            <Title level={3} style={{ margin: 0 }}>
+              Create Automation Flow
+            </Title>
+          </div>
+
+          {activeAccount && (
+            <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-2">
+              <InstagramOutlined className="text-indigo-650" />
+              <span className="text-xs font-bold text-indigo-750">
+                Scope: {activeAccount.pageName}
+              </span>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
@@ -381,7 +425,7 @@ function CreateAutomationContent() {
             htmlType="submit"
             icon={<SaveOutlined />}
             loading={mutation.isPending}
-            className="bg-indigo-600 border-none font-bold"
+            className="bg-indigo-600 border-none font-bold rounded-xl h-12 shadow-sm"
           >
             Create Automation Flow
           </Button>
