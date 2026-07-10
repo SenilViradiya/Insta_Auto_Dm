@@ -4,6 +4,7 @@ import { PrismaService } from '../../../prisma.service';
 import { MessagingConfig } from '../config/messaging.config';
 import { TokenExpiredException } from '../exceptions/messaging.exceptions';
 import { decryptToken } from '../../../meta/crypto.utils';
+import { createRedisClient } from '../../../config/redis.config';
 
 @Injectable()
 export class TokenService {
@@ -14,10 +15,7 @@ export class TokenService {
     private readonly prisma: PrismaService,
     private readonly config: MessagingConfig,
   ) {
-    this.redis = new Redis({
-      host: process.env.REDIS_HOST ?? 'localhost',
-      port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
-      password: process.env.REDIS_PASSWORD || undefined,
+    this.redis = createRedisClient({
       lazyConnect: true,
     });
   }
