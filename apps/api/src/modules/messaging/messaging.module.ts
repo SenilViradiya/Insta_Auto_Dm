@@ -8,8 +8,10 @@ import { TokenService } from './token/token.service';
 import { MetaRateLimiterService } from './rate-limit/rate-limiter.service';
 import { MessageRepository } from './repositories/message.repository';
 import { MessagingMetricsService } from './metrics/messaging-metrics.service';
+import { MetaPlatformModule } from '../meta-platform/meta-platform.module';
 
 @Module({
+  imports: [MetaPlatformModule],
   controllers: [MessagingController],
   providers: [
     PrismaService,

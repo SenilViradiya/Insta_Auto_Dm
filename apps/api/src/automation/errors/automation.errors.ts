@@ -44,6 +44,55 @@ export class NonRetryableException extends AutomationException {
   }
 }
 
+export class UnknownTriggerException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class TriggerConfigurationException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class TriggerValidationException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class TriggerMatchException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 // Backward compatible aliases
 export { ValidationException as ValidationError };
 export { NonRetryableException as NonRetryableError };
+
+export class ConditionException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class ActionException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class VariableResolutionException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class RetryException extends AutomationException {
+  constructor(message: string) {
+    super(message);
+  }
+}
+

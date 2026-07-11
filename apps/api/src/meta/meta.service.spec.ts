@@ -2,11 +2,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MetaService } from './meta.service';
 import { PrismaService } from '../prisma.service';
 import { BadRequestException } from '@nestjs/common';
-import { encryptToken, decryptToken } from './crypto.utils';
+import { encryptToken, decryptToken } from '../modules/meta-platform/utils/crypto.utils';
+import { GraphClient } from '../modules/meta-platform/clients/graph.client';
 
 describe('MetaService', () => {
   let service: MetaService;
   let prismaMock: any;
+  let graphClientMock: any;
 
   beforeEach(async () => {
     prismaMock = {
@@ -17,10 +19,16 @@ describe('MetaService', () => {
       },
     };
 
+    graphClientMock = {
+      request: jest.fn(),
+      paginate: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MetaService,
         { provide: PrismaService, useValue: prismaMock },
+        { provide: GraphClient, useValue: graphClientMock },
       ],
     }).compile();
 

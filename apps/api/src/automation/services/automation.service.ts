@@ -1,15 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { AutomationRepository } from '../repositories/automation.repository';
-import { ExecutionRepository } from '../repositories/execution.repository';
-import { ConditionService } from './condition.service';
-import { QueueService } from './queue.service';
 import { DomainEvent } from '../interfaces/domain-event.interface';
 import { IdempotencyService } from './idempotency.service';
 import { LockService } from './lock.service';
-import { ExecutionStatus } from '@prisma/client';
-import { MetricsService } from './metrics.service';
-import { AutomationConfig } from '../config/automation.config';
+import { TriggerResolver } from './trigger.resolver';
+import { ExecutionEngine } from './execution-engine';
 
 @Injectable()
 export class AutomationService {
@@ -17,13 +13,10 @@ export class AutomationService {
 
   constructor(
     private readonly automationRepo: AutomationRepository,
-    private readonly executionRepo: ExecutionRepository,
-    private readonly conditionService: ConditionService,
-    private readonly queueService: QueueService,
     private readonly idempotencyService: IdempotencyService,
     private readonly lockService: LockService,
-    private readonly metricsService: MetricsService,
-    private readonly config: AutomationConfig,
+    private readonly triggerResolver: TriggerResolver,
+    private readonly executionEngine: ExecutionEngine,
   ) {}
 
   async processDomainEvent(event: DomainEvent): Promise<{
@@ -102,15 +95,10 @@ export class AutomationService {
           const triggeredAutoIds: string[] = [];
 
           for (const auto of automations) {
-            // Evaluate conditions
-            const match = this.conditionService.evaluateConditions(
-              auto.conditions,
-              event,
-            );
-
-            if (!match) {
-              this.logger.log(
-                `Automation ${auto.id} conditions did not match. Skipping.`,
+            // Evaluate trigger strategy
+            if (!auto.triggerType) {
+              this.logger.warn(
+                `Automation ${auto.id} has no triggerType set. Skipping.`,
                 JSON.stringify({
                   ...structuredLogContext,
                   automationId: auto.id,
@@ -119,78 +107,52 @@ export class AutomationService {
               continue;
             }
 
-            // Create execution record with status QUEUED (instead of PENDING)
-            const execution = await this.executionRepo.createExecution({
-              automationId: auto.id,
-              eventId: event.eventId,
-              status: ExecutionStatus.QUEUED,
-            });
-
-            triggeredAutoIds.push(execution.id);
-
-            // Store initial execution log propagating correlation ID in metadata
-            await this.executionRepo.createLog({
-              executionId: execution.id,
-              level: 'INFO',
-              message: `Execution ${execution.id} started for automation "${auto.name}" with status QUEUED`,
-              metadata: {
-                automationId: auto.id,
-                eventId: event.eventId,
-                instagramAccountId: event.instagramAccountId,
-              },
-              correlationId,
-            });
-
-            // Enqueue first action if it exists
-            if (auto.actions.length > 0) {
-              const firstAction = auto.actions[0];
-
-              await this.executionRepo.createLog({
-                executionId: execution.id,
-                level: 'INFO',
-                message: `Enqueuing first action index: 0 (Type: ${firstAction.actionType})`,
-                metadata: { actionId: firstAction.id },
-                correlationId,
-              });
-
-              await this.queueService.enqueueExecuteAction({
-                executionId: execution.id,
-                actionId: firstAction.id,
+            try {
+              const strategy = this.triggerResolver.resolve(auto.triggerType as any);
+              const triggerResult = strategy.matchesEvent({
+                automation: auto,
                 event,
-                correlationId,
+                currentTime: new Date(),
+                workspaceId: auto.workspaceId,
               });
-            } else {
-              // If no actions, complete execution immediately
-              const startTime = new Date(execution.startedAt).getTime();
-              const duration = Date.now() - startTime;
 
-              await this.executionRepo.updateExecutionStatus(
-                execution.id,
-                ExecutionStatus.SUCCESS,
-                new Date(),
-                duration,
-              );
-              this.metricsService.incrementSuccess(duration);
-
-              // Warn on slow processes
-              if (duration > this.config.slowExecutionThresholdMs) {
-                this.logger.warn(
-                  `[SLOW EXECUTION] Execution ${execution.id} took ${duration}ms (Threshold: ${this.config.slowExecutionThresholdMs}ms)`,
+              if (!triggerResult.matched) {
+                this.logger.log(
+                  `Automation ${auto.id} trigger did not match. Reason: ${triggerResult.reason}`,
                   JSON.stringify({
                     ...structuredLogContext,
-                    executionId: execution.id,
-                    duration,
+                    automationId: auto.id,
                   }),
                 );
+                continue;
               }
 
-              await this.executionRepo.createLog({
-                executionId: execution.id,
-                level: 'INFO',
-                message: `Execution completed: no actions to execute.`,
-                metadata: {},
-                correlationId,
-              });
+              this.logger.log(
+                `[Trigger matched] Automation ${auto.id} trigger matches event: ${triggerResult.reason}`,
+                JSON.stringify({
+                  ...structuredLogContext,
+                  automationId: auto.id,
+                }),
+              );
+
+              // Propagate keyword match details
+              event.metadata = event.metadata || {};
+              event.metadata.matchedKeywords = triggerResult.matchedConditions || [];
+            } catch (err: any) {
+              this.logger.error(
+                `Error evaluating trigger strategy for automation ${auto.id}: ${err.message}`,
+                JSON.stringify({
+                  ...structuredLogContext,
+                  automationId: auto.id,
+                }),
+              );
+              continue;
+            }
+
+            // Route matching automation to ExecutionEngine
+            const execId = await this.executionEngine.startExecution(auto, event);
+            if (execId) {
+              triggeredAutoIds.push(execId);
             }
           }
 

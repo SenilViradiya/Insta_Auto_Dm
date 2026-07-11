@@ -23,12 +23,6 @@ export interface AutomationActionModel {
   payload: Record<string, any>;
 }
 
-export interface AutomationTriggerModel {
-  id: string;
-  eventType: string;
-  enabled: boolean;
-}
-
 export interface AutomationConditionModel {
   id: string;
   field: string;
@@ -38,14 +32,15 @@ export interface AutomationConditionModel {
 
 export interface AutomationModel {
   id: string;
+  workspaceId?: string | null;
   instagramAccountId: string;
   name: string;
   description?: string | null;
   enabled: boolean;
-  triggerType?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  triggers: AutomationTriggerModel[];
+  triggerType: string | null;
+  triggerConfig: any;
   conditions: AutomationConditionModel[];
   actions: AutomationActionModel[];
+  createdAt: Date;
+  updatedAt: Date;
 }

@@ -1,12 +1,16 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { encryptToken } from './crypto.utils';
+import { encryptToken } from '../modules/meta-platform/utils/crypto.utils';
+import { GraphClient } from '../modules/meta-platform/clients/graph.client';
 
 @Injectable()
 export class MetaService {
   private readonly logger = new Logger(MetaService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly graphClient: GraphClient,
+  ) {}
 
   private getEnvOrThrow(key: string): string {
     const value = process.env[key];
@@ -45,27 +49,22 @@ export class MetaService {
     const appId = this.getEnvOrThrow('META_APP_ID');
     const appSecret = this.getEnvOrThrow('META_APP_SECRET');
     const redirectUri = this.getEnvOrThrow('META_REDIRECT_URI');
-    const version = process.env.META_GRAPH_API_VERSION ?? 'v20.0';
 
-    const url = new URL(
-      `https://graph.facebook.com/${version}/oauth/access_token`,
-    );
-    url.searchParams.append('client_id', appId);
-    url.searchParams.append('client_secret', appSecret);
-    url.searchParams.append('redirect_uri', redirectUri);
-    url.searchParams.append('code', code);
-
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-      const errText = await response.text();
-      this.logger.error(`Meta API code exchange failed: ${errText}`);
+    try {
+      return await this.graphClient.request({
+        method: 'GET',
+        endpoint: 'oauth/access_token',
+        params: {
+          client_id: appId,
+          client_secret: appSecret,
+          redirect_uri: redirectUri,
+          code,
+        },
+      });
+    } catch (e: any) {
+      this.logger.error(`Meta API code exchange failed: ${e.message}`);
       throw new BadRequestException('Failed to exchange code with Meta');
     }
-
-    return response.json() as Promise<{
-      access_token: string;
-      expires_in?: number;
-    }>;
   }
 
   async fetchLongLivedToken(
@@ -73,51 +72,40 @@ export class MetaService {
   ): Promise<{ access_token: string; expires_in?: number }> {
     const appId = this.getEnvOrThrow('META_APP_ID');
     const appSecret = this.getEnvOrThrow('META_APP_SECRET');
-    const version = process.env.META_GRAPH_API_VERSION ?? 'v20.0';
 
-    const url = new URL(
-      `https://graph.facebook.com/${version}/oauth/access_token`,
-    );
-    url.searchParams.append('grant_type', 'fb_exchange_token');
-    url.searchParams.append('client_id', appId);
-    url.searchParams.append('client_secret', appSecret);
-    url.searchParams.append('fb_exchange_token', shortToken);
-
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-      const errText = await response.text();
-      this.logger.error(
-        `Meta API long-lived token exchange failed: ${errText}`,
-      );
+    try {
+      return await this.graphClient.request({
+        method: 'GET',
+        endpoint: 'oauth/access_token',
+        params: {
+          grant_type: 'fb_exchange_token',
+          client_id: appId,
+          client_secret: appSecret,
+          fb_exchange_token: shortToken,
+        },
+      });
+    } catch (e: any) {
+      this.logger.error(`Meta API long-lived token exchange failed: ${e.message}`);
       throw new BadRequestException('Failed to obtain long-lived token');
     }
-
-    return response.json() as Promise<{
-      access_token: string;
-      expires_in?: number;
-    }>;
   }
 
   async fetchUserPages(
     longToken: string,
   ): Promise<Array<{ id: string; name: string; access_token: string }>> {
-    const version = process.env.META_GRAPH_API_VERSION ?? 'v20.0';
-    const url = `https://graph.facebook.com/${version}/me/accounts`;
-
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${longToken}` },
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      this.logger.error(`Meta API me/accounts failed: ${errText}`);
+    try {
+      const response = await this.graphClient.request<{
+        data?: Array<{ id: string; name: string; access_token: string }>;
+      }>({
+        method: 'GET',
+        endpoint: 'me/accounts',
+        token: longToken,
+      });
+      return response.data ?? [];
+    } catch (e: any) {
+      this.logger.error(`Meta API me/accounts failed: ${e.message}`);
       throw new BadRequestException('Failed to retrieve connected Meta Pages');
     }
-
-    const json = (await response.json()) as {
-      data?: Array<{ id: string; name: string; access_token: string }>;
-    };
-    return json.data ?? [];
   }
 
   async fetchPageInstagramAccount(
@@ -127,24 +115,19 @@ export class MetaService {
     instagram_business_account?: { id: string };
     name: string;
   } | null> {
-    const version = process.env.META_GRAPH_API_VERSION ?? 'v20.0';
-    const url = `https://graph.facebook.com/${version}/${pageId}?fields=instagram_business_account,name`;
-
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${pageToken}` },
-    });
-
-    if (!response.ok) {
-      this.logger.warn(
-        `Failed to inspect page ${pageId}: ${await response.text()}`,
-      );
+    try {
+      return await this.graphClient.request({
+        method: 'GET',
+        endpoint: pageId,
+        params: {
+          fields: 'instagram_business_account,name',
+        },
+        token: pageToken,
+      });
+    } catch (e: any) {
+      this.logger.warn(`Failed to inspect page ${pageId}: ${e.message}`);
       return null;
     }
-
-    return response.json() as Promise<{
-      instagram_business_account?: { id: string };
-      name: string;
-    }>;
   }
 
   async exchangeCodeAndConnect(code: string): Promise<void> {

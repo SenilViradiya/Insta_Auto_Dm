@@ -123,4 +123,71 @@ export class ExecutionRepository {
       );
     }
   }
+
+  async findMany(filters: {
+    status?: ExecutionStatus;
+    automationId?: string;
+    skip?: number;
+    take?: number;
+  }): Promise<{ items: any[]; total: number }> {
+    try {
+      const where: Prisma.AutomationExecutionWhereInput = {};
+      if (filters.status) {
+        where.status = filters.status;
+      }
+      if (filters.automationId) {
+        where.automationId = filters.automationId;
+      }
+
+      const [items, total] = await Promise.all([
+        this.prisma.automationExecution.findMany({
+          where,
+          orderBy: { startedAt: 'desc' },
+          skip: filters.skip || 0,
+          take: filters.take || 10,
+          include: {
+            automation: true,
+          },
+        }),
+        this.prisma.automationExecution.count({ where }),
+      ]);
+
+      return { items, total };
+    } catch (error) {
+      this.logger.error(`Database failure in findMany:`, error);
+      throw new InfrastructureException(
+        `Failed to retrieve execution records: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async findById(id: string): Promise<any | null> {
+    try {
+      return await this.prisma.automationExecution.findUnique({
+        where: { id },
+        include: {
+          automation: true,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Database failure in findById:`, error);
+      throw new InfrastructureException(
+        `Failed to retrieve execution record: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async findLogs(executionId: string): Promise<any[]> {
+    try {
+      return await this.prisma.automationLog.findMany({
+        where: { executionId },
+        orderBy: { createdAt: 'asc' },
+      });
+    } catch (error) {
+      this.logger.error(`Database failure in findLogs:`, error);
+      throw new InfrastructureException(
+        `Failed to retrieve execution logs: ${(error as Error).message}`,
+      );
+    }
+  }
 }

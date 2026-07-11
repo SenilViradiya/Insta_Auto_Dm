@@ -13,21 +13,23 @@ model User {
 }
 
 model InstagramAccount {
-  id                   String    @id @default(uuid())
-  instagramUserId      String    @unique
+  id                   String            @id @default(uuid())
+  instagramUserId      String            @unique
   pageId               String
   pageName             String
   accessTokenEncrypted String
   tokenExpiresAt       DateTime?
-  connectedAt          DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  connectedAt          DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  assets               InstagramAsset[]
+  profile              InstagramProfile?
 }
 
 enum TriggerType {
-  MESSAGE_RECEIVED
-  COMMENT_CREATED
-  KEYWORD_MATCH
-  FIRST_MESSAGE
+  DIRECT_MESSAGE
+  REEL_COMMENT
+  POST_COMMENT
+  STORY_REPLY
   STORY_MENTION
 }
 
@@ -60,30 +62,20 @@ enum ExecutionStatus {
 model Automation {
   id                 String                @id @default(uuid())
   instagramAccountId String                @default("default")
+  workspaceId        String?
   name               String
   description        String?
   enabled            Boolean               @default(true)
-  triggerType        TriggerType?
+  triggerType        TriggerType?          @default(DIRECT_MESSAGE)
+  triggerConfig      Json?                 @default("{}")
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @updatedAt
-  triggers           AutomationTrigger[]
   conditions         AutomationCondition[]
   actions            AutomationAction[]
   executions         AutomationExecution[]
 
   @@index([enabled])
   @@index([instagramAccountId])
-}
-
-model AutomationTrigger {
-  id           String      @id @default(uuid())
-  automationId String
-  automation   Automation  @relation(fields: [automationId], references: [id], onDelete: Cascade)
-  eventType    TriggerType
-  enabled      Boolean     @default(true)
-
-  @@index([eventType])
-  @@index([automationId])
 }
 
 model AutomationCondition {
@@ -178,4 +170,55 @@ model OutboundMessage {
   @@index([status])
   @@index([createdAt])
   @@index([automationExecutionId])
+}
+
+enum InstagramAssetType {
+  REEL
+  POST
+  CAROUSEL
+  VIDEO
+  IMAGE
+  UNKNOWN
+}
+
+model InstagramAsset {
+  id                 String             @id @default(uuid())
+  instagramAccountId String
+  instagramAccount   InstagramAccount   @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  instagramMediaId   String
+  assetType          InstagramAssetType
+  caption            String?
+  mediaType          String?
+  thumbnailUrl       String?
+  mediaUrl           String?
+  permalink          String?
+  shortCode          String?
+  timestamp          DateTime?
+  isArchived         Boolean            @default(false)
+  syncVersion        Int                @default(1)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@unique([instagramAccountId, instagramMediaId])
+  @@index([instagramAccountId])
+  @@index([instagramMediaId])
+  @@index([assetType])
+  @@index([timestamp])
+}
+
+model InstagramProfile {
+  id                 String           @id @default(uuid())
+  instagramAccountId String           @unique
+  instagramAccount   InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  username           String
+  name               String?
+  profilePictureUrl  String?
+  followers          Int              @default(0)
+  following          Int              @default(0)
+  mediaCount         Int              @default(0)
+  biography          String?
+  website            String?
+  lastSyncedAt       DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 }
