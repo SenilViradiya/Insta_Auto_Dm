@@ -38,7 +38,7 @@ export default function TriggerConfigStep({
             <span style={{ fontWeight: 'bold' }}>{meta?.title || type} Rules</span>
           </div>
         }
-        variant={false}
+        variant="borderless"
         style={{ borderRadius: '16px', border: '1px solid #cbd5e1' }}
       >
         <RenderTriggerConfig
