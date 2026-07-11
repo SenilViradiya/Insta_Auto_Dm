@@ -31,6 +31,7 @@ import { ActionWorker } from './workers/action.worker';
 import { AutomationWorker } from './workers/automation.worker';
 import { MessagingModule } from '../modules/messaging/messaging.module';
 import { MessagingService as MsgSvc } from '../modules/messaging/services/messaging.service';
+import { MetaPlatformModule } from '../modules/meta-platform/meta-platform.module';
 
 // Strategies and resolvers
 import { TriggerRegistry } from './services/trigger.registry';
@@ -52,6 +53,7 @@ import { StoryMentionTriggerStrategy } from './strategies/story-mention.strategy
       },
     ),
     MessagingModule,
+    MetaPlatformModule,
   ],
   controllers: [AutomationController, ExecutionController, HealthController],
   providers: [

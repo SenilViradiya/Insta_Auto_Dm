@@ -23,6 +23,9 @@ export class VariableResolver {
   }
 
   private resolveExpression(variableName: string, context: ExecutionContext): string {
+    if (context.variables && context.variables[variableName] !== undefined) {
+      return context.variables[variableName];
+    }
     switch (variableName) {
       case 'user.username':
         return context.sender?.username || context.sender?.id || 'User';

@@ -126,6 +126,18 @@ export class AutomationService {
                 );
                 continue;
               }
+
+              this.logger.log(
+                `[Trigger matched] Automation ${auto.id} trigger matches event: ${triggerResult.reason}`,
+                JSON.stringify({
+                  ...structuredLogContext,
+                  automationId: auto.id,
+                }),
+              );
+
+              // Propagate keyword match details
+              event.metadata = event.metadata || {};
+              event.metadata.matchedKeywords = triggerResult.matchedConditions || [];
             } catch (err: any) {
               this.logger.error(
                 `Error evaluating trigger strategy for automation ${auto.id}: ${err.message}`,

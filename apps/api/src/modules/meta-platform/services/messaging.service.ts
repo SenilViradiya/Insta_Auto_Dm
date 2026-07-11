@@ -36,4 +36,26 @@ export class MessagingService {
       messageId: response.message_id || '',
     };
   }
+
+  async sendPublicReply(
+    commentId: string,
+    messageText: string,
+    accessToken: string
+  ): Promise<{ commentId: string; replyId: string }> {
+    const response = await this.graphClient.request<{
+      id?: string;
+    }>({
+      method: 'POST',
+      endpoint: `${commentId}/replies`,
+      body: {
+        message: messageText,
+      },
+      token: accessToken,
+    });
+
+    return {
+      commentId,
+      replyId: response.id || '',
+    };
+  }
 }

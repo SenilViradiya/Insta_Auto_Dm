@@ -12,6 +12,9 @@ import { ExecutionException, ActionException, NonRetryableException, RetryExcept
 import { MetricsService } from './metrics.service';
 import { AutomationConfig } from '../config/automation.config';
 
+import { TokenService } from '../../modules/meta-platform/services/token.service';
+import { MessagingService as MetaMessagingService } from '../../modules/meta-platform/services/messaging.service';
+
 @Injectable()
 export class ExecutionEngine {
   private readonly logger = new Logger(ExecutionEngine.name);
@@ -24,6 +27,8 @@ export class ExecutionEngine {
     private readonly actionStrategyResolver: ActionStrategyResolver,
     private readonly metricsService: MetricsService,
     private readonly config: AutomationConfig,
+    private readonly tokenService: TokenService,
+    private readonly metaMessagingService: MetaMessagingService,
   ) {}
 
   /**
@@ -59,6 +64,11 @@ export class ExecutionEngine {
       return null;
     }
 
+    this.logger.log(
+      `[Conditions passed] Automation ${automation.id} filter conditions passed.`,
+      JSON.stringify({ correlationId, eventId: event.eventId }),
+    );
+
     // 2. Create the Execution Record
     const execution = await this.executionRepo.createExecution({
       automationId: automation.id,
@@ -66,12 +76,38 @@ export class ExecutionEngine {
       status: ExecutionStatus.QUEUED,
     });
 
-    // 3. Log execution started
+    // 3. Optional Public Reply
+    let publicReplyStatus = 'SKIPPED';
+    if (automation.triggerConfig?.publicReply && event.eventType === 'REEL_COMMENT') {
+      try {
+        const token = await this.tokenService.getToken(event.instagramAccountId);
+        await this.metaMessagingService.sendPublicReply(
+          event.eventId, // comment ID is eventId
+          automation.triggerConfig.publicReply,
+          token,
+        );
+        publicReplyStatus = 'SUCCESS';
+      } catch (err: any) {
+        publicReplyStatus = 'FAILED';
+        this.logger.error(
+          `Failed to dispatch public reply: ${err.message}`,
+          JSON.stringify({ correlationId, eventId: event.eventId }),
+        );
+      }
+    }
+
+    // 4. Log trigger matching and execution metadata
     await this.executionRepo.createLog({
       executionId: execution.id,
       level: 'INFO',
-      message: `Execution pipeline initialized with status QUEUED (Automation: "${automation.name}")`,
+      message: `[Trigger matched] Execution pipeline initialized with status QUEUED (Automation: "${automation.name}")`,
       metadata: {
+        triggerMatched: true,
+        matchedKeyword: event.metadata?.matchedKeywords || [],
+        selectedReel: automation.triggerConfig?.mediaId || null,
+        commentId: event.eventId,
+        publicReplyStatus,
+        dmStatus: 'QUEUED',
         automationId: automation.id,
         eventId: event.eventId,
         instagramAccountId: event.instagramAccountId,
@@ -79,7 +115,7 @@ export class ExecutionEngine {
       correlationId,
     });
 
-    // 4. Enqueue first action in pipeline
+    // 5. Enqueue first action in pipeline
     if (automation.actions && automation.actions.length > 0) {
       const firstAction = automation.actions[0];
       await this.executionRepo.createLog({
@@ -126,7 +162,9 @@ export class ExecutionEngine {
     event: DomainEvent,
     correlationId?: string,
   ): Promise<void> {
-    const allAutomations = await this.automationRepo.findMany({});
+    const allAutomations = await this.automationRepo.findMany({
+      instagramAccountId: event.instagramAccountId,
+    });
     const targetAuto = allAutomations.items.find((auto) =>
       auto.actions.some((act) => act.id === actionId),
     ) || null;
@@ -140,6 +178,28 @@ export class ExecutionEngine {
     const action = targetAuto.actions.find((act) => act.id === actionId);
     if (!action) {
       throw new ActionException(`Action step ${actionId} not found`);
+    }
+
+    // Resolve reel / media caption if present
+    let caption = event.content?.caption || '';
+    if (!caption) {
+      const mediaId = event.content?.mediaId || event.content?.media_id;
+      if (mediaId) {
+        try {
+          const repoPrisma = (this.executionRepo as any).prisma;
+          const asset = await repoPrisma.instagramAsset.findFirst({
+            where: {
+              instagramAccountId: event.instagramAccountId,
+              instagramMediaId: mediaId,
+            },
+          });
+          if (asset?.caption) {
+            caption = asset.caption;
+          }
+        } catch (err: any) {
+          this.logger.warn(`Could not resolve reel caption from database: ${err.message}`, err.stack);
+        }
+      }
     }
 
     // 1. Compile Strongly-Typed ExecutionContext
@@ -160,7 +220,7 @@ export class ExecutionEngine {
       variables: {
         'user.username': event.content?.username || event.content?.senderUsername || 'User',
         'comment.text': event.content?.text || '',
-        'reel.caption': event.content?.caption || '',
+        'reel.caption': caption,
         'current_time': new Date().toISOString(),
       },
       metadata: {
@@ -194,7 +254,9 @@ export class ExecutionEngine {
       },
       context,
     );
-    if (result.retryable !== undefined) {
+
+    // Only throw retry/non-retry if the step was not completed successfully or transitioning to waite-timer
+    if (result.transitionToStatus !== 'SUCCESS' && result.transitionToStatus !== 'WAITING') {
       if (result.retryable) {
         throw new RetryException(`Strategy execution failed with a retryable error`);
       } else {
@@ -218,6 +280,11 @@ export class ExecutionEngine {
       );
       return;
     }
+
+    this.logger.log(
+      `[Actions executed] Executed action strategy ${action.actionType} for execution: ${executionId}`,
+      JSON.stringify({ correlationId, executionId, actionId }),
+    );
 
     // Evaluate subsequent actions
     const currentIndex = targetAuto.actions.findIndex((act) => act.id === actionId);
@@ -258,7 +325,7 @@ export class ExecutionEngine {
         });
 
         await this.queueService.enqueueExecuteAction({
-          executionId,
+          executionId: nextAction.id,
           actionId: nextAction.id,
           event,
           correlationId,
@@ -284,11 +351,19 @@ export class ExecutionEngine {
         );
       }
 
+      this.logger.log(
+        `[Execution completed] Automation execution completed successfully.`,
+        JSON.stringify({ correlationId, executionId, durationMs: duration }),
+      );
+
       await this.executionRepo.createLog({
         executionId,
         level: 'INFO',
-        message: 'Automation execution completed successfully.',
-        metadata: { durationMs: duration },
+        message: '[Execution completed] Automation execution completed successfully.',
+        metadata: {
+          durationMs: duration,
+          dmStatus: 'SENT',
+        },
         correlationId,
       });
     }

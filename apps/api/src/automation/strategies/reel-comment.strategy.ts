@@ -37,8 +37,16 @@ export class ReelCommentTriggerStrategy implements TriggerStrategy {
     // Check matchType (ANY_COMMENT or KEYWORD)
     if (config.matchType === 'KEYWORD') {
       const text = (context.event.content?.text || '').toLowerCase().trim();
-      const keywords: string[] = config.keywords || [];
-      const matchedKeywords = keywords.filter(k => text.includes(k.toLowerCase().trim()));
+      const rawKeywords: string[] = config.keywords || [];
+      
+      // Trim and ignore duplicates
+      const uniqueKeywords = Array.from(
+        new Set(rawKeywords.map((k) => String(k).trim())),
+      ).filter((k) => k.length > 0);
+
+      const matchedKeywords = uniqueKeywords.filter((k) =>
+        text.includes(k.toLowerCase()),
+      );
       
       if (matchedKeywords.length === 0) {
         return { matched: false, reason: `Comment text "${text}" did not match keywords.` };

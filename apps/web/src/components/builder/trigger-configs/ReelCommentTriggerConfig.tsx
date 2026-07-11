@@ -57,8 +57,13 @@ export default function ReelCommentTriggerConfig({
 
   const handleAddKeyword = () => {
     const trimmed = inputVal.trim();
-    if (trimmed && !keywords.includes(trimmed)) {
-      handleUpdate({ keywords: [...keywords, trimmed] });
+    if (trimmed) {
+      const alreadyExists = keywords.some(
+        (kw) => kw.toLowerCase() === trimmed.toLowerCase()
+      );
+      if (!alreadyExists) {
+        handleUpdate({ keywords: [...keywords, trimmed] });
+      }
       setInputVal('');
     }
   };
