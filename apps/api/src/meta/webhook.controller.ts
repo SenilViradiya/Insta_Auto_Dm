@@ -8,10 +8,12 @@ import {
   HttpStatus,
   ForbiddenException,
   Logger,
+  Req,
 } from '@nestjs/common';
 import { TriggerType } from '@prisma/client';
 import { AutomationService } from '../automation/services/automation.service';
 import { DomainEvent } from '../automation/interfaces/domain-event.interface';
+import * as crypto from 'crypto';
 
 @Controller('webhook')
 export class WebhookController {
@@ -41,7 +43,44 @@ export class WebhookController {
 
   @Post()
   @HttpCode(HttpStatus.OK)
-  async handleEvent(@Body() payload: any) {
+  async handleEvent(@Body() payload: any, @Req() req?: any) {
+    const isTest = process.env.NODE_ENV === 'test';
+    if (!isTest) {
+      const signature = req.headers?.['x-hub-signature-256'] as string;
+      if (!signature) {
+        this.logger.error('Missing X-Hub-Signature-256 header');
+        throw new ForbiddenException('Missing signature');
+      }
+
+      const parts = signature.split('=');
+      if (parts.length !== 2 || parts[0] !== 'sha256') {
+        this.logger.error('Invalid signature format');
+        throw new ForbiddenException('Invalid signature format');
+      }
+
+      const expectedSignature = parts[1];
+      const appSecret = process.env.META_APP_SECRET;
+      if (!appSecret) {
+        this.logger.error('META_APP_SECRET is not configured');
+        throw new ForbiddenException('Server configuration error');
+      }
+
+      const rawBody = req.rawBody;
+      if (!rawBody) {
+        this.logger.error('Raw body not available for signature verification');
+        throw new ForbiddenException('Verification error');
+      }
+
+      const hmac = crypto.createHmac('sha256', appSecret);
+      hmac.update(rawBody);
+      const calculatedSignature = hmac.digest('hex');
+
+      if (calculatedSignature !== expectedSignature) {
+        this.logger.error('HMAC signature mismatch');
+        throw new ForbiddenException('Signature verification failed');
+      }
+    }
+
     this.logger.log(`Received Meta Webhook Event: ${JSON.stringify(payload)}`);
 
     if (payload.object !== 'instagram') {

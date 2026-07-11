@@ -145,6 +145,7 @@ describe('MetaController (e2e)', () => {
           if (urlStr.includes('/oauth/access_token')) {
             return Promise.resolve({
               ok: true,
+              headers: { get: () => 'application/json' },
               json: () =>
                 Promise.resolve({
                   access_token: 'mock-long-lived-token-xyz',
@@ -155,6 +156,7 @@ describe('MetaController (e2e)', () => {
           if (urlStr.includes('/me/accounts')) {
             return Promise.resolve({
               ok: true,
+              headers: { get: () => 'application/json' },
               json: () =>
                 Promise.resolve({
                   data: [
@@ -170,6 +172,7 @@ describe('MetaController (e2e)', () => {
           if (urlStr.includes('/page-123')) {
             return Promise.resolve({
               ok: true,
+              headers: { get: () => 'application/json' },
               json: () =>
                 Promise.resolve({
                   id: 'page-123',
@@ -180,7 +183,11 @@ describe('MetaController (e2e)', () => {
                 }),
             } as any);
           }
-          return Promise.resolve({ ok: false } as any);
+          return Promise.resolve({
+            ok: false,
+            headers: { get: () => 'application/json' },
+            text: () => Promise.resolve(''),
+          } as any);
         });
 
       await request(app.getHttpServer())
