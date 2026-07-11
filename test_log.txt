@@ -1,0 +1,139 @@
+$ jest
+PASS src/app.controller.spec.ts (28.729 s)
+PASS src/automation/tests/direct-message.strategy.spec.ts (37.314 s)
+PASS src/automation/tests/post-comment.strategy.spec.ts (8.376 s)
+PASS src/automation/tests/story-reply.strategy.spec.ts (38.867 s)
+PASS src/automation/tests/trigger-framework.spec.ts (38.411 s)
+PASS src/automation/tests/reel-comment.strategy.spec.ts (39.079 s)
+[31m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [31m  ERROR[39m [38;5;3m[VariableResolver] [39m[31mError resolving variable "invalid.nested.path.expression":[39m
+[31m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [31m  ERROR[39m [38;5;3m[VariableResolver] [39mVariableResolutionException: Unknown variable expression: "invalid.nested.path.expression"
+    at VariableResolver.resolveExpression [90m(E:\insta dm\apps\api\[39msrc\automation\services\variable-resolver.ts:43:15[90m)[39m
+    at [90mE:\insta dm\apps\api\[39msrc\automation\services\variable-resolver.ts:15:21
+    at String.replace (<anonymous>)
+    at VariableResolver.resolve [90m(E:\insta dm\apps\api\[39msrc\automation\services\variable-resolver.ts:12:21[90m)[39m
+    at [90mE:\insta dm\apps\api\[39msrc\automation\tests\execution-engine.spec.ts:127:24
+    at Object.<anonymous> (E:\insta dm\node_modules\[4m.pnpm[24m\expect@29.7.0\node_modules\[4mexpect[24m\build\toThrowMatchers.js:74:11)
+    at Object.throwingMatcher [as toThrow] (E:\insta dm\node_modules\[4m.pnpm[24m\expect@29.7.0\node_modules\[4mexpect[24m\build\index.js:320:21)
+    at Object.<anonymous> [90m(E:\insta dm\apps\api\[39msrc\automation\tests\execution-engine.spec.ts:128:7[90m)[39m
+    at Promise.then.completed (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\utils.js:298:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\utils.js:231:10)
+    at _callCircusTest (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\run.js:316:40)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at _runTest (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\run.js:252:3)
+    at _runTestsForDescribeBlock (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\run.js:126:9)
+    at _runTestsForDescribeBlock (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\run.js:121:9)
+    at run (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\run.js:71:3)
+    at runAndTransformResultsToJestFormat (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+    at jestAdapter (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+    at runTestInternal (E:\insta dm\node_modules\[4m.pnpm[24m\jest-runner@29.7.0\node_modules\[4mjest-runner[24m\build\runTest.js:367:16)
+    at runTest (E:\insta dm\node_modules\[4m.pnpm[24m\jest-runner@29.7.0\node_modules\[4mjest-runner[24m\build\runTest.js:444:34)
+    at Object.worker (E:\insta dm\node_modules\[4m.pnpm[24m\jest-runner@29.7.0\node_modules\[4mjest-runner[24m\build\testWorker.js:106:12)
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [95m  DEBUG[39m [38;5;3m[ConditionEngine] [39m[95m[ConditionEngine] Evaluating: "content.text" (Hello target message) CONTAINS "target" -> Result: true[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [95m  DEBUG[39m [38;5;3m[ConditionEngine] [39m[95m[ConditionEngine] Evaluating: "content.text" (Hello target message) STARTS_WITH "Hello" -> Result: true[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [95m  DEBUG[39m [38;5;3m[ConditionEngine] [39m[95m[ConditionEngine] Evaluating: "content.text" (Hello target message) CONTAINS "apples" -> Result: false[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [95m  DEBUG[39m [38;5;3m[ConditionEngine] [39m[95m[ConditionEngine] Evaluating: "content.text" (Hello target message) CONTAINS "message" -> Result: true[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [95m  DEBUG[39m [38;5;3m[ConditionEngine] [39m[95m[ConditionEngine] Evaluating: "content.text" (Hello target message) CONTAINS "apples" -> Result: false[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [95m  DEBUG[39m [38;5;3m[ConditionEngine] [39m[95m[ConditionEngine] Evaluating: "content.text" (Hello target message) EQUALS "Hello" -> Result: false[39m
+[32m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [32m    LOG[39m [38;5;3m[ActionStrategyResolver] [39m[32mRegistered Action Strategy: [SEND_MESSAGE][39m
+[32m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [32m    LOG[39m [38;5;3m[ActionStrategyResolver] [39m[32mRegistered Action Strategy: [WAIT][39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [95m  DEBUG[39m [38;5;3m[WaitActionStrategy] [39m[95m[WaitActionStrategy] Executing wait of 15s (ExecutionId: exe-123)[39m
+[32m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [32m    LOG[39m [38;5;3m[ActionStrategyResolver] [39m[32mRegistered Action Strategy: [SEND_MESSAGE][39m
+[32m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [32m    LOG[39m [38;5;3m[ActionStrategyResolver] [39m[32mRegistered Action Strategy: [WAIT][39m
+[32m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [32m    LOG[39m [38;5;3m[SendMessageActionStrategy] [39m[32m[SendMessageActionStrategy] Sending message to sender-123: [REDACTED message length: 8][39m
+[32m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [32m    LOG[39m [38;5;3m[ActionStrategyResolver] [39m[32mRegistered Action Strategy: [SEND_MESSAGE][39m
+[32m[Nest] 18544  - [39m11/07/2026, 3:56:35 pm [32m    LOG[39m [38;5;3m[ActionStrategyResolver] [39m[32mRegistered Action Strategy: [WAIT][39m
+PASS src/automation/tests/execution-engine.spec.ts (5.84 s)
+PASS src/modules/assets/tests/asset.controller.spec.ts (6.528 s)
+PASS src/meta/meta.controller.spec.ts (5.452 s)
+[31m[Nest] 11444  - [39m11/07/2026, 3:56:35 pm [31m  ERROR[39m [38;5;3m[MetaService] [39m[31mError disconnecting Instagram account acc-uuid: Error: DB Delete Error[39m
+PASS src/meta/meta.service.spec.ts (5.577 s)
+PASS src/modules/assets/tests/assets.spec.ts (5.982 s)
+[31m[Nest] 20184  - [39m11/07/2026, 3:56:37 pm [31m  ERROR[39m [38;5;3m[ActionWorker] [39m[31mFailed to process action step: Invalid structure[39m
+{"executionId":"exe-1","actionId":"act-1","eventId":"evt-1","instagramAccountId":"acc-1","worker":"ActionWorker","isPermanent":true,"retryCount":1}
+[95m[Nest] 20184  - [39m11/07/2026, 3:56:36 pm [95m  DEBUG[39m [38;5;3m[IdempotencyService] [39m[95mSuccessfully logged idempotency key for eventId evt-unique[39m
+[33m[Nest] 20184  - [39m11/07/2026, 3:56:36 pm [33m   WARN[39m [38;5;3m[IdempotencyService] [39m[33mAttempted duplicate processing for already logged eventId evt-double[39m
+[32m[Nest] 20184  - [39m11/07/2026, 3:56:37 pm [32m    LOG[39m [38;5;3m[ActionWorker] [39m[32m[ActionWorker] Processing job job-1 (Name: execute-action)[39m
+[31m[Nest] 20184  - [39m11/07/2026, 3:56:37 pm [31m  ERROR[39m [38;5;3m[ActionWorker] [39m[31mFailed to process action step: Network error[39m
+{"executionId":"exe-1","actionId":"act-1","eventId":"evt-1","instagramAccountId":"acc-1","worker":"ActionWorker","isPermanent":true,"retryCount":3}
+[31m[Nest] 20184  - [39m11/07/2026, 3:56:37 pm [31m  ERROR[39m [38;5;3m[ActionWorker] [39m[31mFailed to process action step: Network error[39m
+{"executionId":"exe-1","actionId":"act-1","eventId":"evt-1","instagramAccountId":"acc-1","worker":"ActionWorker","isPermanent":false,"retryCount":1}
+PASS src/automation/tests/production-hardening.spec.ts (45.646 s)
+[32m[Nest] 20184  - [39m11/07/2026, 3:56:37 pm [32m    LOG[39m [38;5;3m[ActionWorker] [39m[32m[ActionWorker] Processing job job-1 (Name: execute-action)[39m
+[32m[Nest] 20184  - [39m11/07/2026, 3:56:37 pm [32m    LOG[39m [38;5;3m[ActionWorker] [39m[32m[ActionWorker] Processing job job-1 (Name: execute-action)[39m
+PASS src/automation/tests/automation-engine.spec.ts
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:38 pm [95m  DEBUG[39m [38;5;3m[ConditionService] [39m[95mEvaluating condition on field "message.text". Got: "Hello, World!", Expected: "Hello, World!" using EQUALS. Result: true[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:38 pm [95m  DEBUG[39m [38;5;3m[ConditionService] [39m[95mEvaluating condition on field "message.text". Got: "Hello, World!", Expected: "other" using EQUALS. Result: false[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:38 pm [95m  DEBUG[39m [38;5;3m[ConditionService] [39m[95mEvaluating condition on field "content.text". Got: "Hello, World!", Expected: "other" using NOT_EQUALS. Result: true[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:38 pm [95m  DEBUG[39m [38;5;3m[ConditionService] [39m[95mEvaluating condition on field "content.text". Got: "Hello, World!", Expected: "World" using CONTAINS. Result: true[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:38 pm [95m  DEBUG[39m [38;5;3m[ConditionService] [39m[95mEvaluating condition on field "content.text". Got: "Hello, World!", Expected: "Apples" using CONTAINS. Result: false[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:38 pm [95m  DEBUG[39m [38;5;3m[ConditionService] [39m[95mEvaluating condition on field "content.text". Got: "Hello, World!", Expected: "Apples" using NOT_CONTAINS. Result: true[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:38 pm [95m  DEBUG[39m [38;5;3m[ConditionService] [39m[95mEvaluating condition on field "content.text". Got: "Hello, World!", Expected: "Hello" using STARTS_WITH. Result: true[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:38 pm [95m  DEBUG[39m [38;5;3m[ConditionService] [39m[95mEvaluating condition on field "content.text". Got: "Hello, World!", Expected: "World!" using ENDS_WITH. Result: true[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:38 pm [95m  DEBUG[39m [38;5;3m[ConditionService] [39m[95mEvaluating condition on field "content.text". Got: "Hello, World!", Expected: "^Hello.*!$" using REGEX. Result: true[39m
+[95m[Nest] 18544  - [39m11/07/2026, 3:56:38 pm [95m  DEBUG[39m [38;5;3m[ActionDispatcher] [39m[95mDispatching action act-1 (Type: SEND_MESSAGE)[39m
+PASS src/automation/tests/story-mention.strategy.spec.ts
+[95m[Nest] 11444  - [39m11/07/2026, 3:56:38 pm [95m  DEBUG[39m [38;5;3m[GraphClient] [39m[95m[GraphClient] API Request: [GET] /v20.0/me (Attempt 1/2)[39m
+[95m[Nest] 11444  - [39m11/07/2026, 3:56:38 pm [95m  DEBUG[39m [38;5;3m[GraphClient] [39m[95m[GraphClient] API Request: [GET] /v20.0/me/accounts (Attempt 1/2)[39m
+[33m[Nest] 11444  - [39m11/07/2026, 3:56:38 pm [33m   WARN[39m [38;5;3m[GraphClient] [39m[33m[GraphClient] Transient error (timeout: true, network: false) on attempt 1. Retrying...[39m
+PASS src/modules/meta-platform/tests/meta-platform.spec.ts
+[95m[Nest] 11444  - [39m11/07/2026, 3:56:39 pm [95m  DEBUG[39m [38;5;3m[GraphClient] [39m[95m[GraphClient] API Request: [GET] /v20.0/me/accounts (Attempt 2/2)[39m
+[31m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [31m  ERROR[39m [38;5;3m[MessagingService] [39m[31mMessage msg-1 failed: Access token has expired[39m
+{"correlationId":"2ebe80c6-2a32-489d-b20f-8f0cbd5d3df0","instagramAccountId":"acc-1","recipientId":"user-1"}
+[31m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [31m  ERROR[39m [38;5;3m[MessagingService] [39m[31mMessage send failed: Access token has expired[39m
+{"correlationId":"2ebe80c6-2a32-489d-b20f-8f0cbd5d3df0","instagramAccountId":"acc-1","recipientId":"user-1"}
+[31m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [31m  ERROR[39m [38;5;3m[MessagingService] [39m[31mMessage msg-1 failed: Rate limited[39m
+{"correlationId":"dadbbfce-5757-4f1a-8236-df3c4a511a38","instagramAccountId":"acc-1","recipientId":"user-1"}
+[31m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [31m  ERROR[39m [38;5;3m[MessagingService] [39m[31mMessage send failed: Rate limited[39m
+{"correlationId":"dadbbfce-5757-4f1a-8236-df3c4a511a38","instagramAccountId":"acc-1","recipientId":"user-1"}
+[31m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [31m  ERROR[39m [38;5;3m[MessagingService] [39m[31mMessage send failed: Message validation failed: messageText — Message text cannot be empty[39m
+{"correlationId":"ecaa12d7-ed9a-46b9-979a-33a81c5d22ac","instagramAccountId":"acc-1","recipientId":"user-1"}
+[33m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [33m   WARN[39m [38;5;3m[MetaRateLimiterService] [39m[33mRate limit exceeded for account acc-1: 3/3 in 1000ms window[39m
+[33m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [33m   WARN[39m [38;5;3m[MetaRateLimiterService] [39m[33mRate limiter Redis error, allowing request (fail-open)[39m
+[33m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [33m   WARN[39m [38;5;3m[MetaRateLimiterService] [39mError: Redis down
+    at Object.<anonymous> [90m(E:\insta dm\apps\api\[39msrc\modules\messaging\tests\messaging.spec.ts:179:50[90m)[39m
+    at Promise.then.completed (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\utils.js:298:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\utils.js:231:10)
+    at _callCircusTest (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\run.js:316:40)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at _runTest (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\run.js:252:3)
+    at _runTestsForDescribeBlock (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\run.js:126:9)
+    at _runTestsForDescribeBlock (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\run.js:121:9)
+    at run (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\run.js:71:3)
+    at runAndTransformResultsToJestFormat (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+    at jestAdapter (E:\insta dm\node_modules\[4m.pnpm[24m\jest-circus@29.7.0\node_modules\[4mjest-circus[24m\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+    at runTestInternal (E:\insta dm\node_modules\[4m.pnpm[24m\jest-runner@29.7.0\node_modules\[4mjest-runner[24m\build\runTest.js:367:16)
+    at runTest (E:\insta dm\node_modules\[4m.pnpm[24m\jest-runner@29.7.0\node_modules\[4mjest-runner[24m\build\runTest.js:444:34)
+    at Object.worker (E:\insta dm\node_modules\[4m.pnpm[24m\jest-runner@29.7.0\node_modules\[4mjest-runner[24m\build\testWorker.js:106:12)
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32mProcessing send request[39m
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32m{"correlationId":"08c43fa4-cbb4-442c-a63f-f1c9269e0e87","instagramAccountId":"acc-1","recipientId":"user-1"}[39m
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32mMessage sent successfully in 2ms[39m
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32m{"correlationId":"08c43fa4-cbb4-442c-a63f-f1c9269e0e87","instagramAccountId":"acc-1","recipientId":"user-1","metaMessageId":"mid.success","durationMs":2,"attempt":0}[39m
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32mProcessing send request[39m
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32m{"correlationId":"daacdf92-3e95-42e0-9026-84d09fbb0ea1","instagramAccountId":"acc-1","recipientId":"user-1"}[39m
+[33m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [33m   WARN[39m [38;5;3m[MessagingService] [39m[33mRetry 1/2 in 10ms[39m
+[33m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [33m   WARN[39m [38;5;3m[MessagingService] [39m[33m{"correlationId":"daacdf92-3e95-42e0-9026-84d09fbb0ea1","instagramAccountId":"acc-1","recipientId":"user-1"}[39m
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32mMessage sent successfully in 14ms[39m
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32m{"correlationId":"daacdf92-3e95-42e0-9026-84d09fbb0ea1","instagramAccountId":"acc-1","recipientId":"user-1","metaMessageId":"mid.retry-ok","durationMs":14,"attempt":1}[39m
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32mProcessing send request[39m
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32m{"correlationId":"2ebe80c6-2a32-489d-b20f-8f0cbd5d3df0","instagramAccountId":"acc-1","recipientId":"user-1"}[39m
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32mProcessing send request[39m
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32m{"correlationId":"dadbbfce-5757-4f1a-8236-df3c4a511a38","instagramAccountId":"acc-1","recipientId":"user-1"}[39m
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32mProcessing send request[39m
+[32m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [32m    LOG[39m [38;5;3m[MessagingService] [39m[32m{"correlationId":"c3ebe2ad-8c82-4ba1-ab26-a5ba4c0a3ecb","instagramAccountId":"acc-1","recipientId":"user-1"}[39m
+[33m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [33m   WARN[39m [38;5;3m[MessagingService] [39m[33mRetry 1/2 in 10ms[39m
+[33m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [33m   WARN[39m [38;5;3m[MessagingService] [39m[33m{"correlationId":"c3ebe2ad-8c82-4ba1-ab26-a5ba4c0a3ecb","instagramAccountId":"acc-1","recipientId":"user-1"}[39m
+[33m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [33m   WARN[39m [38;5;3m[MessagingService] [39m[33mRetry 2/2 in 20ms[39m
+[33m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [33m   WARN[39m [38;5;3m[MessagingService] [39m[33m{"correlationId":"c3ebe2ad-8c82-4ba1-ab26-a5ba4c0a3ecb","instagramAccountId":"acc-1","recipientId":"user-1"}[39m
+[31m[Nest] 19572  - [39m11/07/2026, 3:56:39 pm [31m  ERROR[39m [38;5;3m[MessagingService] [39m[31mMessage msg-1 failed: Down[39m
+{"correlationId":"c3ebe2ad-8c82-4ba1-ab26-a5ba4c0a3ecb","instagramAccountId":"acc-1","recipientId":"user-1"}
+PASS src/modules/messaging/tests/messaging.spec.ts
+PASS src/automation/tests/reel-comment-e2e.spec.ts (48.673 s)
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+
+Test Suites: 17 passed, 17 total
+Tests:       142 passed, 142 total
+Snapshots:   0 total
+Time:        55.205 s
+Ran all test suites.
