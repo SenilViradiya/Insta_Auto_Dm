@@ -408,10 +408,10 @@ export const useReview = () => useBuilderStore((state) => state.draft.review);
 export const useCurrentStep = () => useBuilderStore((state) => state.currentStep);
 export const useMetadata = () => useBuilderStore((state) => state.draft.metadata);
 export const useIsDirty = () => useBuilderStore((state) => state.isDirty);
-export const useUndoRedo = () =>
-  useBuilderStore((state) => ({
-    canUndo: state.undoStack.length > 0,
-    canRedo: state.redoStack.length > 0,
-    undo: state.undo,
-    redo: state.redo,
-  }));
+export const useUndoRedo = () => {
+  const undo = useBuilderStore((state) => state.undo);
+  const redo = useBuilderStore((state) => state.redo);
+  const canUndo = useBuilderStore((state) => state.undoStack.length > 0);
+  const canRedo = useBuilderStore((state) => state.redoStack.length > 0);
+  return { canUndo, canRedo, undo, redo };
+};

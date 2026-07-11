@@ -27,7 +27,7 @@ export default function ActionsStep({
 
       <Card
         title={<span style={{ fontWeight: 'bold' }}>Actions Pipeline</span>}
-        bordered={false}
+        variant={false}
         style={{ borderRadius: '16px', border: '1px solid #cbd5e1' }}
       >
         <ActionBuilder actions={actions} onChange={onChange} />
