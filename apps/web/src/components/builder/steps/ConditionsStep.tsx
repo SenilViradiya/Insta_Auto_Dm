@@ -27,7 +27,7 @@ export default function ConditionsStep({
 
       <Card
         title={<span style={{ fontWeight: 'bold' }}>Conditional Rules</span>}
-        variant={false}
+        variant="borderless"
         style={{ borderRadius: '16px', border: '1px solid #cbd5e1' }}
       >
         <ConditionBuilder conditions={conditions} onChange={onChange} />
