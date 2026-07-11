@@ -13,9 +13,9 @@ export class LockService implements OnModuleDestroy {
     });
   }
 
-  async acquireLock(key: string, ttlMs: number): Promise<boolean> {
+  async acquireLock(key: string, ttlMs: number, value: string = 'locked'): Promise<boolean> {
     try {
-      const result = await this.redis.set(key, 'locked', 'PX', ttlMs, 'NX');
+      const result = await this.redis.set(key, value, 'PX', ttlMs, 'NX');
       return result === 'OK';
     } catch (error) {
       this.logger.error(`Failed to acquire lock for key ${key}:`, error);
@@ -23,9 +23,16 @@ export class LockService implements OnModuleDestroy {
     }
   }
 
-  async releaseLock(key: string): Promise<void> {
+  async releaseLock(key: string, value: string = 'locked'): Promise<void> {
     try {
-      await this.redis.del(key);
+      const luaScript = `
+        if redis.call("get", KEYS[1]) == ARGV[1] then
+          return redis.call("del", KEYS[1])
+        else
+          return 0
+        end
+      `;
+      await this.redis.eval(luaScript, 1, key, value);
     } catch (error) {
       this.logger.error(`Failed to release lock for key ${key}:`, error);
     }
@@ -36,7 +43,8 @@ export class LockService implements OnModuleDestroy {
     ttlMs: number,
     fn: () => Promise<T>,
   ): Promise<T | null> {
-    const acquired = await this.acquireLock(key, ttlMs);
+    const token = Math.random().toString(36).substring(2, 15) + Date.now();
+    const acquired = await this.acquireLock(key, ttlMs, token);
     if (!acquired) {
       this.logger.warn(
         `[LockService] Collision detected. Failed to acquire lock for key: ${key}`,
@@ -46,7 +54,7 @@ export class LockService implements OnModuleDestroy {
     try {
       return await fn();
     } finally {
-      await this.releaseLock(key);
+      await this.releaseLock(key, token);
     }
   }
 
@@ -58,3 +66,4 @@ export class LockService implements OnModuleDestroy {
     }
   }
 }
+

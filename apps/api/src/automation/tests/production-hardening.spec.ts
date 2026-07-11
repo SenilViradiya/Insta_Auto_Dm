@@ -47,15 +47,15 @@ describe('Production Hardening Service Suite', () => {
   describe('Redis Distributed Lock', () => {
     let lockService: LockService;
     let mockSet: jest.Mock;
-    let mockDel: jest.Mock;
+    let mockEval: jest.Mock;
 
     beforeEach(() => {
       lockService = new LockService();
       mockSet = jest.fn();
-      mockDel = jest.fn();
+      mockEval = jest.fn();
       (lockService as any).redis = {
         set: mockSet,
-        del: mockDel,
+        eval: mockEval,
         quit: jest.fn().mockResolvedValue(undefined),
       };
     });
@@ -80,20 +80,30 @@ describe('Production Hardening Service Suite', () => {
     });
 
     it('releases lock by deleting key', async () => {
-      mockDel.mockResolvedValue(1);
+      mockEval.mockResolvedValue(1);
       await lockService.releaseLock('lock-key');
-      expect(mockDel).toHaveBeenCalledWith('lock-key');
+      expect(mockEval).toHaveBeenCalledWith(
+        expect.any(String),
+        1,
+        'lock-key',
+        'locked',
+      );
     });
 
     it('runs execution code safely with automatic lock release', async () => {
       mockSet.mockResolvedValue('OK');
-      mockDel.mockResolvedValue(1);
+      mockEval.mockResolvedValue(1);
       const callback = jest.fn().mockResolvedValue('callback-value');
 
       const result = await lockService.runWithLock('lock-key', 2000, callback);
       expect(result).toBe('callback-value');
       expect(callback).toHaveBeenCalled();
-      expect(mockDel).toHaveBeenCalledWith('lock-key');
+      expect(mockEval).toHaveBeenCalledWith(
+        expect.any(String),
+        1,
+        'lock-key',
+        expect.any(String),
+      );
     });
   });
 
@@ -159,6 +169,10 @@ describe('Production Hardening Service Suite', () => {
       mockExecutionRepo = {
         updateExecutionStatus: jest.fn(),
         createLog: jest.fn(),
+        findById: jest.fn().mockResolvedValue({
+          id: 'exe-1',
+          automationId: 'resolved-auto-1',
+        }),
       };
       mockAutomationRepo = {
         findMany: jest.fn().mockResolvedValue({
@@ -218,17 +232,19 @@ describe('Production Hardening Service Suite', () => {
         },
         attemptsMade: 1,
         opts: { attempts: 3 },
+        discard: jest.fn().mockResolvedValue(undefined),
       };
 
-      await expect(actionWorker.process(mockJob)).resolves.not.toThrow();
+      await expect(actionWorker.process(mockJob)).rejects.toThrow('Invalid structure');
 
       expect(mockQueueService.enqueueDlq).toHaveBeenCalledWith({
-        automationId: 'evt-1',
+        automationId: 'resolved-auto-1',
         executionId: 'exe-1',
         eventId: 'evt-1',
         failureReason: 'Invalid structure',
         retryCount: 1,
         lastAttemptAt: expect.any(Date),
+        correlationId: undefined,
       });
       expect(mockMetricsService.incrementDlq).toHaveBeenCalled();
       expect(mockExecutionRepo.updateExecutionStatus).toHaveBeenCalledWith(
@@ -252,17 +268,19 @@ describe('Production Hardening Service Suite', () => {
         },
         attemptsMade: 3,
         opts: { attempts: 3 },
+        discard: jest.fn().mockResolvedValue(undefined),
       };
 
-      await expect(actionWorker.process(mockJob)).resolves.not.toThrow();
+      await expect(actionWorker.process(mockJob)).rejects.toThrow('Network error');
 
       expect(mockQueueService.enqueueDlq).toHaveBeenCalledWith({
-        automationId: 'evt-1',
+        automationId: 'resolved-auto-1',
         executionId: 'exe-1',
         eventId: 'evt-1',
         failureReason: 'Network error',
         retryCount: 3,
         lastAttemptAt: expect.any(Date),
+        correlationId: undefined,
       });
     });
 
@@ -280,6 +298,7 @@ describe('Production Hardening Service Suite', () => {
         },
         attemptsMade: 1,
         opts: { attempts: 3 },
+        discard: jest.fn().mockResolvedValue(undefined),
       };
 
       await expect(actionWorker.process(mockJob)).rejects.toThrow(

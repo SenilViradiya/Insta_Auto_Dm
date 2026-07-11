@@ -28,7 +28,6 @@ import {
   CallWebhookActionHandler,
 } from './services/action-handlers';
 import { ActionWorker } from './workers/action.worker';
-import { AutomationWorker } from './workers/automation.worker';
 import { MessagingModule } from '../modules/messaging/messaging.module';
 import { MessagingService as MsgSvc } from '../modules/messaging/services/messaging.service';
 import { MetaPlatformModule } from '../modules/meta-platform/meta-platform.module';
@@ -84,7 +83,6 @@ import { StoryMentionTriggerStrategy } from './strategies/story-mention.strategy
     AddTagActionHandler,
     CallWebhookActionHandler,
     ActionWorker,
-    AutomationWorker,
     TriggerRegistry,
     TriggerResolver,
     DirectMessageTriggerStrategy,

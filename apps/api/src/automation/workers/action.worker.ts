@@ -100,9 +100,27 @@ export class ActionWorker extends WorkerHost {
       );
 
       if (isPermanent) {
+        // Discard any remaining retry attempts in BullMQ
+        try {
+          await job.discard();
+        } catch (discardErr) {
+          this.logger.warn(`Failed to discard job attempts in BullMQ: ${String(discardErr)}`);
+        }
+
+        // Retrieve actual automationId from the database execution record
+        let resolvedAutomationId = event.eventId; // Fallback
+        try {
+          const execution = await this.executionRepo.findById(executionId);
+          if (execution?.automationId) {
+            resolvedAutomationId = execution.automationId;
+          }
+        } catch (dbErr) {
+          this.logger.warn(`Could not resolve actual automationId for execution ${executionId} on failure: ${String(dbErr)}`);
+        }
+
         // Move execution record to DLQ and mark FAILED status
         await this.queueService.enqueueDlq({
-          automationId: event.eventId, // Fallback if no automation found
+          automationId: resolvedAutomationId,
           executionId,
           eventId: event.eventId,
           failureReason: (error as Error).message || String(error),
@@ -127,6 +145,9 @@ export class ActionWorker extends WorkerHost {
           ExecutionStatus.FAILED,
           new Date(),
         );
+
+        // Throw error so BullMQ marks the job as failed
+        throw error;
       } else {
         // Increment retry count metrics and queue next retry attempt
         this.metricsService.incrementRetry();

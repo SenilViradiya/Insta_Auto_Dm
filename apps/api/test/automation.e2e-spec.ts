@@ -40,9 +40,9 @@ class MockPrismaService {
         description: data.description || '',
         enabled: data.enabled ?? true,
         triggerType: data.triggerType || null,
+        triggerConfig: data.triggerConfig || null,
         createdAt: new Date(),
         updatedAt: new Date(),
-        triggers: data.triggers?.create || [],
         conditions: data.conditions?.create || [],
         actions: data.actions?.create || [],
       };
@@ -147,7 +147,8 @@ describe('AutomationController (e2e)', () => {
         name: 'Welcome Flow',
         description: 'Sends welcome text on keyword',
         enabled: true,
-        triggers: [{ eventType: 'KEYWORD_MATCH', enabled: true }],
+        triggerType: 'DIRECT_MESSAGE',
+        triggerConfig: { mode: 'ANY_MESSAGE' },
         conditions: [
           { field: 'message.text', operator: 'CONTAINS', value: 'hello' },
         ],
@@ -165,7 +166,7 @@ describe('AutomationController (e2e)', () => {
         .expect(201);
 
       expect(res.body.name).toBe('Welcome Flow');
-      expect(res.body.triggers).toHaveLength(1);
+      expect(res.body.triggerType).toBe('DIRECT_MESSAGE');
       expect(res.body.conditions).toHaveLength(1);
       expect(res.body.actions).toHaveLength(1);
       expect(res.body.id).toBe('12345678-1234-1234-1234-123456789012');
@@ -182,7 +183,7 @@ describe('AutomationController (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/automations')
-        .send({ name: '', triggers: [], actions: [] })
+        .send({ name: '', triggerType: 'DIRECT_MESSAGE', triggerConfig: { mode: 'ANY_MESSAGE' }, actions: [] })
         .expect(400);
     });
   });
