@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { Layout, Button, Typography, Spin, message } from "antd";
 import { LeftOutlined, ThunderboltOutlined, InstagramOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { AutomationDraft } from "../../../components/builder/types";
+import { useBuilderStore } from "../../../components/builder/builder.store";
 
 const AutomationBuilder = dynamic(
   () => import("../../../components/builder/AutomationBuilder"),
@@ -26,6 +27,11 @@ function CreateAutomationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [messageApi, contextHolder] = message.useMessage();
+  const resetDraft = useBuilderStore((state) => state.resetDraft);
+
+  useEffect(() => {
+    resetDraft();
+  }, [resetDraft]);
 
   // Retrieve selected account from query or localStorage
   const activeAccountId =

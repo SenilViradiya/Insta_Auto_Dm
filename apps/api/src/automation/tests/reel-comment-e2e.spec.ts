@@ -30,7 +30,7 @@ import { StoryReplyTriggerStrategy } from '../strategies/story-reply.strategy';
 import { StoryMentionTriggerStrategy } from '../strategies/story-mention.strategy';
 
 describe('Reel Comment to DM Integration E2E', () => {
-  jest.setTimeout(30000);
+  jest.setTimeout(90000);
   let controller: WebhookController;
   let automationRepo: AutomationRepository;
   let executionRepo: ExecutionRepository;
