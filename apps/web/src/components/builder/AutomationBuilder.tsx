@@ -179,7 +179,7 @@ export default function AutomationBuilder({
       {contextHolder}
 
       {/* Basic flow details editor (Permanent top header row) */}
-      <Card bordered={false} style={{ borderRadius: '16px', border: '1px solid #e2e8f0', background: 'white' }}>
+      <Card variant={false} style={{ borderRadius: '16px', border: '1px solid #e2e8f0', background: 'white' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: '250px' }}>
             <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748b' }}>FLOW NAME</span>
@@ -223,7 +223,7 @@ export default function AutomationBuilder({
       </Card>
 
       {/* Progress Steps Indicator */}
-      <Card bordered={false} style={{ borderRadius: '16px', border: '1px solid #e2e8f0', background: 'white' }}>
+      <Card variant={false} style={{ borderRadius: '16px', border: '1px solid #e2e8f0', background: 'white' }}>
         <Steps current={currentStep} items={stepItems} onChange={jumpToStep} style={{ cursor: 'pointer' }} />
       </Card>
 
@@ -269,7 +269,7 @@ export default function AutomationBuilder({
       </div>
 
       {/* Footer Navigation Buttons */}
-      <Card bordered={false} style={{ borderRadius: '16px', border: '1px solid #e2e8f0', background: 'white' }}>
+      <Card variant={false} style={{ borderRadius: '16px', border: '1px solid #e2e8f0', background: 'white' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Button
             type="default"

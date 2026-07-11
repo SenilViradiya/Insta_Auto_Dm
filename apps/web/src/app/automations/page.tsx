@@ -372,7 +372,7 @@ function AutomationsContent() {
       <Layout className="min-h-screen bg-slate-50">
         {renderHeader()}
         <Content className="p-8 max-w-4xl mx-auto w-full flex items-center justify-center" style={{ minHeight: "75vh" }}>
-          <Card bordered={false} className="shadow-lg rounded-2xl p-8 max-w-lg text-center bg-white border border-slate-100">
+          <Card variant={false} className="shadow-lg rounded-2xl p-8 max-w-lg text-center bg-white border border-slate-100">
             <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500">
               <InstagramOutlined style={{ fontSize: 36 }} />
             </div>
@@ -409,7 +409,7 @@ function AutomationsContent() {
 
       <Content className="p-8 max-w-6xl mx-auto w-full flex flex-col gap-8">
         {/* Account Selector + Profile Summary - Task 5 & 6 */}
-        <Card bordered={false} className="shadow-sm rounded-2xl bg-white border border-slate-100 p-2">
+        <Card variant={false} className="shadow-sm rounded-2xl bg-white border border-slate-100 p-2">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
@@ -424,7 +424,7 @@ function AutomationsContent() {
                   onChange={handleAccountChange}
                   dropdownClassName="rounded-xl shadow-lg border border-slate-100"
                   className="w-64 font-bold text-slate-800 text-lg border-none hover:border-none focus:outline-none"
-                  bordered={false}
+                  variant={false}
                   placeholder="Select account"
                 >
                   {accountsList.map((acc) => (
@@ -498,7 +498,7 @@ function AutomationsContent() {
             className="rounded-xl shadow-sm"
           />
         ) : (
-          <Card bordered={false} className="shadow-sm rounded-2xl bg-white border border-slate-100 overflow-hidden">
+          <Card variant={false} className="shadow-sm rounded-2xl bg-white border border-slate-100 overflow-hidden">
             <Table
               dataSource={automationsData}
               columns={columns}

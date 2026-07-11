@@ -6,8 +6,16 @@ import { LeftOutlined, ThunderboltOutlined, InstagramOutlined } from "@ant-desig
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import AutomationBuilder from "../../../components/builder/AutomationBuilder";
+import dynamic from "next/dynamic";
 import { AutomationDraft } from "../../../components/builder/types";
+
+const AutomationBuilder = dynamic(
+  () => import("../../../components/builder/AutomationBuilder"),
+  {
+    ssr: false,
+    loading: () => <Spin size="large" className="py-20 flex justify-center w-full" />,
+  }
+);
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;

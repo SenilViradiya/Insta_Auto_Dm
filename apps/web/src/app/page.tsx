@@ -194,7 +194,7 @@ function DashboardContent() {
 
       <Content className="p-8 max-w-6xl mx-auto w-full flex flex-col gap-8">
         <Card
-          bordered={false}
+          variant={false}
           className="shadow-sm rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-900 text-white relative overflow-hidden"
         >
           <div className="absolute right-0 top-0 translate-x-20 -translate-y-20 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
@@ -244,7 +244,7 @@ function DashboardContent() {
           />
         ) : (
           <Card
-            bordered={false}
+            variant={false}
             className="shadow-sm rounded-2xl"
             title={
               <div className="flex items-center justify-between w-full py-1">
