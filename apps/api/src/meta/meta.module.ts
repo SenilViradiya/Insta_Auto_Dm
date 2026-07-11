@@ -4,12 +4,11 @@ import { WebhookController } from './webhook.controller';
 import { MetaService } from './meta.service';
 import { PrismaService } from '../prisma.service';
 import { AutomationModule } from '../automation/automation.module';
+import { MetaPlatformModule } from '../modules/meta-platform/meta-platform.module';
 
 @Module({
-  imports: [AutomationModule],
+  imports: [AutomationModule, MetaPlatformModule],
   controllers: [MetaController, WebhookController],
   providers: [MetaService, PrismaService],
 })
 export class MetaModule {}
-
-

@@ -184,136 +184,66 @@ describe('MetaRateLimiterService', () => {
 // ---------- Token Service Tests ----------
 describe('TokenService', () => {
   let tokenService: TokenService;
-  let mockRedis: any;
-  let mockPrisma: any;
+  let mockMetaTokenService: any;
 
   beforeEach(() => {
-    const config = {
-      encryptionKey: 'test-key-32-chars-long-exactly!!',
-      tokenCacheTtlSeconds: 300,
-    } as any;
-
-    mockPrisma = {
-      instagramAccount: {
-        findFirst: jest.fn(),
-      },
+    mockMetaTokenService = {
+      getToken: jest.fn(),
+      invalidateCache: jest.fn(),
     };
-
-    tokenService = new TokenService(mockPrisma, config);
-
-    mockRedis = {
-      get: jest.fn().mockResolvedValue(null),
-      set: jest.fn().mockResolvedValue('OK'),
-      del: jest.fn().mockResolvedValue(1),
-      quit: jest.fn().mockResolvedValue(undefined),
-    };
-    (tokenService as any).redis = mockRedis;
+    tokenService = new TokenService(mockMetaTokenService);
   });
 
-  it('returns cached token on Redis HIT', async () => {
-    mockRedis.get.mockResolvedValue('cached-token');
+  it('delegates getToken directly to MetaTokenService', async () => {
+    mockMetaTokenService.getToken.mockResolvedValue('delegated-token');
     const token = await tokenService.getToken('acc-1');
-    expect(token).toBe('cached-token');
-    expect(mockPrisma.instagramAccount.findFirst).not.toHaveBeenCalled();
+    expect(token).toBe('delegated-token');
+    expect(mockMetaTokenService.getToken).toHaveBeenCalledWith('acc-1');
   });
 
-  it('throws TokenExpiredException if account not found', async () => {
-    mockPrisma.instagramAccount.findFirst.mockResolvedValue(null);
-    await expect(tokenService.getToken('missing')).rejects.toThrow(
-      TokenExpiredException,
-    );
-  });
-
-  it('throws TokenExpiredException if token is expired', async () => {
-    mockPrisma.instagramAccount.findFirst.mockResolvedValue({
-      id: 'acc-1',
-      accessTokenEncrypted: 'abc:def',
-      tokenExpiresAt: new Date('2020-01-01'),
-    });
-    await expect(tokenService.getToken('acc-1')).rejects.toThrow(
-      TokenExpiredException,
-    );
-  });
-
-  it('invalidates cache', async () => {
+  it('delegates invalidateCache directly to MetaTokenService', async () => {
     await tokenService.invalidateCache('acc-1');
-    expect(mockRedis.del).toHaveBeenCalledWith('msg:token:acc-1');
+    expect(mockMetaTokenService.invalidateCache).toHaveBeenCalledWith('acc-1');
   });
 });
 
 // ---------- MetaGraphClient Tests ----------
 describe('MetaGraphClient', () => {
   let client: MetaGraphClient;
+  let mockMetaMessagingService: any;
+  let mockGraphClient: any;
 
   beforeEach(() => {
-    const config = {
-      graphApiVersion: 'v20.0',
-      graphApiBaseUrl: 'https://graph.facebook.com/v20.0',
-      httpTimeoutMs: 5000,
-    } as any;
-    client = new MetaGraphClient(config);
+    mockMetaMessagingService = {
+      sendMessage: jest.fn(),
+    };
+    mockGraphClient = {
+      request: jest.fn(),
+    };
+    client = new MetaGraphClient(mockMetaMessagingService, mockGraphClient);
   });
 
-  it('parses successful response', async () => {
-    const mockResponse = {
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          recipient_id: 'user-1',
-          message_id: 'mid.123',
-        }),
-    };
-    global.fetch = jest.fn().mockResolvedValue(mockResponse) as any;
+  it('delegates sendMessage to MetaMessagingService', async () => {
+    mockMetaMessagingService.sendMessage.mockResolvedValue({
+      recipientId: 'user-1',
+      messageId: 'mid.123',
+    });
 
     const result = await client.sendMessage('user-1', 'Hello', 'token');
     expect(result.recipientId).toBe('user-1');
     expect(result.messageId).toBe('mid.123');
+    expect(mockMetaMessagingService.sendMessage).toHaveBeenCalledWith('user-1', 'Hello', 'token');
   });
 
-  it('throws TokenExpiredException for Meta code 190', async () => {
-    const mockResponse = {
-      ok: false,
-      json: () =>
-        Promise.resolve({
-          error: {
-            message: 'Token expired',
-            type: 'OAuthException',
-            code: 190,
-          },
-        }),
-    };
-    global.fetch = jest.fn().mockResolvedValue(mockResponse) as any;
-
-    await expect(
-      client.sendMessage('user-1', 'Hello', 'bad-token'),
-    ).rejects.toThrow(TokenExpiredException);
-  });
-
-  it('throws MetaApiException for Meta code 10 (permission)', async () => {
-    const mockResponse = {
-      ok: false,
-      json: () =>
-        Promise.resolve({
-          error: {
-            message: 'Permission denied',
-            type: 'OAuthException',
-            code: 10,
-          },
-        }),
-    };
-    global.fetch = jest.fn().mockResolvedValue(mockResponse) as any;
-
-    await expect(
-      client.sendMessage('user-1', 'Hello', 'token'),
-    ).rejects.toThrow(MetaApiException);
-  });
-
-  it('throws NetworkException on fetch failure', async () => {
-    global.fetch = jest.fn().mockRejectedValue({ code: 'ENOTFOUND' }) as any;
-
-    await expect(
-      client.sendMessage('user-1', 'Hello', 'token'),
-    ).rejects.toThrow(NetworkException);
+  it('delegates healthCheck to GraphClient search request', async () => {
+    mockGraphClient.request.mockResolvedValue({ id: 'some-id' });
+    const healthy = await client.healthCheck('token');
+    expect(healthy).toBe(true);
+    expect(mockGraphClient.request).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'GET',
+      endpoint: 'me',
+      token: 'token',
+    }));
   });
 });
 

@@ -69,28 +69,28 @@ describe('Asset Management Module', () => {
 
   describe('MetaAssetClient (fetch utilities)', () => {
     it('normalizes type post, reel, image, video and carousel correctly', async () => {
-      const client = new MetaAssetClient();
-      const mockFetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          data: [
+      const mockProfileService = {} as any;
+      const mockAssetService = {
+        fetchMediaList: jest.fn().mockResolvedValue({
+          items: [
             {
-              id: 'media-post',
+              instagramMediaId: 'media-post',
               caption: 'My Post',
-              media_type: 'IMAGE',
+              mediaType: 'IMAGE',
               permalink: 'https://instagram.com/p/123/',
+              timestamp: new Date(),
             },
             {
-              id: 'media-reel',
+              instagramMediaId: 'media-reel',
               caption: 'My Reel',
-              media_type: 'VIDEO',
+              mediaType: 'VIDEO',
               permalink: 'https://instagram.com/reel/456/',
+              timestamp: new Date(),
             },
           ],
         }),
-      });
-      global.fetch = mockFetch;
-
+      } as any;
+      const client = new MetaAssetClient(mockProfileService, mockAssetService);
       const result = await client.fetchMediaList('usr-1', 'tok', 100);
       expect(result.items.length).toBe(2);
       expect(result.items[0].instagramMediaId).toBe('media-post');

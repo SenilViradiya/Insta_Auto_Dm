@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Steps, Button, Card, Input, Typography, Space, Alert, message } from 'antd';
+import React, { useEffect } from 'react';
+import { Steps, Button, Card, Input, Typography, Space, Tooltip, message } from 'antd';
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
   SaveOutlined,
-  SettingOutlined,
+  UndoOutlined,
+  RedoOutlined,
 } from '@ant-design/icons';
-import { AutomationDraft, TriggerType, Condition, ActionItem } from './types';
+import { useBuilderStore, useUndoRedo } from './builder.store';
+import { TriggerType, Condition, ActionItem, AutomationDraft } from './types';
 
 import TriggerSelectionStep from './steps/TriggerSelectionStep';
 import TriggerConfigStep from './steps/TriggerConfigStep';
@@ -14,7 +16,7 @@ import ConditionsStep from './steps/ConditionsStep';
 import ActionsStep from './steps/ActionsStep';
 import ReviewStep from './steps/ReviewStep';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 interface AutomationBuilderProps {
   instagramAccountId: string;
@@ -29,24 +31,28 @@ export default function AutomationBuilder({
   activeAccountName,
   initialData,
   onSave,
-  isSaving,
+  isSaving: initialSaving,
 }: AutomationBuilderProps) {
-  const [currentStep, setCurrentStep] = useState(0);
   const [messageApi, contextHolder] = message.useMessage();
 
-  // 1. Initialize draft state
-  const [draft, setDraft] = useState<AutomationDraft>({
-    metadata: { name: '', description: '' },
-    trigger: { type: 'DIRECT_MESSAGE', config: { mode: 'ANY_MESSAGE' } },
-    conditions: [],
-    actions: [],
-    review: { valid: false, warnings: [] },
-  });
+  // Zustand Store selectors
+  const draft = useBuilderStore((state) => state.draft);
+  const currentStep = useBuilderStore((state) => state.currentStep);
+  const loadDraft = useBuilderStore((state) => state.loadDraft);
+  const resetDraft = useBuilderStore((state) => state.resetDraft);
+  const validate = useBuilderStore((state) => state.validate);
+  const updateMetadata = useBuilderStore((state) => state.updateMetadata);
+  const setTrigger = useBuilderStore((state) => state.setTrigger);
+  const updateTriggerConfig = useBuilderStore((state) => state.updateTriggerConfig);
+  const nextStep = useBuilderStore((state) => state.nextStep);
+  const previousStep = useBuilderStore((state) => state.previousStep);
+  const jumpToStep = useBuilderStore((state) => state.jumpToStep);
 
-  // 2. Load initial data or localStorage drafts
+  const { canUndo, canRedo, undo, redo } = useUndoRedo();
+
+  // Load initial data (Edit Mode) or let draft recover automatically from LocalStorage
   useEffect(() => {
     if (initialData) {
-      // Map backend payload to draft structure
       const parsedConfig = initialData.triggerConfig || {};
       
       const mappedActions: ActionItem[] = (initialData.actions || []).map((act: any) => {
@@ -75,7 +81,7 @@ export default function AutomationBuilder({
         };
       });
 
-      setDraft({
+      loadDraft({
         metadata: {
           name: initialData.name || '',
           description: initialData.description || '',
@@ -89,106 +95,58 @@ export default function AutomationBuilder({
         review: { valid: false, warnings: [] },
       });
     } else {
-      // Try local storage draft load
-      const draftKey = `auto_draft:${instagramAccountId}`;
-      const saved = localStorage.getItem(draftKey);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          setDraft(parsed);
-        } catch {
-          // ignore
-        }
-      }
+      validate();
     }
-  }, [initialData, instagramAccountId]);
+  }, [initialData, loadDraft, validate]);
 
-  // 3. Save draft to local storage on changes
-  useEffect(() => {
-    if (!initialData && instagramAccountId) {
-      const draftKey = `auto_draft:${instagramAccountId}`;
-      localStorage.setItem(draftKey, JSON.stringify(draft));
-    }
-  }, [draft, instagramAccountId, initialData]);
-
-  // 4. State updates handlers
-  const updateMetadata = (key: string, value: string) => {
-    setDraft((prev) => ({
-      ...prev,
-      metadata: {
-        ...prev.metadata,
-        [key]: value,
-      },
-    }));
-  };
-
-  const handleSelectTrigger = (type: TriggerType) => {
-    // Initialize default configs to avoid empty objects errors
-    let defaultConfig = {};
-    if (type === 'DIRECT_MESSAGE') {
-      defaultConfig = { mode: 'ANY_MESSAGE' };
-    } else if (type === 'REEL_COMMENT') {
-      defaultConfig = { mediaScope: 'ALL_REELS', matchType: 'ANY_COMMENT' };
-    } else if (type === 'POST_COMMENT') {
-      defaultConfig = { mediaScope: 'ALL_POSTS', matchType: 'ANY_COMMENT' };
-    } else if (type === 'STORY_REPLY') {
-      defaultConfig = { storyScope: 'ANY' };
-    }
-
-    setDraft((prev) => ({
-      ...prev,
-      trigger: {
-        type,
-        config: defaultConfig,
-      },
-    }));
-  };
-
-  const handleTriggerConfigChange = (newConfig: any) => {
-    setDraft((prev) => ({
-      ...prev,
-      trigger: {
-        ...prev.trigger,
-        config: newConfig,
-      },
-    }));
-  };
-
+  // Hook conditions change directly into Zustand actions
   const handleConditionsChange = (conditions: Condition[]) => {
-    setDraft((prev) => ({
-      ...prev,
-      conditions,
-    }));
+    useBuilderStore.setState((state) => {
+      const updatedDraft = { ...state.draft, conditions };
+      return {
+        draft: {
+          ...updatedDraft,
+          review: state.draft.review, // preserve or refine at validation time
+        },
+        isDirty: true,
+      };
+    });
+    validate();
   };
 
   const handleActionsChange = (actions: ActionItem[]) => {
-    setDraft((prev) => ({
-      ...prev,
-      actions,
-    }));
+    useBuilderStore.setState((state) => {
+      const updatedDraft = { ...state.draft, actions };
+      return {
+        draft: {
+          ...updatedDraft,
+          review: state.draft.review,
+        },
+        isDirty: true,
+      };
+    });
+    validate();
   };
 
   const handleValidationChange = (valid: boolean, warnings: string[]) => {
-    // Avoid loops by doing deep checks
+    // Sync validation check status with store
     if (draft.review.valid !== valid || draft.review.warnings.length !== warnings.length) {
-      setDraft((prev) => ({
-        ...prev,
-        review: { valid, warnings },
+      useBuilderStore.setState((state) => ({
+        draft: {
+          ...state.draft,
+          review: { valid, warnings },
+        },
       }));
     }
   };
 
-  // 5. Steps navigation controls
-  const next = () => {
+  // Steps navigation controls
+  const handleNext = () => {
     if (currentStep === 0 && !draft.trigger.type) {
       messageApi.error('Please choose a trigger to proceed.');
       return;
     }
-    setCurrentStep((prev) => prev + 1);
-  };
-
-  const prev = () => {
-    setCurrentStep((prev) => prev - 1);
+    nextStep();
   };
 
   const handleSave = async () => {
@@ -200,7 +158,8 @@ export default function AutomationBuilder({
       await onSave(draft);
       // Remove drafted storage item
       if (!initialData) {
-        localStorage.removeItem(`auto_draft:${instagramAccountId}`);
+        localStorage.removeItem('builder-draft-store');
+        resetDraft();
       }
     } catch (e: any) {
       messageApi.error(e.message || 'Operation failed.');
@@ -241,12 +200,31 @@ export default function AutomationBuilder({
               size="large"
             />
           </div>
+          {/* Undo/Redo Toolbar Actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '18px' }}>
+            <Tooltip title="Undo (Ctrl+Z)">
+              <Button
+                icon={<UndoOutlined />}
+                disabled={!canUndo}
+                onClick={undo}
+                style={{ borderRadius: '8px' }}
+              />
+            </Tooltip>
+            <Tooltip title="Redo (Ctrl+Y)">
+              <Button
+                icon={<RedoOutlined />}
+                disabled={!canRedo}
+                onClick={redo}
+                style={{ borderRadius: '8px' }}
+              />
+            </Tooltip>
+          </div>
         </div>
       </Card>
 
       {/* Progress Steps Indicator */}
       <Card bordered={false} style={{ borderRadius: '16px', border: '1px solid #e2e8f0', background: 'white' }}>
-        <Steps current={currentStep} items={stepItems} />
+        <Steps current={currentStep} items={stepItems} onChange={jumpToStep} style={{ cursor: 'pointer' }} />
       </Card>
 
       {/* Dynamic Render Steps Component */}
@@ -254,7 +232,7 @@ export default function AutomationBuilder({
         {currentStep === 0 && (
           <TriggerSelectionStep
             selectedType={draft.trigger.type}
-            onSelect={handleSelectTrigger}
+            onSelect={setTrigger}
           />
         )}
 
@@ -262,7 +240,7 @@ export default function AutomationBuilder({
           <TriggerConfigStep
             type={draft.trigger.type}
             config={draft.trigger.config}
-            onChange={handleTriggerConfigChange}
+            onChange={updateTriggerConfig}
             instagramAccountId={instagramAccountId}
           />
         )}
@@ -296,7 +274,7 @@ export default function AutomationBuilder({
           <Button
             type="default"
             icon={<ArrowLeftOutlined />}
-            onClick={prev}
+            onClick={previousStep}
             disabled={currentStep === 0}
             size="large"
           >
@@ -307,7 +285,7 @@ export default function AutomationBuilder({
             {currentStep < 4 ? (
               <Button
                 type="primary"
-                onClick={next}
+                onClick={handleNext}
                 size="large"
                 style={{ background: '#4f46e5', borderColor: '#4f46e5' }}
               >
@@ -318,7 +296,7 @@ export default function AutomationBuilder({
                 type="primary"
                 icon={<SaveOutlined />}
                 onClick={handleSave}
-                loading={isSaving}
+                loading={initialSaving}
                 disabled={!draft.review.valid}
                 size="large"
                 style={{

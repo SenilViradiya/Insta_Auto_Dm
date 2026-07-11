@@ -7,6 +7,7 @@ import { MetaModule } from './meta/meta.module';
 import { AutomationModule } from './automation/automation.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
 import { AssetsModule } from './modules/assets/assets.module';
+import { MetaPlatformModule } from './modules/meta-platform/meta-platform.module';
 
 import { getRedisConfig } from './config/redis.config';
 
@@ -29,6 +30,7 @@ import { getRedisConfig } from './config/redis.config';
     BullModule.forRoot({
       connection: getRedisConfig(),
     }),
+    MetaPlatformModule,
     MetaModule,
     AutomationModule,
     MessagingModule,
