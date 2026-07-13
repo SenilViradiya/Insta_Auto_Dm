@@ -1,9 +1,7 @@
 import React from 'react';
-import { Button, Row, Col, Select, Input, Typography, Space } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Button, Select, Input } from 'antd';
+import { Plus, Trash2 } from 'lucide-react';
 import { Condition } from '../types';
-
-const { Text } = Typography;
 
 interface ConditionBuilderProps {
   conditions: Condition[];
@@ -52,78 +50,125 @@ export default function ConditionBuilder({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div>
-        <Text style={{ display: 'block', marginBottom: '8px' }}>
-          Define conditions under which the action pipeline will run. (Optional)
-        </Text>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 var(--space-2) 0' }}>
+        Configure filter criteria for executing this message flow:
+      </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
         {conditions.map((cond, index) => (
-          <Row key={index} gutter={12} align="middle" style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-            <Col xs={24} sm={7}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <Text style={{ fontSize: '11px', fontWeight: 'bold' }}>Field</Text>
-                <Select
-                  value={cond.field}
-                  onChange={(val) => handleUpdateCondition(index, { field: val })}
-                  options={FIELD_OPTIONS}
-                  style={{ width: '100%' }}
-                />
-              </div>
-            </Col>
-
-            <Col xs={24} sm={6}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <Text style={{ fontSize: '11px', fontWeight: 'bold' }}>Operator</Text>
-                <Select
-                  value={cond.operator}
-                  onChange={(val) => handleUpdateCondition(index, { operator: val as any })}
-                  options={OPERATOR_OPTIONS}
-                  style={{ width: '105%' }}
-                />
-              </div>
-            </Col>
-
-            <Col xs={24} sm={8}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <Text style={{ fontSize: '11px', fontWeight: 'bold' }}>Matching Value</Text>
-                <Input
-                  value={cond.value}
-                  onChange={(e) => handleUpdateCondition(index, { value: e.target.value })}
-                  placeholder="e.g. query value"
-                />
-              </div>
-            </Col>
-
-            <Col xs={24} sm={3} style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-              <Button
-                danger
-                type="text"
-                icon={<DeleteOutlined />}
-                onClick={() => handleRemoveCondition(index)}
+          <div
+            key={index}
+            style={{
+              background: 'var(--surface-secondary)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-md)',
+              padding: 'var(--space-4)',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'flex-end',
+              gap: 'var(--space-3)',
+            }}
+          >
+            {/* Field */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', flex: '1 1 200px' }}>
+              <span style={{ fontSize: 11, fontWeight: 650, color: 'var(--text-secondary)' }}>FieldName</span>
+              <Select
+                value={cond.field}
+                onChange={(val) => handleUpdateCondition(index, { field: val })}
+                options={FIELD_OPTIONS}
+                style={{ width: '100%' }}
               />
-            </Col>
-          </Row>
+            </div>
+
+            {/* Operator */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', flex: '1 1 150px' }}>
+              <span style={{ fontSize: 11, fontWeight: 650, color: 'var(--text-secondary)' }}>Operator</span>
+              <Select
+                value={cond.operator}
+                onChange={(val) => handleUpdateCondition(index, { operator: val as any })}
+                options={OPERATOR_OPTIONS}
+                style={{ width: '100%' }}
+              />
+            </div>
+
+            {/* Match Value */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', flex: '2 1 250px' }}>
+              <span style={{ fontSize: 11, fontWeight: 650, color: 'var(--text-secondary)' }}>Matching Value</span>
+              <Input
+                value={cond.value}
+                onChange={(e) => handleUpdateCondition(index, { value: e.target.value })}
+                placeholder="e.g. discount, promo"
+              />
+            </div>
+
+            {/* Remove */}
+            <button
+              onClick={() => handleRemoveCondition(index)}
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                padding: 'var(--space-2)',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all var(--duration) var(--ease)',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--danger)'; e.currentTarget.style.color = 'var(--danger)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+              type="button"
+              aria-label="Remove condition"
+            >
+              <Trash2 size={15} />
+            </button>
+          </div>
         ))}
 
         {conditions.length === 0 && (
-          <div style={{ padding: '24px', textAlign: 'center', border: '1px dashed #cbd5e1', borderRadius: '12px', background: '#f8fafc' }}>
-            <Text type="secondary">No filter conditions linked. Flow executes for every trigger occurrence.</Text>
+          <div
+            style={{
+              padding: 'var(--space-8)',
+              textAlign: 'center',
+              border: '1px dashed var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--surface-secondary)',
+            }}
+          >
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              No filter conditions. Automation runs unconditionally for all matching triggers.
+            </span>
           </div>
         )}
       </div>
 
-      <Space>
-        <Button
-          type="dashed"
-          icon={<PlusOutlined />}
+      <div style={{ marginTop: 'var(--space-1)' }}>
+        <button
           onClick={handleAddCondition}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 'var(--space-2)',
+            padding: '8px 16px',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-md)',
+            fontSize: 13,
+            fontWeight: 500,
+            color: 'var(--text-primary)',
+            cursor: 'pointer',
+            transition: 'all var(--duration) var(--ease)',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-secondary)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--surface)'; }}
+          type="button"
         >
+          <Plus size={14} />
           Add Condition Rule
-        </Button>
-      </Space>
+        </button>
+      </div>
     </div>
   );
 }

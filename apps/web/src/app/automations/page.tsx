@@ -1,60 +1,30 @@
 "use client";
 
 import React, { Suspense, useEffect, useState } from "react";
-import {
-  Layout,
-  Button,
-  Card,
-  Table,
-  Switch,
-  Badge,
-  Typography,
-  Space,
-  Alert,
-  Spin,
-  message,
-  Popconfirm,
-  Select,
-} from "antd";
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  SettingOutlined,
-  LoadingOutlined,
-  ThunderboltOutlined,
-  InstagramOutlined,
-} from "@ant-design/icons";
+import { Switch, message, Popconfirm } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  Plus,
+  MessageSquare,
+  Film,
+  Image,
+  Play,
+  AtSign,
+  Pencil,
+  Trash2,
+  Bot,
+  ChevronDown,
+  Zap,
+  Clock,
+  Send,
+  AlertCircle,
+  CircleCheck,
+} from "lucide-react";
+import AppShell from "../../components/layout/AppShell";
 import { mapBackendToFrontend } from "./mapping-utils";
 
-const { Header, Content } = Layout;
-const { Title, Text } = Typography;
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
-interface Keyword {
-  id?: string;
-  keyword: string;
-  matchType: "EXACT" | "CONTAINS" | "STARTS_WITH";
-}
-
-interface Action {
-  id?: string;
-  message: string;
-  delaySeconds: number;
-}
-
-interface Automation {
-  id: string;
-  name: string;
-  enabled: boolean;
-  createdAt: string;
-  keywords: Keyword[];
-  actions: Action[];
-}
 
 interface InstagramAccount {
   id: string;
@@ -64,50 +34,372 @@ interface InstagramAccount {
   connectedAt: string;
 }
 
+/* ── Trigger Meta ── */
+const TRIGGER_META: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  DIRECT_MESSAGE: { label: "Direct Message", icon: <MessageSquare size={14} />, color: "var(--primary)" },
+  REEL_COMMENT: { label: "Reel Comment", icon: <Film size={14} />, color: "#DB2777" },
+  POST_COMMENT: { label: "Post Comment", icon: <Image size={14} />, color: "var(--success)" },
+  STORY_REPLY: { label: "Story Reply", icon: <Play size={14} />, color: "var(--warning)" },
+  STORY_MENTION: { label: "Story Mention", icon: <AtSign size={14} />, color: "#7C3AED" },
+};
+
+/* ── Skeleton ── */
+function AutomationsSkeleton() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div>
+          <div className="skeleton skeleton-title" style={{ width: 220 }} />
+          <div className="skeleton skeleton-text" style={{ width: 300 }} />
+        </div>
+        <div className="skeleton" style={{ width: 170, height: 40, borderRadius: "var(--radius-md)" }} />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "var(--space-4)" }}>
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="skeleton" style={{ height: 200, borderRadius: "var(--radius-lg)" }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Workflow Card ── */
+function WorkflowCard({
+  automation,
+  selectedAccountId,
+  onToggle,
+  onDelete,
+  isToggling,
+  isDeleting,
+}: {
+  automation: any;
+  selectedAccountId: string;
+  onToggle: (enabled: boolean) => void;
+  onDelete: () => void;
+  isToggling: boolean;
+  isDeleting: boolean;
+}) {
+  const router = useRouter();
+  const triggerType = automation.triggerType || "DIRECT_MESSAGE";
+  const meta = TRIGGER_META[triggerType] || TRIGGER_META.DIRECT_MESSAGE;
+  const keywords = Array.isArray(automation.keywords) ? automation.keywords.filter((k: any) => k?.keyword) : [];
+  const actions = Array.isArray(automation.actions) ? automation.actions : [];
+
+  return (
+    <div
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-lg)",
+        padding: "var(--space-6)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--space-4)",
+        transition: "all var(--duration) var(--ease)",
+        cursor: "pointer",
+        position: "relative",
+      }}
+      className="card-interactive"
+      onClick={() => router.push(`/automations/edit/${automation.id}?instagramAccountId=${selectedAccountId}`)}
+      role="button"
+      tabIndex={0}
+      aria-label={`Edit automation ${automation.name}`}
+      onKeyDown={(e) => { if (e.key === "Enter") router.push(`/automations/edit/${automation.id}?instagramAccountId=${selectedAccountId}`); }}
+    >
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)", flex: 1, minWidth: 0 }}>
+          <h3
+            style={{
+              fontSize: 15,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+              margin: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {automation.name || "Untitled Workflow"}
+          </h3>
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+            Created {automation.createdAt ? new Date(automation.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
+          </span>
+        </div>
+        <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+          <Switch
+            size="small"
+            checked={automation.enabled}
+            loading={isToggling}
+            onChange={onToggle}
+          />
+        </div>
+      </div>
+
+      {/* Pipeline summary */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+        {/* Trigger */}
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+          <div
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: "var(--radius-sm)",
+              background: `${meta.color}14`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: meta.color,
+              flexShrink: 0,
+            }}
+          >
+            {meta.icon}
+          </div>
+          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>
+            {meta.label}
+          </span>
+          {keywords.length > 0 && (
+            <div style={{ display: "flex", gap: "var(--space-1)", flexWrap: "wrap" }}>
+              {keywords.slice(0, 3).map((kw: any, i: number) => (
+                <span
+                  key={i}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: "var(--primary)",
+                    background: "var(--hover-bg)",
+                    padding: "1px 8px",
+                    borderRadius: "var(--radius-sm)",
+                  }}
+                >
+                  {kw.keyword}
+                </span>
+              ))}
+              {keywords.length > 3 && (
+                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>+{keywords.length - 3}</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Connector */}
+        <div style={{ marginLeft: 11, width: 2, height: 12, background: "var(--border)" }} />
+
+        {/* Actions Summary */}
+        {actions.map((act: any, i: number) => (
+          <React.Fragment key={i}>
+            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+              <div
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: "var(--radius-sm)",
+                  background: act.delaySeconds > 0 ? "var(--warning-bg)" : "var(--hover-bg)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: act.delaySeconds > 0 ? "var(--warning)" : "var(--primary)",
+                  flexShrink: 0,
+                }}
+              >
+                {act.delaySeconds > 0 ? <Clock size={13} /> : <Send size={13} />}
+              </div>
+              <span
+                style={{
+                  fontSize: 13,
+                  color: "var(--text-secondary)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  flex: 1,
+                }}
+              >
+                {act.delaySeconds > 0 && (
+                  <span style={{ color: "var(--warning)", fontWeight: 500 }}>Wait {act.delaySeconds}s → </span>
+                )}
+                {act.message ? `"${act.message.substring(0, 50)}${act.message.length > 50 ? "…" : ""}"` : "Send DM"}
+              </span>
+            </div>
+            {i < actions.length - 1 && (
+              <div style={{ marginLeft: 11, width: 2, height: 8, background: "var(--border)" }} />
+            )}
+          </React.Fragment>
+        ))}
+
+        {actions.length === 0 && (
+          <span style={{ fontSize: 13, color: "var(--text-muted)", fontStyle: "italic" }}>No actions configured</span>
+        )}
+      </div>
+
+      {/* Footer Actions */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderTop: "1px solid var(--divider)",
+          paddingTop: "var(--space-3)",
+          marginTop: "var(--space-1)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "var(--space-1)",
+            fontSize: 12,
+            fontWeight: 500,
+            color: automation.enabled ? "var(--success)" : "var(--text-muted)",
+          }}
+        >
+          <CircleCheck size={13} />
+          {automation.enabled ? "Active" : "Paused"}
+        </div>
+        <div style={{ display: "flex", gap: "var(--space-2)" }}>
+          <button
+            onClick={() => router.push(`/automations/edit/${automation.id}?instagramAccountId=${selectedAccountId}`)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              padding: "4px 10px",
+              fontSize: 12,
+              fontWeight: 500,
+              color: "var(--text-secondary)",
+              cursor: "pointer",
+              transition: "all var(--duration) var(--ease)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; e.currentTarget.style.color = "var(--primary)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+          >
+            <Pencil size={12} />
+            Edit
+          </button>
+          <Popconfirm
+            title="Delete this automation?"
+            description="This action cannot be undone."
+            okText="Delete"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true }}
+            onConfirm={onDelete}
+          >
+            <button
+              disabled={isDeleting}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                background: "transparent",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-sm)",
+                padding: "4px 10px",
+                fontSize: 12,
+                fontWeight: 500,
+                color: "var(--text-muted)",
+                cursor: isDeleting ? "wait" : "pointer",
+                transition: "all var(--duration) var(--ease)",
+                opacity: isDeleting ? 0.5 : 1,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--danger)"; e.currentTarget.style.color = "var(--danger)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+            >
+              <Trash2 size={12} />
+            </button>
+          </Popconfirm>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Empty Automations ── */
+function EmptyAutomations({ onCreateClick }: { onCreateClick: () => void }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "var(--space-14) var(--space-6)",
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: "var(--radius-lg)",
+          background: "var(--hover-bg)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: "var(--space-5)",
+        }}
+      >
+        <Bot size={24} color="var(--primary)" />
+      </div>
+      <h3 style={{ fontSize: 20, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 var(--space-2) 0" }}>
+        No automations yet
+      </h3>
+      <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 var(--space-6) 0", maxWidth: 380, lineHeight: 1.6 }}>
+        Create your first automation workflow to start responding to DMs, comments, and story interactions automatically.
+      </p>
+      <button
+        onClick={onCreateClick}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "var(--space-2)",
+          padding: "10px 20px",
+          background: "var(--primary)",
+          color: "#fff",
+          border: "none",
+          borderRadius: "var(--radius-md)",
+          fontSize: 14,
+          fontWeight: 500,
+          cursor: "pointer",
+          transition: "all var(--duration) var(--ease)",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--primary-hover)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "var(--primary)"; }}
+      >
+        <Plus size={16} />
+        Create Automation
+      </button>
+    </div>
+  );
+}
+
+/* ── Main Content ── */
 function AutomationsContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [messageApi, contextHolder] = message.useMessage();
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
-  // 1. Query connected accounts dynamically
   const { data: statusData, isLoading: accountsLoading, error: accountsError } = useQuery({
     queryKey: ["meta-status"],
     queryFn: async () => {
       const response = await fetch(`${API_URL}/meta/status`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch connection status from API");
-      }
+      if (!response.ok) throw new Error("Failed to fetch connection status");
       return response.json() as Promise<{ accounts: InstagramAccount[] }>;
     },
   });
 
-  // 2. Synchronize selected account with state and localStorage
-  //    IMPORTANT: We use the Prisma UUID (acc.id) as the canonical internal identifier.
-  //    The instagramUserId (Meta Business ID) is only used for display and Meta API calls.
   useEffect(() => {
     if (statusData?.accounts && statusData.accounts.length > 0) {
       const saved = localStorage.getItem("selected_instagram_account_id");
-
-      // Direct UUID match — the happy path after migration
       const exactMatch = statusData.accounts.find((acc) => acc.id === saved);
-      if (saved && exactMatch) {
-        setSelectedAccountId(saved);
-        return;
-      }
-
-      // Migration: if the saved value is an old instagramUserId (Meta Business ID),
-      // transparently convert it to the internal UUID. This runs once per user upgrade.
+      if (saved && exactMatch) { setSelectedAccountId(saved); return; }
       if (saved) {
         const legacyMatch = statusData.accounts.find((acc) => acc.instagramUserId === saved);
-        if (legacyMatch) {
-          setSelectedAccountId(legacyMatch.id);
-          localStorage.setItem("selected_instagram_account_id", legacyMatch.id);
-          return;
-        }
+        if (legacyMatch) { setSelectedAccountId(legacyMatch.id); localStorage.setItem("selected_instagram_account_id", legacyMatch.id); return; }
       }
-
-      // Fallback: no saved value or saved value doesn't match any account
       const firstId = statusData.accounts[0].id;
       setSelectedAccountId(firstId);
       localStorage.setItem("selected_instagram_account_id", firstId);
@@ -121,441 +413,200 @@ function AutomationsContent() {
     localStorage.setItem("selected_instagram_account_id", val);
   };
 
-  // 3. Query automations scoped to selectedAccountId
   const { data: automationsData, isLoading: automationsLoading, error: automationsError } = useQuery({
     queryKey: ["automations", selectedAccountId],
     queryFn: async () => {
-      if (!selectedAccountId) return [] as Automation[];
-      const response = await fetch(`${API_URL}/automations`, {
-        headers: {
-          "x-instagram-account-id": selectedAccountId,
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch automations list");
-      }
+      if (!selectedAccountId) return [];
+      const response = await fetch(`${API_URL}/automations`, { headers: { "x-instagram-account-id": selectedAccountId } });
+      if (!response.ok) throw new Error("Failed to fetch automations");
       const json = await response.json();
       const items = json && Array.isArray(json.items) ? json.items : [];
-      return items.map(mapBackendToFrontend) as Automation[];
+      return items.map(mapBackendToFrontend);
     },
     enabled: !!selectedAccountId,
   });
 
-  // Toggle switch enabled/disabled
   const toggleMutation = useMutation({
     mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
       const response = await fetch(`${API_URL}/automations/${id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-instagram-account-id": selectedAccountId || "default",
-        },
+        headers: { "Content-Type": "application/json", "x-instagram-account-id": selectedAccountId || "default" },
         body: JSON.stringify({ enabled }),
       });
-      if (!response.ok) {
-        throw new Error("Failed to update status");
-      }
+      if (!response.ok) throw new Error("Failed to update status");
       return response.json();
     },
     onSuccess: () => {
-      messageApi.success("Automation status updated.");
+      messageApi.success("Status updated.");
       queryClient.invalidateQueries({ queryKey: ["automations", selectedAccountId] });
     },
-    onError: (err: Error) => {
-      messageApi.error(err.message || "Failed to update status");
-    },
+    onError: (err: Error) => messageApi.error(err.message),
   });
 
-  // Delete automation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`${API_URL}/automations/${id}`, {
         method: "DELETE",
-        headers: {
-          "x-instagram-account-id": selectedAccountId || "default",
-        },
+        headers: { "x-instagram-account-id": selectedAccountId || "default" },
       });
-      if (!response.ok) {
-        throw new Error("Failed to delete automation");
-      }
+      if (!response.ok) throw new Error("Failed to delete automation");
       return response.json();
     },
     onSuccess: () => {
-      messageApi.success("Automation deleted successfully.");
+      messageApi.success("Automation deleted.");
       queryClient.invalidateQueries({ queryKey: ["automations", selectedAccountId] });
     },
-    onError: (err: Error) => {
-      messageApi.error(err.message || "Failed to delete automation");
-    },
+    onError: (err: Error) => messageApi.error(err.message),
   });
 
-  const columns = [
-    {
-      title: "Flow Name",
-      dataIndex: "name",
-      key: "name",
-      render: (text: string, record: Automation) => (
-        <Space direction="vertical" size={0}>
-          <span className="font-bold text-slate-800 text-base">{text}</span>
-          {record.createdAt && (
-            <Text type="secondary" className="text-xs">
-              Created: {new Date(record.createdAt).toLocaleDateString()}
-            </Text>
-          )}
-        </Space>
-      ),
-    },
-    {
-      title: "Keywords & Triggers",
-      dataIndex: "keywords",
-      key: "keywords",
-      render: (keywords: Keyword[]) => {
-        const list = Array.isArray(keywords) ? keywords : [];
-        if (list.length === 0) return <Text type="secondary" className="text-xs">No keywords</Text>;
-        return (
-          <div className="flex flex-wrap gap-2 max-w-sm">
-            {list.map((kw, idx) => {
-              if (!kw || !kw.keyword) return null;
-              let color = "blue";
-              if (kw.matchType === "EXACT") color = "purple";
-              if (kw.matchType === "STARTS_WITH") color = "cyan";
-              return (
-                <Badge
-                  key={kw.id || idx}
-                  count={`${kw.keyword} (${(kw.matchType || "exact").toLowerCase()})`}
-                  style={{ backgroundColor: color, color: "#fff" }}
-                />
-              );
-            })}
-          </div>
-        );
-      },
-    },
-    {
-      title: "DM Responses & Actions",
-      dataIndex: "actions",
-      key: "actions",
-      render: (actions: Action[]) => {
-        const list = Array.isArray(actions) ? actions : [];
-        if (list.length === 0) return <Text type="secondary" className="text-xs">No actions configured</Text>;
-        return (
-          <div className="flex flex-col gap-2 max-w-md">
-            {list.map((act, idx) => {
-              if (!act) return null;
-              return (
-                <div
-                  key={act.id || idx}
-                  className="flex flex-col gap-1 bg-slate-100 p-2.5 rounded-lg border border-slate-200"
-                >
-                  <Text className="italic text-xs font-semibold text-slate-500">
-                    Message Content:
-                  </Text>
-                  <Text className="text-sm font-medium text-slate-800">
-                    &ldquo;{act.message || "(Empty text message)"}&rdquo;
-                  </Text>
-                  {act.delaySeconds > 0 && (
-                    <Badge
-                      status="processing"
-                      text={`Delay response: ${act.delaySeconds}s`}
-                      className="mt-1"
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        );
-      },
-    },
-    {
-      title: "Active",
-      dataIndex: "enabled",
-      key: "enabled",
-      render: (enabled: boolean, record: Automation) => (
-        <Switch
-          checked={enabled}
-          loading={
-            toggleMutation.isPending &&
-            toggleMutation.variables?.id === record.id
-          }
-          onChange={(val) =>
-            toggleMutation.mutate({ id: record.id, enabled: val })
-          }
-        />
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_: unknown, record: Automation) => (
-        <Space size="middle">
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => router.push(`/automations/edit/${record.id}?instagramAccountId=${selectedAccountId}`)}
-          />
-          <Popconfirm
-            title="Are you sure you want to delete this automation?"
-            okText="Yes"
-            cancelText="No"
-            onConfirm={() => deleteMutation.mutate(record.id)}
-          >
-            <Button
-              danger
-              type="primary"
-              icon={<DeleteOutlined />}
-              loading={
-                deleteMutation.isPending &&
-                deleteMutation.variables === record.id
-              }
-            />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
-
-  // Render Top Header
-  const renderHeader = () => (
-    <Header className="bg-white border-b border-slate-200 px-8 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-red-500 to-indigo-600 flex items-center justify-center">
-          <ThunderboltOutlined className="text-white text-xl" />
-        </div>
-        <Title
-          level={4}
-          style={{ margin: 0, fontWeight: 800 }}
-          className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent"
-        >
-          InstaDM Manager
-        </Title>
-      </div>
-
-      <div className="flex items-center gap-6">
-        <Link
-          href="/"
-          className="font-semibold text-slate-500 hover:text-slate-800 transition py-5 text-sm"
-        >
-          Connections
-        </Link>
-        <Link
-          href="/automations"
-          className="font-semibold text-slate-900 border-b-2 border-indigo-600 py-5 text-sm"
-        >
-          Automations
-        </Link>
-      </div>
-    </Header>
-  );
-
-  // Render Loading States
-  if (accountsLoading) {
-    return (
-      <Layout className="min-h-screen bg-slate-50">
-        {renderHeader()}
-        <Content className="p-8 max-w-6xl mx-auto w-full flex flex-col items-center justify-center gap-3" style={{ minHeight: "70vh" }}>
-          <Spin indicator={<LoadingOutlined style={{ fontSize: 32 }} spin />} />
-          <Text type="secondary" className="font-medium text-slate-500">
-            Loading connected accounts...
-          </Text>
-        </Content>
-      </Layout>
-    );
-  }
-
-  // Render accounts fetch error
-  if (accountsError) {
-    return (
-      <Layout className="min-h-screen bg-slate-50">
-        {renderHeader()}
-        <Content className="p-8 max-w-2xl mx-auto w-full" style={{ minHeight: "70vh", display: "flex", alignItems: "center" }}>
-          <Alert
-            message="Server Integration Error"
-            description="Unable to connect to the backend server. Make sure the NestJS backend application is running on port 3001."
-            type="error"
-            showIcon
-            className="w-full shadow-sm rounded-xl"
-          />
-        </Content>
-      </Layout>
-    );
-  }
-
   const accountsList = statusData?.accounts || [];
+  const selectedAccount = accountsList.find((acc) => acc.id === selectedAccountId);
 
-  // Render Empty State (No accounts connected) - Task 4
-  if (accountsList.length === 0) {
-    return (
-      <Layout className="min-h-screen bg-slate-50">
-        {renderHeader()}
-        <Content className="p-8 max-w-4xl mx-auto w-full flex items-center justify-center" style={{ minHeight: "75vh" }}>
-          <Card variant="borderless" className="shadow-lg rounded-2xl p-8 max-w-lg text-center bg-white border border-slate-100">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500">
-              <InstagramOutlined style={{ fontSize: 36 }} />
-            </div>
-            <Title level={3} className="text-slate-800 font-extrabold mb-3">
-              No Instagram account connected.
-            </Title>
-            <Text type="secondary" style={{ display: "block", marginBottom: 30 }} className="text-base text-slate-500">
-              To configure automations, you must first connect an active Instagram Business Profile linked to Facebook Page.
-            </Text>
-            <Button
-              type="primary"
-              size="large"
-              icon={<InstagramOutlined />}
-              className="bg-indigo-600 border-none font-bold hover:bg-indigo-700 h-12 px-8 rounded-xl shadow-md"
-              onClick={() => router.push("/")}
-            >
-              Go to Connections Page
-            </Button>
-          </Card>
-        </Content>
-      </Layout>
-    );
-  }
-
-  // Active Selected Instagram Profile Object Details - Task 5
-  const selectedAccountDetails = accountsList.find(
-    (acc) => acc.id === selectedAccountId
+  if (accountsLoading) return <AppShell><AutomationsSkeleton /></AppShell>;
+  if (accountsError) return (
+    <AppShell>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "var(--space-3)",
+          padding: "var(--space-4) var(--space-6)",
+          background: "var(--danger-bg)",
+          border: "1px solid #FECACA",
+          borderRadius: "var(--radius-md)",
+          fontSize: 14,
+          color: "var(--danger)",
+        }}
+      >
+        <AlertCircle size={18} />
+        Unable to connect to backend. Ensure the API server is running on port 3001.
+      </div>
+    </AppShell>
+  );
+  if (accountsList.length === 0) return (
+    <AppShell>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "var(--space-14)", textAlign: "center" }}>
+        <h2 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 var(--space-2)" }}>No accounts connected</h2>
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 var(--space-6)" }}>Connect an Instagram Business account to create automations.</p>
+        <button
+          onClick={() => router.push("/")}
+          style={{ padding: "10px 20px", background: "var(--primary)", color: "#fff", border: "none", borderRadius: "var(--radius-md)", fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+        >
+          Go to Connections
+        </button>
+      </div>
+    </AppShell>
   );
 
   return (
-    <Layout className="min-h-screen bg-slate-50">
+    <AppShell>
       {contextHolder}
-      {renderHeader()}
 
-      <Content className="p-8 max-w-6xl mx-auto w-full flex flex-col gap-8">
-        {/* Account Selector + Profile Summary - Task 5 & 6 */}
-        <Card variant="borderless" className="shadow-sm rounded-2xl bg-white border border-slate-100 p-2">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-                <InstagramOutlined style={{ fontSize: 24 }} />
-              </div>
-              <div className="flex flex-col">
-                <Text type="secondary" className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
-                  Selected Instagram Profile
-                </Text>
-                <Select
-                  value={selectedAccountId || undefined}
-                  onChange={handleAccountChange}
-                  dropdownClassName="rounded-xl shadow-lg border border-slate-100"
-                  className="w-64 font-bold text-slate-800 text-lg border-none hover:border-none focus:outline-none"
-                  variant="borderless"
-                  placeholder="Select account"
-                >
-                  {accountsList.map((acc) => (
-                    <Select.Option key={acc.id} value={acc.id}>
-                      {acc.pageName || `ID: ${acc.instagramUserId}`}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </div>
-            </div>
-
-            {selectedAccountDetails && (
-              <div className="flex flex-wrap gap-x-6 gap-y-2 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-8">
-                <div className="flex flex-col">
-                  <Text className="text-xs font-medium text-slate-400">FB Page Name</Text>
-                  <Text className="text-sm font-bold text-slate-700">{selectedAccountDetails.pageName}</Text>
-                </div>
-                <div className="flex flex-col">
-                  <Text className="text-xs font-medium text-slate-400">Instagram Handle ID</Text>
-                  <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono mt-0.5">
-                    {selectedAccountDetails.instagramUserId}
-                  </code>
-                </div>
-                <div className="flex flex-col">
-                  <Text className="text-xs font-medium text-slate-400">Connected Date</Text>
-                  <Text className="text-xs text-slate-500 font-medium mt-0.5">
-                    {new Date(selectedAccountDetails.connectedAt).toLocaleDateString()}
-                  </Text>
-                </div>
-                <div className="flex flex-col justify-center">
-                  <Badge status="success" text={<Text className="text-xs font-semibold text-emerald-600">Active</Text>} />
-                </div>
-              </div>
+      {/* Page Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "var(--space-8)" }}>
+        <div>
+          <h1 style={{ fontSize: 26, fontWeight: 600, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.02em" }}>
+            Automations
+          </h1>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "var(--space-1) 0 0" }}>
+            {selectedAccount ? (
+              <>
+                Workflows for{" "}
+                <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>{selectedAccount.pageName}</span>
+                {accountsList.length > 1 && (
+                  <select
+                    value={selectedAccountId || ""}
+                    onChange={(e) => handleAccountChange(e.target.value)}
+                    style={{
+                      marginLeft: "var(--space-2)",
+                      padding: "2px 6px",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius-sm)",
+                      fontSize: 12,
+                      color: "var(--text-secondary)",
+                      background: "var(--surface)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {accountsList.map((acc) => (
+                      <option key={acc.id} value={acc.id}>{acc.pageName}</option>
+                    ))}
+                  </select>
+                )}
+              </>
+            ) : (
+              "Select an account to view workflows."
             )}
-          </div>
-        </Card>
-
-        {/* Automations Table Action Bar */}
-        <div className="flex items-center justify-between">
-          <div>
-            <Title level={2} style={{ margin: 0, fontWeight: 800 }} className="text-slate-800">
-              Keyword Automations
-            </Title>
-            <Text type="secondary">
-              Set automated responses to send whenever a user direct messages a configured keyword.
-            </Text>
-          </div>
-          <Button
-            type="primary"
-            size="large"
-            icon={<PlusOutlined />}
-            onClick={() => router.push(`/automations/create?instagramAccountId=${selectedAccountId}`)}
-            className="bg-indigo-600 border-none font-bold rounded-xl h-11 px-6 shadow-sm"
-          >
-            Create Automation
-          </Button>
+          </p>
         </div>
+        <button
+          onClick={() => router.push(`/automations/create?instagramAccountId=${selectedAccountId}`)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "var(--space-2)",
+            padding: "10px 20px",
+            background: "var(--primary)",
+            color: "#fff",
+            border: "none",
+            borderRadius: "var(--radius-md)",
+            fontSize: 14,
+            fontWeight: 500,
+            cursor: "pointer",
+            transition: "all var(--duration) var(--ease)",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--primary-hover)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--primary)"; }}
+        >
+          <Plus size={16} />
+          Create Automation
+        </button>
+      </div>
 
-        {/* Automations Table / Content Body - Task 4 */}
-        {automationsLoading ? (
-          <div className="py-20 flex flex-col items-center justify-center gap-3">
-            <Spin indicator={<LoadingOutlined style={{ fontSize: 32 }} spin />} />
-            <Text type="secondary">Retrieving keyword workflows...</Text>
-          </div>
-        ) : automationsError ? (
-          <Alert
-            message="Error"
-            description="Unable to load automation data. Make sure the NestJS backend is running and connected."
-            type="error"
-            showIcon
-            className="rounded-xl shadow-sm"
-          />
-        ) : (
-          <Card variant="borderless" className="shadow-sm rounded-2xl bg-white border border-slate-100 overflow-hidden">
-            <Table
-              dataSource={automationsData}
-              columns={columns}
-              rowKey="id"
-              locale={{
-                emptyText: (
-                  <div className="py-16 text-center">
-                    <SettingOutlined className="text-4xl text-slate-300 mb-4" />
-                    <Title level={4} className="text-slate-800">No Automations Found</Title>
-                    <Text type="secondary" style={{ display: "block", marginBottom: 20 }}>
-                      Control messages by creating a keyword flows template.
-                    </Text>
-                    <Button
-                      type="primary"
-                      icon={<PlusOutlined />}
-                      onClick={() => router.push(`/automations/create?instagramAccountId=${selectedAccountId}`)}
-                      className="bg-indigo-600 border-none rounded-xl"
-                    >
-                      Connect your first flow
-                    </Button>
-                  </div>
-                ),
-              }}
+      {/* Content */}
+      {automationsLoading ? (
+        <AutomationsSkeleton />
+      ) : automationsError ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "var(--space-3)",
+            padding: "var(--space-4) var(--space-6)",
+            background: "var(--danger-bg)",
+            border: "1px solid #FECACA",
+            borderRadius: "var(--radius-md)",
+            fontSize: 14,
+            color: "var(--danger)",
+          }}
+        >
+          <AlertCircle size={18} />
+          Error loading automations. Check backend connection.
+        </div>
+      ) : !automationsData?.length ? (
+        <EmptyAutomations onCreateClick={() => router.push(`/automations/create?instagramAccountId=${selectedAccountId}`)} />
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "var(--space-4)" }}>
+          {automationsData.map((auto: any) => (
+            <WorkflowCard
+              key={auto.id}
+              automation={auto}
+              selectedAccountId={selectedAccountId || ""}
+              onToggle={(val) => toggleMutation.mutate({ id: auto.id, enabled: val })}
+              onDelete={() => deleteMutation.mutate(auto.id)}
+              isToggling={toggleMutation.isPending && (toggleMutation.variables as any)?.id === auto.id}
+              isDeleting={deleteMutation.isPending && deleteMutation.variables === auto.id}
             />
-          </Card>
-        )}
-      </Content>
-    </Layout>
+          ))}
+        </div>
+      )}
+    </AppShell>
   );
 }
 
 export default function Page() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
-          <Spin indicator={<LoadingOutlined style={{ fontSize: 32 }} spin />} />
-        </div>
-      }
-    >
+    <Suspense fallback={<AppShell><AutomationsSkeleton /></AppShell>}>
       <AutomationsContent />
     </Suspense>
   );

@@ -1,30 +1,19 @@
 "use client";
 
 import React, { Suspense, useEffect } from "react";
-import {
-  Layout,
-  Button,
-  Card,
-  Table,
-  Badge,
-  Typography,
-  Space,
-  Alert,
-  Spin,
-  message,
-} from "antd";
-import Link from "next/link";
-import {
-  InstagramOutlined,
-  DisconnectOutlined,
-  LoadingOutlined,
-  CheckCircleOutlined,
-} from "@ant-design/icons";
+import { message } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useRouter } from "next/navigation";
-
-const { Header, Content } = Layout;
-const { Title, Text } = Typography;
+import {
+  Link2,
+  ExternalLink,
+  Unplug,
+  Plus,
+  CircleCheck,
+  AlertCircle,
+  Instagram,
+} from "lucide-react";
+import AppShell from "../components/layout/AppShell";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -36,43 +25,248 @@ interface InstagramAccount {
   connectedAt: string;
 }
 
+/* ── Skeleton Loader ── */
+function ConnectionsSkeleton() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div className="skeleton skeleton-title" style={{ width: 200 }} />
+          <div className="skeleton skeleton-text" style={{ width: 340 }} />
+        </div>
+        <div className="skeleton" style={{ width: 160, height: 40, borderRadius: "var(--radius-md)" }} />
+      </div>
+      {[1, 2].map((i) => (
+        <div key={i} className="skeleton skeleton-card" style={{ height: 72 }} />
+      ))}
+    </div>
+  );
+}
+
+/* ── Empty State ── */
+function EmptyState({ onConnect }: { onConnect: () => void }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "var(--space-14) var(--space-6)",
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: "var(--radius-lg)",
+          background: "var(--hover-bg)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: "var(--space-5)",
+        }}
+      >
+        <Link2 size={24} color="var(--primary)" />
+      </div>
+      <h3
+        style={{
+          fontSize: 20,
+          fontWeight: 600,
+          color: "var(--text-primary)",
+          margin: "0 0 var(--space-2) 0",
+        }}
+      >
+        No accounts connected
+      </h3>
+      <p
+        style={{
+          fontSize: 14,
+          color: "var(--text-secondary)",
+          margin: "0 0 var(--space-6) 0",
+          maxWidth: 380,
+          lineHeight: 1.6,
+        }}
+      >
+        Connect an Instagram Business account to start building automations and managing direct messages.
+      </p>
+      <button
+        onClick={onConnect}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "var(--space-2)",
+          padding: "10px 20px",
+          background: "var(--primary)",
+          color: "#fff",
+          border: "none",
+          borderRadius: "var(--radius-md)",
+          fontSize: 14,
+          fontWeight: 500,
+          cursor: "pointer",
+          transition: "all var(--duration) var(--ease)",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--primary-hover)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "var(--primary)"; }}
+      >
+        <Plus size={16} />
+        Connect Instagram
+      </button>
+      <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: "var(--space-4)" }}>
+        Requires a Facebook Page linked to an Instagram Business Profile
+      </p>
+    </div>
+  );
+}
+
+/* ── Account Row ── */
+function AccountRow({
+  account,
+  onDisconnect,
+  isDisconnecting,
+}: {
+  account: InstagramAccount;
+  onDisconnect: () => void;
+  isDisconnecting: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "var(--space-4) var(--space-6)",
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-lg)",
+        transition: "all var(--duration) var(--ease)",
+      }}
+      className="card-interactive"
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
+        {/* Avatar/Icon */}
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "var(--radius-md)",
+            background: "linear-gradient(135deg, #833AB4, #E1306C, #F77737)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <Instagram size={20} color="#fff" />
+        </div>
+
+        {/* Info */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
+            {account.pageName}
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
+            <code
+              style={{
+                fontSize: 12,
+                color: "var(--text-muted)",
+                background: "var(--surface-secondary)",
+                padding: "1px 6px",
+                borderRadius: "var(--radius-sm)",
+                fontFamily: "var(--font-mono)",
+              }}
+            >
+              {account.instagramUserId}
+            </code>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+              Connected {new Date(account.connectedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
+        {/* Status */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "var(--space-1)",
+            fontSize: 12,
+            fontWeight: 500,
+            color: "var(--success)",
+          }}
+        >
+          <CircleCheck size={14} />
+          Active
+        </div>
+
+        {/* Disconnect */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onDisconnect(); }}
+          disabled={isDisconnecting}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "var(--space-1)",
+            padding: "6px 12px",
+            background: "transparent",
+            color: "var(--text-muted)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-md)",
+            fontSize: 13,
+            fontWeight: 500,
+            cursor: isDisconnecting ? "wait" : "pointer",
+            transition: "all var(--duration) var(--ease)",
+            opacity: isDisconnecting ? 0.5 : 1,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "var(--danger)";
+            e.currentTarget.style.color = "var(--danger)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "var(--border)";
+            e.currentTarget.style.color = "var(--text-muted)";
+          }}
+          aria-label={`Disconnect ${account.pageName}`}
+        >
+          <Unplug size={14} />
+          {isDisconnecting ? "Disconnecting…" : "Disconnect"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main Content ── */
 function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const queryClient = useQueryClient();
-
   const connectedParam = searchParams.get("connected");
   const errorParam = searchParams.get("error");
-
   const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
     if (connectedParam === "true") {
-      messageApi.success(
-        "Successfully connected your Instagram Business Account!",
-      );
-      // Clean query params
+      messageApi.success("Instagram Business account connected successfully.");
       router.replace("/");
     } else if (errorParam) {
       messageApi.error(`Connection failed: ${decodeURIComponent(errorParam)}`);
-      // Clean query params
       router.replace("/");
     }
   }, [connectedParam, errorParam, router, messageApi]);
 
-  // Query connected state
   const { data, isLoading, error } = useQuery({
     queryKey: ["meta-status"],
     queryFn: async () => {
       const response = await fetch(`${API_URL}/meta/status`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch connection status from API");
-      }
+      if (!response.ok) throw new Error("Failed to fetch connection status");
       return response.json() as Promise<{ accounts: InstagramAccount[] }>;
     },
   });
 
-  // Mutate disconnect
   const disconnectMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`${API_URL}/meta/disconnect`, {
@@ -80,19 +274,15 @@ function DashboardContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
-      if (!response.ok) {
-        throw new Error("Failed to disconnect account");
-      }
+      if (!response.ok) throw new Error("Failed to disconnect account");
       return response.json();
     },
     onSuccess: () => {
-      messageApi.success("Account disconnected successfully.");
+      messageApi.success("Account disconnected.");
       queryClient.invalidateQueries({ queryKey: ["meta-status"] });
     },
     onError: (err: Error) => {
-      messageApi.error(
-        err.message || "Failed to disconnect account due to API error",
-      );
+      messageApi.error(err.message || "Disconnect failed");
     },
   });
 
@@ -100,189 +290,121 @@ function DashboardContent() {
     window.location.href = `${API_URL}/meta/login`;
   };
 
-  const columns = [
-    {
-      title: "Instagram Page Name",
-      dataIndex: "pageName",
-      key: "pageName",
-      render: (text: string) => (
-        <span className="font-semibold flex items-center gap-2">
-          <InstagramOutlined style={{ color: "#E1306C" }} /> {text}
-        </span>
-      ),
-    },
-    {
-      title: "Instagram User ID",
-      dataIndex: "instagramUserId",
-      key: "instagramUserId",
-      render: (text: string) => (
-        <code className="text-xs bg-slate-100 px-1 py-0.5 rounded">{text}</code>
-      ),
-    },
-    {
-      title: "Facebook Page ID",
-      dataIndex: "pageId",
-      key: "pageId",
-      render: (text: string) => (
-        <Text type="secondary" className="text-xs">
-          {text}
-        </Text>
-      ),
-    },
-    {
-      title: "Connected At",
-      dataIndex: "connectedAt",
-      key: "connectedAt",
-      render: (text: string) => new Date(text).toLocaleString(),
-    },
-    {
-      title: "Status",
-      key: "status",
-      render: () => <Badge status="success" text="Connected" />,
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_: unknown, record: InstagramAccount) => (
-        <Button
-          danger
-          type="text"
-          icon={<DisconnectOutlined />}
-          loading={
-            disconnectMutation.isPending &&
-            disconnectMutation.variables === record.id
-          }
-          onClick={() => disconnectMutation.mutate(record.id)}
-        >
-          Disconnect
-        </Button>
-      ),
-    },
-  ];
-
   return (
-    <Layout className="min-h-screen bg-slate-50">
+    <AppShell>
       {contextHolder}
-      <Header className="bg-white border-b border-slate-200 px-8 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-red-500 to-indigo-600 flex items-center justify-center">
-            <InstagramOutlined className="text-white text-xl" />
-          </div>
-          <Title
-            level={4}
-            style={{ margin: 0, fontWeight: 800 }}
-            className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent"
-          >
-            InstaDM Connect
-          </Title>
-        </div>
-        <div className="flex items-center gap-6">
-          <Link
-            href="/"
-            className="font-semibold text-slate-900 border-b-2 border-indigo-600 py-5 text-sm"
+
+      {/* Page Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "var(--space-8)",
+        }}
+      >
+        <div>
+          <h1
+            style={{
+              fontSize: 26,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+              margin: 0,
+              letterSpacing: "-0.02em",
+            }}
           >
             Connections
-          </Link>
-          <Link
-            href="/automations"
-            className="font-semibold text-slate-500 hover:text-slate-800 transition py-5 text-sm"
+          </h1>
+          <p
+            style={{
+              fontSize: 14,
+              color: "var(--text-secondary)",
+              margin: "var(--space-1) 0 0 0",
+            }}
           >
-            Automations
-          </Link>
+            Manage linked Instagram Business accounts for automation.
+          </p>
         </div>
-      </Header>
 
-      <Content className="p-8 max-w-6xl mx-auto w-full flex flex-col gap-8">
-        <Card
-          variant="borderless"
-          className="shadow-sm rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-900 text-white relative overflow-hidden"
+        <button
+          onClick={handleConnect}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "var(--space-2)",
+            padding: "10px 20px",
+            background: "var(--primary)",
+            color: "#fff",
+            border: "none",
+            borderRadius: "var(--radius-md)",
+            fontSize: 14,
+            fontWeight: 500,
+            cursor: "pointer",
+            transition: "all var(--duration) var(--ease)",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--primary-hover)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--primary)"; }}
         >
-          <div className="absolute right-0 top-0 translate-x-20 -translate-y-20 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <Space direction="vertical" size="small">
-              <span className="px-3 py-1 bg-white/10 rounded-full text-indigo-200 text-xs font-semibold tracking-wide uppercase">
-                Instagram Business OAuth
-              </span>
-              <Title
-                level={2}
-                style={{ margin: 0, color: "white", fontWeight: 800 }}
-              >
-                Link Facebook & Instagram Business Access
-              </Title>
-              <Text className="text-slate-300">
-                Grant permission for read and manage capabilities by logging in
-                via Meta OAuth.
-              </Text>
-            </Space>
-            <Button
-              type="primary"
-              size="large"
-              icon={<InstagramOutlined />}
-              className="bg-white text-slate-900 border-none hover:bg-slate-100 font-bold shadow-lg"
-              onClick={handleConnect}
-            >
-              Connect Instagram
-            </Button>
-          </div>
-        </Card>
+          <Plus size={16} />
+          Connect Account
+        </button>
+      </div>
 
-        {isLoading ? (
-          <div className="py-20 flex flex-col items-center justify-center gap-3">
-            <Spin
-              indicator={<LoadingOutlined style={{ fontSize: 32 }} spin />}
-            />
-            <Text type="secondary">
-              Retrieving connection status details...
-            </Text>
-          </div>
-        ) : error ? (
-          <Alert
-            message="Server Error"
-            description="Failed to load connections from the backend. Make sure the NestJS backend is running on port 3001."
-            type="error"
-            showIcon
-          />
-        ) : (
-          <Card
-            variant="borderless"
-            className="shadow-sm rounded-2xl"
-            title={
-              <div className="flex items-center justify-between w-full py-1">
-                <span className="font-bold text-slate-800 flex items-center gap-2">
-                  <CheckCircleOutlined className="text-emerald-500" />
-                  Active Instagram Profiles ({data?.accounts.length ?? 0})
-                </span>
-              </div>
-            }
+      {/* Content */}
+      {isLoading ? (
+        <ConnectionsSkeleton />
+      ) : error ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "var(--space-3)",
+            padding: "var(--space-4) var(--space-6)",
+            background: "var(--danger-bg)",
+            border: "1px solid #FECACA",
+            borderRadius: "var(--radius-md)",
+            fontSize: 14,
+            color: "var(--danger)",
+          }}
+        >
+          <AlertCircle size={18} />
+          Unable to connect to backend. Ensure the API server is running on port 3001.
+        </div>
+      ) : !data?.accounts?.length ? (
+        <EmptyState onConnect={handleConnect} />
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "var(--space-2)",
+              fontSize: 12,
+              fontWeight: 500,
+              color: "var(--text-muted)",
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              padding: "0 var(--space-2)",
+              marginBottom: "var(--space-1)",
+            }}
           >
-            <Table
-              dataSource={data?.accounts}
-              columns={columns}
-              rowKey="id"
-              locale={{
-                emptyText: (
-                  <div className="py-12 text-center">
-                    <Text
-                      type="secondary"
-                      style={{ display: "block", marginBottom: 16 }}
-                    >
-                      No connected Instagram Business accounts found.
-                    </Text>
-                    <Button
-                      type="dashed"
-                      icon={<InstagramOutlined />}
-                      onClick={handleConnect}
-                    >
-                      Connect your first profile
-                    </Button>
-                  </div>
-                ),
-              }}
+            <CircleCheck size={14} color="var(--success)" />
+            {data.accounts.length} active {data.accounts.length === 1 ? "connection" : "connections"}
+          </div>
+
+          {data.accounts.map((account) => (
+            <AccountRow
+              key={account.id}
+              account={account}
+              onDisconnect={() => disconnectMutation.mutate(account.id)}
+              isDisconnecting={
+                disconnectMutation.isPending && disconnectMutation.variables === account.id
+              }
             />
-          </Card>
-        )}
-      </Content>
-    </Layout>
+          ))}
+        </div>
+      )}
+    </AppShell>
   );
 }
 
@@ -290,9 +412,9 @@ export default function Page() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
-          <Spin indicator={<LoadingOutlined style={{ fontSize: 32 }} spin />} />
-        </div>
+        <AppShell>
+          <ConnectionsSkeleton />
+        </AppShell>
       }
     >
       <DashboardContent />

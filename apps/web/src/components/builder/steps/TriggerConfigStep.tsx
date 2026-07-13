@@ -1,9 +1,7 @@
 import React from 'react';
-import { Card, Typography, Alert } from 'antd';
 import { TRIGGER_REGISTRY, RenderTriggerConfig } from '../TriggerRegistry';
 import { TriggerType } from '../types';
-
-const { Title, Text } = Typography;
+import { AlertTriangle } from 'lucide-react';
 
 interface TriggerConfigStepProps {
   type: TriggerType;
@@ -21,41 +19,78 @@ export default function TriggerConfigStep({
   const meta = TRIGGER_REGISTRY[type];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <div>
-        <Title level={4} style={{ margin: 0, fontWeight: 700 }}>
-          Step 2: Configure Trigger Rules
-        </Title>
-        <Text type="secondary">
-          Customize parameters for the selected "{meta?.title || type}" trigger.
-        </Text>
+        <h2 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 var(--space-1) 0' }}>
+          Configure Trigger Settings
+        </h2>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+          Customize target scopes and filters for the "<strong>{meta?.title || type}</strong>" event.
+        </p>
       </div>
 
-      <Card
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {meta?.icon}
-            <span style={{ fontWeight: 'bold' }}>{meta?.title || type} Rules</span>
-          </div>
-        }
-        variant="borderless"
-        style={{ borderRadius: '16px', border: '1px solid #cbd5e1' }}
+      <div
+        style={{
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)',
+          padding: 'var(--space-6)',
+        }}
       >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-6)', borderBottom: '1px solid var(--divider)', paddingBottom: 'var(--space-4)' }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--hover-bg)',
+              color: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {meta?.icon}
+          </div>
+          <div>
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+              {meta?.title || type} Rules
+            </h3>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              Configure scope restrictions below
+            </span>
+          </div>
+        </div>
+
         <RenderTriggerConfig
           type={type}
           config={config}
           onChange={onChange}
           instagramAccountId={instagramAccountId}
         />
-      </Card>
+      </div>
 
       {(!instagramAccountId || instagramAccountId === 'default') && (
-        <Alert
-          message="Account scope missing"
-          description="Make sure you select/link an active Instagram account to correctly display media lists."
-          type="warning"
-          showIcon
-        />
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 'var(--space-3)',
+            padding: 'var(--space-4) var(--space-5)',
+            background: 'var(--warning-bg)',
+            border: '1px solid #FDE68A',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--warning)',
+          }}
+        >
+          <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: 1 }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Account Scope Missing</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              Please link or select an active Instagram account to load and map assets (Reels or Posts) correctly.
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,24 +1,25 @@
 "use client";
 
 import React, { Suspense } from "react";
-import { Layout, Button, Typography, Spin, Alert, message } from "antd";
-import { LeftOutlined, ThunderboltOutlined, LoadingOutlined, InstagramOutlined } from "@ant-design/icons";
+import { Spin, Alert, Button, message } from "antd";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { ArrowLeft, Instagram } from "lucide-react";
 import dynamic from "next/dynamic";
 import { AutomationDraft } from "../../../../components/builder/types";
+import AppShell from "../../../../components/layout/AppShell";
 
 const AutomationBuilder = dynamic(
   () => import("../../../../components/builder/AutomationBuilder"),
   {
     ssr: false,
-    loading: () => <Spin size="large" className="py-20 flex justify-center w-full" />,
+    loading: () => (
+      <div style={{ display: "flex", justifyContent: "center", padding: "var(--space-12)" }}>
+        <Spin size="large" />
+      </div>
+    ),
   }
 );
-
-const { Header, Content } = Layout;
-const { Title, Text } = Typography;
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -106,22 +107,22 @@ function EditAutomationContent() {
 
   if (isLoading) {
     return (
-      <Layout className="min-h-screen bg-slate-50">
-        <div className="py-40 flex flex-col items-center justify-center gap-3">
-          <Spin indicator={<LoadingOutlined style={{ fontSize: 32 }} spin />} />
-          <Text type="secondary">Loading automation details...</Text>
+      <AppShell>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "var(--space-12)", gap: "var(--space-3)" }}>
+          <Spin size="large" />
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Loading flow details...</span>
         </div>
-      </Layout>
+      </AppShell>
     );
   }
 
   if (error) {
     return (
-      <Layout className="min-h-screen bg-slate-50">
-        <Content className="p-8 max-w-3xl mx-auto w-full">
+      <AppShell>
+        <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "var(--space-6)" }}>
           <Alert
             message="Error"
-            description="Failed to load automation details. Check the ID parameter and verify connection to NestJS."
+            description="Failed to load automation details. Check the parameter ID and verify NestJS API status."
             type="error"
             showIcon
             action={
@@ -134,62 +135,63 @@ function EditAutomationContent() {
               </Button>
             }
           />
-        </Content>
-      </Layout>
+        </div>
+      </AppShell>
     );
   }
 
   return (
-    <Layout className="min-h-screen bg-slate-50">
+    <AppShell>
       {contextHolder}
-      <Header className="bg-white border-b border-slate-200 px-8 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-red-500 to-indigo-600 flex items-center justify-center">
-            <ThunderboltOutlined className="text-white text-xl" />
-          </div>
-          <Title
-            level={4}
-            style={{ margin: 0, fontWeight: 800 }}
-            className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent"
-          >
-            InstaDM Manager
-          </Title>
-        </div>
-        <div className="flex items-center gap-6">
-          <Link
-            href="/"
-            className="font-semibold text-slate-500 hover:text-slate-800 transition py-5 text-sm"
-          >
-            Connections
-          </Link>
-          <Link
-            href="/automations"
-            className="font-semibold text-slate-900 border-b-2 border-indigo-600 py-5 text-sm"
-          >
-            Automations
-          </Link>
-        </div>
-      </Header>
 
-      <Content className="p-8 max-w-4xl mx-auto w-full flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              type="text"
-              icon={<LeftOutlined />}
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+        {/* Header toolbar */}
+        <div style={{ display: "flex", alignItems: "center", justifyContext: "space-between", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+            <button
               onClick={() => router.push("/automations")}
-            />
-            <Title level={3} style={{ margin: 0 }}>
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 32,
+                height: 32,
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-md)",
+                cursor: "pointer",
+                color: "var(--text-secondary)",
+                transition: "all var(--duration) var(--ease)",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-secondary)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface)"; }}
+              aria-label="Return to automations list"
+              type="button"
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
               Edit Automation Flow
-            </Title>
+            </h1>
           </div>
 
           {activeAccount && (
-            <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-2">
-              <InstagramOutlined className="text-indigo-650" />
-              <span className="text-xs font-bold text-indigo-750">
-                Scope: {activeAccount.pageName}
-              </span>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "var(--space-2)",
+                background: "var(--hover-bg)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-md)",
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 650,
+                color: "var(--primary)",
+              }}
+            >
+              <Instagram size={14} />
+              Scope: {activeAccount.pageName}
             </div>
           )}
         </div>
@@ -201,8 +203,8 @@ function EditAutomationContent() {
           onSave={handleSave}
           isSaving={updateMutation.isPending}
         />
-      </Content>
-    </Layout>
+      </div>
+    </AppShell>
   );
 }
 
@@ -210,9 +212,11 @@ export default function Page() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
-          <Spin size="large" />
-        </div>
+        <AppShell>
+          <div style={{ display: "flex", justifyContent: "center", padding: "var(--space-12)" }}>
+            <Spin size="large" />
+          </div>
+        </AppShell>
       }
     >
       <EditAutomationContent />

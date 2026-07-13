@@ -1,23 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import Providers from "./providers";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Instagram DM Automation Platform",
+  title: "AutoDM — Instagram Automation Platform",
   description:
-    "Connect business accounts, set keyword triggers, and automate your Instagram messaging workflow.",
+    "Enterprise-grade Instagram DM automation. Connect accounts, build keyword triggers, and automate messaging workflows at scale.",
 };
 
 export default function RootLayout({
@@ -27,9 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body style={{ fontFamily: "var(--font-sans)" }}>
         <AntdRegistry>
           <Providers>{children}</Providers>
         </AntdRegistry>

@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  MessageOutlined,
-  VideoCameraOutlined,
-  PictureOutlined,
-  PlayCircleOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
+import { MessageSquare, Film, Image, Play, AtSign } from 'lucide-react';
 import { TriggerType } from './types';
 
 import DirectMessageTriggerConfig from './trigger-configs/DirectMessageTriggerConfig';
@@ -26,37 +20,37 @@ export const TRIGGER_REGISTRY: Record<TriggerType, TriggerMetadata> = {
   DIRECT_MESSAGE: {
     type: 'DIRECT_MESSAGE',
     title: 'Direct Message',
-    description: 'Triggers on incoming DMs',
-    explanation: 'Listens to direct messages sent to your inbox. You can match any message or look for specific keywords.',
-    icon: <MessageOutlined style={{ fontSize: '24px', color: '#3b82f6' }} />,
+    description: 'Triggers on incoming direct messages',
+    explanation: 'Listens to direct messages sent to your inbox. You can match all incoming messages or filter by specific keywords.',
+    icon: <MessageSquare size={20} strokeWidth={2} />,
   },
   REEL_COMMENT: {
     type: 'REEL_COMMENT',
     title: 'Reel Comment',
-    description: 'Triggers on Reel comments',
-    explanation: 'Listens for comments left on all Reels or a specific Reel asset. Supports custom reply comments & trigger keywords.',
-    icon: <VideoCameraOutlined style={{ fontSize: '24px', color: '#ec4899' }} />,
+    description: 'Triggers on Instagram Reel comments',
+    explanation: 'Listens for comment interactions on all Reels or a specific linked Reel. Supports automatic comment reply and keyword filtering.',
+    icon: <Film size={20} strokeWidth={2} />,
   },
   POST_COMMENT: {
     type: 'POST_COMMENT',
     title: 'Post Comment',
     description: 'Triggers on Feed post comments',
-    explanation: 'Listens for comments left on your standard feed media. Trigger automations when visitors leave feedback on specific posts.',
-    icon: <PictureOutlined style={{ fontSize: '24px', color: '#10b981' }} />,
+    explanation: 'Listens for comment interactions on your standard feed posts. Works on all media items or specific posts.',
+    icon: <Image size={20} strokeWidth={2} />,
   },
   STORY_REPLY: {
     type: 'STORY_REPLY',
     title: 'Story Reply',
-    description: 'Triggers on Story replies',
-    explanation: 'Listens to conversations created when users reply to any active story posted by your linked page.',
-    icon: <PlayCircleOutlined style={{ fontSize: '24px', color: '#f59e0b' }} />,
+    description: 'Triggers on active Story replies',
+    explanation: 'Listens to private chat replies generated when visitors react to any of your active published Page Stories.',
+    icon: <Play size={20} strokeWidth={2} />,
   },
   STORY_MENTION: {
     type: 'STORY_MENTION',
     title: 'Story Mention',
-    description: 'Triggers when mentioned in a Story',
-    explanation: 'Triggers automations immediately as soon as another Instagram account tags you in their story post.',
-    icon: <UserOutlined style={{ fontSize: '24px', color: '#8b5cf6' }} />,
+    description: 'Triggers when user mentions you in a Story',
+    explanation: 'Triggers your marketing and response pipeline as soon as another Instagram user tags or mentions your handle in their story.',
+    icon: <AtSign size={20} strokeWidth={2} />,
   },
 };
 
