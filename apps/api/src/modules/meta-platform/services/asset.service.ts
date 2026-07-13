@@ -29,7 +29,7 @@ export class AssetService {
     limit = 100,
     after?: string
   ): Promise<MetaMediaListResult> {
-    const fields = 'id,caption,media_type,thumbnail_url,media_url,permalink,shortcode,timestamp';
+    const fields = 'id,caption,media_type,thumbnail_url,media_url,permalink,timestamp';
     const params: Record<string, string> = {
       fields,
       limit: String(limit),
@@ -44,16 +44,26 @@ export class AssetService {
       params
     );
 
-    const items: MetaMediaItemData[] = rawItems.map((raw: any) => ({
-      instagramMediaId: raw.id,
-      caption: raw.caption,
-      mediaType: raw.media_type,
-      mediaUrl: raw.media_url,
-      thumbnailUrl: raw.thumbnail_url,
-      permalink: raw.permalink,
-      shortCode: raw.shortcode,
-      timestamp: raw.timestamp ? new Date(raw.timestamp) : new Date(),
-    }));
+    const items: MetaMediaItemData[] = rawItems.map((raw: any) => {
+      let shortCode: string | undefined = undefined;
+      if (raw.permalink) {
+        const match = raw.permalink.match(/\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/);
+        if (match) {
+          shortCode = match[1];
+        }
+      }
+
+      return {
+        instagramMediaId: raw.id,
+        caption: raw.caption,
+        mediaType: raw.media_type,
+        mediaUrl: raw.media_url,
+        thumbnailUrl: raw.thumbnail_url,
+        permalink: raw.permalink,
+        shortCode,
+        timestamp: raw.timestamp ? new Date(raw.timestamp) : new Date(),
+      };
+    });
 
     return { items, nextCursor };
   }

@@ -156,6 +156,21 @@ export class AssetService {
     };
   }
 
+  private async ensureInitialSync(instagramAccountId?: string): Promise<void> {
+    if (!instagramAccountId || instagramAccountId === 'default') {
+      return;
+    }
+    const profile = await this.getProfile(instagramAccountId);
+    if (!profile) {
+      this.logger.log(`No existing profile found for account ${instagramAccountId}. Executing initial on-the-fly assets sync.`);
+      try {
+        await this.syncProfileAndAssets(instagramAccountId);
+      } catch (err: any) {
+        this.logger.error(`Initial asset sync failed: ${err.message}`);
+      }
+    }
+  }
+
   async getProfile(instagramAccountId: string): Promise<InstagramProfile | null> {
     return this.assetRepo.getProfileByAccountId(instagramAccountId);
   }
@@ -165,6 +180,9 @@ export class AssetService {
   }
 
   async getAssets(filters: FindAssetsFilters): Promise<{ total: number; items: InstagramAsset[] }> {
+    if (filters.instagramAccountId) {
+      await this.ensureInitialSync(filters.instagramAccountId);
+    }
     return this.assetRepo.findAssets(filters);
   }
 
@@ -173,6 +191,7 @@ export class AssetService {
     page = 1,
     limit = 10
   ): Promise<{ total: number; items: InstagramAsset[] }> {
+    await this.ensureInitialSync(instagramAccountId);
     return this.assetRepo.findAssets({
       instagramAccountId,
       assetType: InstagramAssetType.REEL,
@@ -186,6 +205,7 @@ export class AssetService {
     page = 1,
     limit = 10
   ): Promise<{ total: number; items: InstagramAsset[] }> {
+    await this.ensureInitialSync(instagramAccountId);
     return this.assetRepo.findAssets({
       instagramAccountId,
       assetType: InstagramAssetType.POST,
