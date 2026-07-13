@@ -43,12 +43,12 @@ function EditAutomationContent() {
       if (!response.ok) {
         throw new Error("Failed to fetch connection status");
       }
-      return response.json() as Promise<{ accounts: Array<{ instagramUserId: string; pageName: string }> }>;
+      return response.json() as Promise<{ accounts: Array<{ id: string; instagramUserId: string; pageName: string }> }>;
     },
   });
 
   const activeAccount = statusData?.accounts?.find(
-    (acc) => acc.instagramUserId === activeAccountId
+    (acc) => acc.id === activeAccountId
   );
 
   // Fetch existing details

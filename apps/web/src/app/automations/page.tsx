@@ -83,17 +83,34 @@ function AutomationsContent() {
   });
 
   // 2. Synchronize selected account with state and localStorage
+  //    IMPORTANT: We use the Prisma UUID (acc.id) as the canonical internal identifier.
+  //    The instagramUserId (Meta Business ID) is only used for display and Meta API calls.
   useEffect(() => {
     if (statusData?.accounts && statusData.accounts.length > 0) {
       const saved = localStorage.getItem("selected_instagram_account_id");
-      const exists = statusData.accounts.some((acc) => acc.instagramUserId === saved);
-      if (saved && exists) {
+
+      // Direct UUID match — the happy path after migration
+      const exactMatch = statusData.accounts.find((acc) => acc.id === saved);
+      if (saved && exactMatch) {
         setSelectedAccountId(saved);
-      } else {
-        const firstId = statusData.accounts[0].instagramUserId;
-        setSelectedAccountId(firstId);
-        localStorage.setItem("selected_instagram_account_id", firstId);
+        return;
       }
+
+      // Migration: if the saved value is an old instagramUserId (Meta Business ID),
+      // transparently convert it to the internal UUID. This runs once per user upgrade.
+      if (saved) {
+        const legacyMatch = statusData.accounts.find((acc) => acc.instagramUserId === saved);
+        if (legacyMatch) {
+          setSelectedAccountId(legacyMatch.id);
+          localStorage.setItem("selected_instagram_account_id", legacyMatch.id);
+          return;
+        }
+      }
+
+      // Fallback: no saved value or saved value doesn't match any account
+      const firstId = statusData.accounts[0].id;
+      setSelectedAccountId(firstId);
+      localStorage.setItem("selected_instagram_account_id", firstId);
     } else {
       setSelectedAccountId(null);
     }
@@ -399,7 +416,7 @@ function AutomationsContent() {
 
   // Active Selected Instagram Profile Object Details - Task 5
   const selectedAccountDetails = accountsList.find(
-    (acc) => acc.instagramUserId === selectedAccountId
+    (acc) => acc.id === selectedAccountId
   );
 
   return (
@@ -428,7 +445,7 @@ function AutomationsContent() {
                   placeholder="Select account"
                 >
                   {accountsList.map((acc) => (
-                    <Select.Option key={acc.instagramUserId} value={acc.instagramUserId}>
+                    <Select.Option key={acc.id} value={acc.id}>
                       {acc.pageName || `ID: ${acc.instagramUserId}`}
                     </Select.Option>
                   ))}
