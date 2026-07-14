@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Zap, Link2, Bot, Settings } from "lucide-react";
+import { Zap, Link2, Bot, Settings, Image, Activity } from "lucide-react";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -12,6 +12,8 @@ interface AppShellProps {
 const NAV_ITEMS = [
   { href: "/", label: "Connections", icon: Link2 },
   { href: "/automations", label: "Automations", icon: Bot },
+  { href: "/assets", label: "Asset Library", icon: Image },
+  { href: "/executions", label: "Execution Logs", icon: Activity },
 ];
 
 export default function AppShell({ children }: AppShellProps) {
