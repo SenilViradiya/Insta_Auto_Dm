@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Suspense, useEffect } from "react";
-import { Spin, message } from "antd";
+import { message } from "antd";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Instagram } from "lucide-react";
@@ -10,15 +10,44 @@ import { AutomationDraft } from "../../../components/builder/types";
 import { useBuilderStore } from "../../../components/builder/builder.store";
 import AppShell from "../../../components/layout/AppShell";
 
+function BuilderSkeleton() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+      {/* Top panel skeleton */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", paddingBottom: "var(--space-4)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", width: "60%" }}>
+          <div style={{ width: "30%", height: "24px" }} className="skeleton" />
+          <div style={{ width: "50%", height: "12px", marginTop: "4px" }} className="skeleton" />
+        </div>
+        <div style={{ width: "120px", height: "36px", borderRadius: "var(--radius-md)" }} className="skeleton" />
+      </div>
+
+      {/* Main split canvas */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 2fr", gap: "var(--space-6)" }}>
+        {/* Left config form card */}
+        <div style={{ padding: "var(--space-5)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", background: "var(--surface)", display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+          <div style={{ width: "40%", height: "16px" }} className="skeleton" />
+          <div style={{ width: "100%", height: "40px" }} className="skeleton" />
+          <div style={{ width: "100%", height: "60px" }} className="skeleton" />
+          <div style={{ width: "100%", height: "40px" }} className="skeleton" />
+        </div>
+
+        {/* Right canvas card */}
+        <div style={{ padding: "var(--space-6)", border: "1px dashed var(--border)", borderRadius: "var(--radius-lg)", background: "var(--surface-secondary)", minHeight: "360px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "var(--space-5)" }}>
+          <div style={{ width: "56px", height: "56px", borderRadius: "50%" }} className="skeleton" />
+          <div style={{ width: "180px", height: "16px" }} className="skeleton" />
+          <div style={{ width: "130px", height: "12px" }} className="skeleton" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const AutomationBuilder = dynamic(
   () => import("../../../components/builder/AutomationBuilder"),
   {
     ssr: false,
-    loading: () => (
-      <div style={{ display: "flex", justifyContent: "center", padding: "var(--space-12)" }}>
-        <Spin size="large" />
-      </div>
-    ),
+    loading: () => <BuilderSkeleton />,
   }
 );
 
@@ -169,9 +198,7 @@ export default function Page() {
     <Suspense
       fallback={
         <AppShell>
-          <div style={{ display: "flex", justifyContent: "center", padding: "var(--space-12)" }}>
-            <Spin size="large" />
-          </div>
+          <BuilderSkeleton />
         </AppShell>
       }
     >

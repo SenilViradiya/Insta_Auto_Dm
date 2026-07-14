@@ -165,33 +165,25 @@ export default function AssetsPage() {
                         </p>
                     </div>
 
-                    {/* Account Swapper */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 550 }}>
-                            Instagram Profile:
-                        </span>
-                        <select
-                            value={selectedAccountId || ""}
-                            onChange={(e) => handleAccountChange(e.target.value)}
+                    {/* Active Workspace Badge indicator */}
+                    {selectedAccount && (
+                        <div
                             style={{
-                                padding: "6px 12px",
-                                border: "1px solid var(--border)",
-                                borderRadius: "var(--radius-md)",
-                                fontSize: "13px",
-                                color: "var(--text-primary)",
-                                background: "var(--surface)",
-                                cursor: "pointer",
-                                fontWeight: 600,
-                                outline: "none",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                fontSize: "12px",
+                                color: "var(--text-secondary)",
+                                background: "var(--surface-secondary)",
+                                padding: "4px 10px",
+                                borderRadius: "12px",
+                                border: "1px solid var(--border)"
                             }}
                         >
-                            {accountsList.map((acc) => (
-                                <option key={acc.id} value={acc.id}>
-                                    {acc.pageName || acc.instagramUserId}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--success)" }} />
+                            <span>Active Profile: <strong style={{ color: "var(--text-primary)" }}>{selectedAccount.pageName}</strong></span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Informational banner */}

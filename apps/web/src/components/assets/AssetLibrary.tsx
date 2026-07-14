@@ -22,7 +22,7 @@ import {
     Film,
     Compass,
 } from "lucide-react";
-import { Spin, message } from "antd";
+import { message } from "antd";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
