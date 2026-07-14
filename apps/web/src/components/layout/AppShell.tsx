@@ -1,9 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Zap, Link2, Bot, Settings, Image, Activity, BarChart3 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { AccountSwitcher } from "../workspace/WorkspaceComponents";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -19,10 +23,44 @@ const NAV_ITEMS = [
 
 export default function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
+  };
+
+  const { data: statusData } = useQuery({
+    queryKey: ["meta-status"],
+    queryFn: async () => {
+      const response = await fetch(`${API_URL}/meta/status`);
+      if (!response.ok) return { accounts: [] };
+      return response.json();
+    },
+  });
+
+  useEffect(() => {
+    if (statusData?.accounts && statusData.accounts.length > 0) {
+      const saved = localStorage.getItem("selected_instagram_account_id");
+      const exactMatch = statusData.accounts.find((acc: any) => acc.id === saved);
+      if (saved && exactMatch) {
+        setSelectedAccountId(saved);
+        return;
+      }
+      setSelectedAccountId(statusData.accounts[0].id);
+    } else {
+      setSelectedAccountId(null);
+    }
+  }, [statusData]);
+
+  const handleSelectAccount = (id: string) => {
+    setSelectedAccountId(id);
+    localStorage.setItem("selected_instagram_account_id", id);
+    window.location.reload();
+  };
+
+  const handleConnectNew = () => {
+    window.location.href = `${API_URL}/meta/login`;
   };
 
   return (
@@ -49,41 +87,55 @@ export default function AppShell({ children }: AppShellProps) {
             height: 56,
           }}
         >
-          {/* Logo */}
-          <Link
-            href="/"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "var(--space-3)",
-              textDecoration: "none",
-            }}
-            aria-label="Home"
-          >
-            <div
+          {/* Logo & Switcher */}
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <Link
+              href="/"
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: "var(--radius-md)",
-                background: "var(--primary)",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
+                gap: "var(--space-3)",
+                textDecoration: "none",
               }}
+              aria-label="Home"
             >
-              <Zap size={18} color="#fff" strokeWidth={2.5} />
-            </div>
-            <span
-              style={{
-                fontSize: 17,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              AutoDM
-            </span>
-          </Link>
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "var(--radius-md)",
+                  background: "var(--primary)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Zap size={18} color="#fff" strokeWidth={2.5} />
+              </div>
+              <span
+                style={{
+                  fontSize: 17,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                AutoDM
+              </span>
+            </Link>
+
+            {statusData?.accounts && statusData.accounts.length > 0 && (
+              <>
+                <div style={{ width: "1px", height: "16px", background: "var(--border)" }} />
+                <AccountSwitcher
+                  accounts={statusData.accounts}
+                  selectedId={selectedAccountId}
+                  onSelect={handleSelectAccount}
+                  onConnectNew={handleConnectNew}
+                />
+              </>
+            )}
+          </div>
 
           {/* Navigation Links */}
           <nav style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>
