@@ -27,6 +27,17 @@ import {
 } from "lucide-react";
 import AppShell from "../../components/layout/AppShell";
 import { useRouter } from "next/navigation";
+import {
+    PageHeader,
+    Toolbar,
+    FilterBar,
+    SearchInput,
+    EmptyState,
+    StatusBadge,
+    Timeline,
+    DrawerHeader,
+    LoadingSkeleton,
+} from "../../components/ui";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -450,30 +461,7 @@ export default function ExecutionsPage() {
         alert("Copied Execution ID to clipboard.");
     };
 
-    // Skeletons
-    const renderSkeleton = () => (
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "10px" }}>
-            {[1, 2, 3, 4, 5].map((idx) => (
-                <div
-                    key={idx}
-                    style={{
-                        height: "75px",
-                        background: "var(--surface)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "var(--radius-md)",
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "0 var(--space-4)",
-                        animation: "skeleton-pulse 1.8s infinite"
-                    }}
-                >
-                    <div style={{ width: "30%", height: "16px", background: "var(--border)", borderRadius: "4px" }} />
-                    <div style={{ width: "20%", height: "16px", background: "var(--border)", borderRadius: "4px", marginLeft: "auto" }} />
-                    <div style={{ width: "15%", height: "16px", background: "var(--border)", borderRadius: "4px", marginLeft: "var(--space-8)" }} />
-                </div>
-            ))}
-        </div>
-    );
+
 
     return (
         <AppShell>
@@ -691,7 +679,7 @@ export default function ExecutionsPage() {
 
                 {/* Execution Log Table view */}
                 {executionsLoading ? (
-                    renderSkeleton()
+                    <LoadingSkeleton variant="table" count={5} />
                 ) : renderedExecutions.length === 0 ? (
                     <div
                         style={{
