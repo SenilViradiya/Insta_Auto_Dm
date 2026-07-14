@@ -25,6 +25,7 @@ export class WaitActionStrategy implements ActionStrategy {
     return {
       transitionToStatus: 'WAITING',
       retryable: false, // Wait timer operations do not retry
+      delaySeconds,
     };
   }
 }

@@ -19,6 +19,7 @@ import { PrismaService } from '../../prisma.service';
 import { TriggerType, ActionType, ExecutionStatus, Operator } from '@prisma/client';
 import { SendMessageActionStrategy } from '../strategies/send-message-action.strategy';
 import { WaitActionStrategy } from '../strategies/wait-action.strategy';
+import { ReplyCommentActionStrategy } from '../strategies/reply-comment-action.strategy';
 import { TokenService } from '../../modules/meta-platform/services/token.service';
 import { MessagingService as MetaMessagingService } from '../../modules/meta-platform/services/messaging.service';
 
@@ -82,6 +83,7 @@ describe('Reel Comment to DM Integration E2E', () => {
 
     mockMessagingServiceOld = {
       send: jest.fn().mockResolvedValue({ success: true, messageId: 'msg_999' }),
+      sendPublicReply: jest.fn().mockResolvedValue({ success: true, replyId: 'reply_555' }),
     };
 
     mockTokenService = {
@@ -98,6 +100,7 @@ describe('Reel Comment to DM Integration E2E', () => {
     };
 
     mockMetricsService = {
+      mockTokenService,
       incrementSuccess: jest.fn(),
       incrementDlq: jest.fn(),
       incrementFailure: jest.fn(),
@@ -121,8 +124,9 @@ describe('Reel Comment to DM Integration E2E', () => {
         ActionStrategyResolver,
         SendMessageActionStrategy,
         WaitActionStrategy,
+        ReplyCommentActionStrategy,
         AutomationConfig,
-        
+
         // Trigger Strategies
         DirectMessageTriggerStrategy,
         ReelCommentTriggerStrategy,
@@ -146,8 +150,7 @@ describe('Reel Comment to DM Integration E2E', () => {
             actionResolver,
             metricsSvc,
             config,
-            tokenSvc,
-            metaMsgSvc,
+            varResolver,
           ) => {
             const engine = new ExecutionEngine(
               execRepo,
@@ -157,8 +160,7 @@ describe('Reel Comment to DM Integration E2E', () => {
               actionResolver,
               metricsSvc,
               config,
-              tokenSvc,
-              metaMsgSvc,
+              varResolver,
             );
             executionEngine = engine;
             return engine;
@@ -171,8 +173,7 @@ describe('Reel Comment to DM Integration E2E', () => {
             ActionStrategyResolver,
             MetricsService,
             AutomationConfig,
-            TokenService,
-            MetaMessagingService,
+            VariableResolver,
           ],
         },
       ],
@@ -273,11 +274,14 @@ describe('Reel Comment to DM Integration E2E', () => {
     const execution = executions[0];
     expect(execution.status).toBe(ExecutionStatus.SUCCESS);
 
-    // Validate public comment reply was posted correctly via Meta Platform layer
-    expect(mockMetaMessagingService.sendPublicReply).toHaveBeenCalledWith(
-      'comment_abc123',
-      'Check your DM 😊',
-      'decrypted_access_token',
+    // Validate public comment reply was posted correctly via MessagingService
+    expect(mockMessagingServiceOld.sendPublicReply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instagramAccountId: 'instagram_account_123',
+        commentId: 'comment_abc123',
+        messageText: 'Check your DM 😊',
+        automationExecutionId: execution.id,
+      }),
     );
 
     // Validate variables resolved and direct message sent
@@ -293,13 +297,12 @@ describe('Reel Comment to DM Integration E2E', () => {
     // Validate execution logging containing all requested parameters
     const startLog = execution.logs.find((l) => l.message.includes('[Trigger matched]'));
     expect(startLog).toBeDefined();
-    
+
     const meta = startLog?.metadata as any;
     expect(meta.triggerMatched).toBe(true);
     expect(meta.matchedKeyword).toEqual(['price']);
     expect(meta.selectedReel).toBe('reel_123');
     expect(meta.commentId).toBe('comment_abc123');
-    expect(meta.publicReplyStatus).toBe('SUCCESS');
     expect(meta.dmStatus).toBe('QUEUED');
 
     // 5. Test IDEMPOTENCY / Duplicate Webhook Protection

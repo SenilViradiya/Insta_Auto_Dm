@@ -17,4 +17,5 @@ export interface ExecutionContext {
   variables: Record<string, string>;
   metadata: Record<string, any>;
   timestamp: Date;
+  resolveVariable?: (template: string) => string;
 }

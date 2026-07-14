@@ -8,7 +8,7 @@ export class MetaGraphClient {
   constructor(
     private readonly metaMessagingService: MetaMessagingService,
     private readonly graphClient: GraphClient,
-  ) {}
+  ) { }
 
   async sendMessage(
     recipientId: string,
@@ -24,6 +24,18 @@ export class MetaGraphClient {
       recipientId: response.recipientId,
       messageId: response.messageId,
     };
+  }
+
+  async sendPublicReply(
+    commentId: string,
+    messageText: string,
+    accessToken: string,
+  ): Promise<{ commentId: string; replyId: string }> {
+    return await this.metaMessagingService.sendPublicReply(
+      commentId,
+      messageText,
+      accessToken,
+    );
   }
 
   async healthCheck(accessToken: string): Promise<boolean> {

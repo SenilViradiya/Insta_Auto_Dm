@@ -11,9 +11,7 @@ import { AutomationModel } from '../interfaces/repository.interfaces';
 import { ExecutionException, ActionException, NonRetryableException, RetryException } from '../errors/automation.errors';
 import { MetricsService } from './metrics.service';
 import { AutomationConfig } from '../config/automation.config';
-
-import { TokenService } from '../../modules/meta-platform/services/token.service';
-import { MessagingService as MetaMessagingService } from '../../modules/meta-platform/services/messaging.service';
+import { VariableResolver } from './variable-resolver';
 
 @Injectable()
 export class ExecutionEngine {
@@ -27,9 +25,31 @@ export class ExecutionEngine {
     private readonly actionStrategyResolver: ActionStrategyResolver,
     private readonly metricsService: MetricsService,
     private readonly config: AutomationConfig,
-    private readonly tokenService: TokenService,
-    private readonly metaMessagingService: MetaMessagingService,
-  ) {}
+    private readonly variableResolver: VariableResolver,
+  ) { }
+
+  /**
+   * Helper to retrieve runtime action execution steps (prepending dynamic REPLY_COMMENT actions for comments)
+   */
+  private getRuntimeActions(automation: AutomationModel): Array<{ id: string; actionType: string; payload: any }> {
+    const list = [...(automation.actions || [])].map(act => ({
+      id: act.id,
+      actionType: act.actionType as string,
+      payload: act.payload,
+    }));
+
+    if (
+      automation.triggerConfig?.publicReply &&
+      (automation.triggerType === 'REEL_COMMENT' || automation.triggerType === 'POST_COMMENT')
+    ) {
+      list.unshift({
+        id: `virtual-reply-${automation.id}`,
+        actionType: 'REPLY_COMMENT',
+        payload: { data: { text: automation.triggerConfig.publicReply } },
+      });
+    }
+    return list;
+  }
 
   /**
    * Evaluates conditions and initiates execution.
@@ -76,27 +96,7 @@ export class ExecutionEngine {
       status: ExecutionStatus.QUEUED,
     });
 
-    // 3. Optional Public Reply
-    let publicReplyStatus = 'SKIPPED';
-    if (automation.triggerConfig?.publicReply && event.eventType === 'REEL_COMMENT') {
-      try {
-        const token = await this.tokenService.getToken(event.instagramAccountId);
-        await this.metaMessagingService.sendPublicReply(
-          event.eventId, // comment ID is eventId
-          automation.triggerConfig.publicReply,
-          token,
-        );
-        publicReplyStatus = 'SUCCESS';
-      } catch (err: any) {
-        publicReplyStatus = 'FAILED';
-        this.logger.error(
-          `Failed to dispatch public reply: ${err.message}`,
-          JSON.stringify({ correlationId, eventId: event.eventId }),
-        );
-      }
-    }
-
-    // 4. Log trigger matching and execution metadata
+    // 3. Log trigger matching and execution metadata
     await this.executionRepo.createLog({
       executionId: execution.id,
       level: 'INFO',
@@ -106,7 +106,6 @@ export class ExecutionEngine {
         matchedKeyword: event.metadata?.matchedKeywords || [],
         selectedReel: automation.triggerConfig?.mediaId || null,
         commentId: event.eventId,
-        publicReplyStatus,
         dmStatus: 'QUEUED',
         automationId: automation.id,
         eventId: event.eventId,
@@ -115,9 +114,11 @@ export class ExecutionEngine {
       correlationId,
     });
 
-    // 5. Enqueue first action in pipeline
-    if (automation.actions && automation.actions.length > 0) {
-      const firstAction = automation.actions[0];
+    const runtimeActions = this.getRuntimeActions(automation);
+
+    // 4. Enqueue first action in pipeline
+    if (runtimeActions.length > 0) {
+      const firstAction = runtimeActions[0];
       await this.executionRepo.createLog({
         executionId: execution.id,
         level: 'INFO',
@@ -165,9 +166,19 @@ export class ExecutionEngine {
     const allAutomations = await this.automationRepo.findMany({
       instagramAccountId: event.instagramAccountId,
     });
-    const targetAuto = allAutomations.items.find((auto) =>
-      auto.actions.some((act) => act.id === actionId),
-    ) || null;
+
+    let targetAuto: AutomationModel | null = null;
+    let action: any = null;
+
+    for (const auto of allAutomations.items) {
+      const acts = this.getRuntimeActions(auto);
+      const found = acts.find((act) => act.id === actionId);
+      if (found) {
+        targetAuto = auto;
+        action = found;
+        break;
+      }
+    }
 
     if (!targetAuto) {
       throw new ExecutionException(
@@ -175,7 +186,6 @@ export class ExecutionEngine {
       );
     }
 
-    const action = targetAuto.actions.find((act) => act.id === actionId);
     if (!action) {
       throw new ActionException(`Action step ${actionId} not found`);
     }
@@ -229,6 +239,11 @@ export class ExecutionEngine {
       timestamp: new Date(),
     };
 
+    // Attach runtime variable resolver
+    context.resolveVariable = (template: string) => {
+      return this.variableResolver.resolve(template, context);
+    };
+
     // Log action execution started
     await this.executionRepo.createLog({
       executionId,
@@ -255,7 +270,7 @@ export class ExecutionEngine {
       context,
     );
 
-    // Only throw retry/non-retry if the step was not completed successfully or transitioning to waite-timer
+    // Only throw retry/non-retry if the step was not completed successfully or transitioning to waiting/timer
     if (result.transitionToStatus !== 'SUCCESS' && result.transitionToStatus !== 'WAITING') {
       if (result.retryable) {
         throw new RetryException(`Strategy execution failed with a retryable error`);
@@ -265,12 +280,19 @@ export class ExecutionEngine {
     }
 
     // 3. Move to next step or handle wait timers
+    const runtimeActions = this.getRuntimeActions(targetAuto);
+    const currentIndex = runtimeActions.findIndex((act) => act.id === actionId);
+    const nextIndex = currentIndex + 1;
+    const hasNext = nextIndex < runtimeActions.length;
+
     if (result.transitionToStatus === 'WAITING') {
+      const delaySeconds = result.delaySeconds || 0;
+
       await this.executionRepo.createLog({
         executionId,
         level: 'INFO',
         message: `Action requested WAITING state. Transitioning execution to WAITING.`,
-        metadata: { actionId },
+        metadata: { actionId, delaySeconds },
         correlationId,
       });
 
@@ -278,6 +300,22 @@ export class ExecutionEngine {
         executionId,
         ExecutionStatus.WAITING,
       );
+
+      if (hasNext) {
+        const nextAction = runtimeActions[nextIndex];
+        await this.executionRepo.createLog({
+          executionId,
+          level: 'INFO',
+          message: `Scheduling next action with delay: ${nextAction.actionType} (Index: ${nextIndex}, delay: ${delaySeconds}s)`,
+          metadata: { nextActionId: nextAction.id },
+          correlationId,
+        });
+
+        await this.queueService.enqueueDelayAction(
+          { executionId, actionId: nextAction.id, event, correlationId },
+          delaySeconds,
+        );
+      }
       return;
     }
 
@@ -286,51 +324,23 @@ export class ExecutionEngine {
       JSON.stringify({ correlationId, executionId, actionId }),
     );
 
-    // Evaluate subsequent actions
-    const currentIndex = targetAuto.actions.findIndex((act) => act.id === actionId);
-    const nextIndex = currentIndex + 1;
+    if (hasNext) {
+      const nextAction = runtimeActions[nextIndex];
 
-    if (nextIndex < targetAuto.actions.length) {
-      const nextAction = targetAuto.actions[nextIndex];
+      await this.executionRepo.createLog({
+        executionId,
+        level: 'INFO',
+        message: `Enqueuing next action: ${nextAction.actionType} (Index: ${nextIndex})`,
+        metadata: { nextActionId: nextAction.id },
+        correlationId,
+      });
 
-      if (nextAction.actionType === 'WAIT') {
-        const payload = nextAction.payload || {};
-        const data = payload.data || payload || {};
-        const delaySeconds = typeof data.delaySeconds === 'number' ? data.delaySeconds : 0;
-
-        await this.executionRepo.createLog({
-          executionId,
-          level: 'INFO',
-          message: `Scheduling next action: WAIT (Index: ${nextIndex}, delay: ${delaySeconds}s)`,
-          metadata: { nextActionId: nextAction.id },
-          correlationId,
-        });
-
-        await this.executionRepo.updateExecutionStatus(
-          executionId,
-          ExecutionStatus.WAITING,
-        );
-
-        await this.queueService.enqueueDelayAction(
-          { executionId, actionId: nextAction.id, event, correlationId },
-          delaySeconds,
-        );
-      } else {
-        await this.executionRepo.createLog({
-          executionId,
-          level: 'INFO',
-          message: `Enqueuing next action: ${nextAction.actionType} (Index: ${nextIndex})`,
-          metadata: { nextActionId: nextAction.id },
-          correlationId,
-        });
-
-        await this.queueService.enqueueExecuteAction({
-          executionId: nextAction.id,
-          actionId: nextAction.id,
-          event,
-          correlationId,
-        });
-      }
+      await this.queueService.enqueueExecuteAction({
+        executionId,
+        actionId: nextAction.id,
+        event,
+        correlationId,
+      });
     } else {
       // All steps executed, compile metrics and transition to SUCCESS
       const record = await this.prismaFindExecution(executionId);

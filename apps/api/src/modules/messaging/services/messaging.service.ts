@@ -30,7 +30,7 @@ export class MessagingService {
     private readonly graphClient: MetaGraphClient,
     private readonly messageRepo: MessageRepository,
     private readonly metrics: MessagingMetricsService,
-  ) {}
+  ) { }
 
   async send(request: SendMessageRequest): Promise<MessagingResult> {
     const correlationId = request.correlationId || randomUUID();
@@ -180,6 +180,70 @@ export class MessagingService {
 
       this.logger.error(
         `Message send failed: ${(err as Error).message}`,
+        JSON.stringify(logContext),
+      );
+
+      return {
+        success: false,
+        errorCode: (err as Error)?.name || 'UNKNOWN',
+        errorMessage: (err as Error)?.message || 'Unknown error',
+        durationMs,
+      };
+    }
+  }
+
+  async sendPublicReply(request: {
+    instagramAccountId: string;
+    commentId: string;
+    messageText: string;
+    automationExecutionId?: string;
+    correlationId?: string;
+  }): Promise<{ success: boolean; replyId?: string; errorCode?: string; errorMessage?: string; durationMs: number }> {
+    const correlationId = request.correlationId || randomUUID();
+    const startTime = Date.now();
+
+    const logContext = {
+      correlationId,
+      instagramAccountId: request.instagramAccountId,
+      commentId: request.commentId,
+      executionId: request.automationExecutionId,
+    };
+
+    try {
+      this.logger.log(`Processing sendPublicReply request`, JSON.stringify(logContext));
+
+      // Load access token
+      const accessToken = await this.tokenService.getToken(request.instagramAccountId);
+
+      // Rate limit check
+      await this.rateLimiter.acquire(request.instagramAccountId);
+
+      // Send via Graph Client
+      const result = await this.graphClient.sendPublicReply(
+        request.commentId,
+        request.messageText,
+        accessToken,
+      );
+
+      const durationMs = Date.now() - startTime;
+      this.logger.log(
+        `Public reply sent successfully in ${durationMs}ms`,
+        JSON.stringify({
+          ...logContext,
+          replyId: result.replyId,
+          durationMs,
+        }),
+      );
+
+      return {
+        success: true,
+        replyId: result.replyId,
+        durationMs,
+      };
+    } catch (err: unknown) {
+      const durationMs = Date.now() - startTime;
+      this.logger.error(
+        `Public reply failed: ${(err as Error).message}`,
         JSON.stringify(logContext),
       );
 
