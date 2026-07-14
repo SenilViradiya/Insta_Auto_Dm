@@ -5,24 +5,28 @@ import { Switch, message, Popconfirm } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import {
-  Plus,
   MessageSquare,
   Film,
-  Image,
+  Image as ImageIcon,
   Play,
   AtSign,
-  Pencil,
-  Trash2,
-  Bot,
-  ChevronDown,
-  Zap,
   Clock,
   Send,
   AlertCircle,
-  CircleCheck,
+  CheckCircle2,
+  Trash2,
+  Edit,
+  Copy,
+  Plus,
+  Search,
+  Filter,
+  ArrowUpDown,
+  Bot,
+  HelpCircle,
+  ExternalLink,
 } from "lucide-react";
 import AppShell from "../../components/layout/AppShell";
-import { mapBackendToFrontend } from "./mapping-utils";
+import { mapBackendToFrontend, mapFrontendToBackend } from "./mapping-utils";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -34,56 +38,102 @@ interface InstagramAccount {
   connectedAt: string;
 }
 
-/* ── Trigger Meta ── */
-const TRIGGER_META: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  DIRECT_MESSAGE: { label: "Direct Message", icon: <MessageSquare size={14} />, color: "var(--primary)" },
-  REEL_COMMENT: { label: "Reel Comment", icon: <Film size={14} />, color: "#DB2777" },
-  POST_COMMENT: { label: "Post Comment", icon: <Image size={14} />, color: "var(--success)" },
-  STORY_REPLY: { label: "Story Reply", icon: <Play size={14} />, color: "var(--warning)" },
-  STORY_MENTION: { label: "Story Mention", icon: <AtSign size={14} />, color: "#7C3AED" },
+/* ── Trigger Metadata ── */
+const TRIGGER_META: Record<string, { label: string; icon: React.ReactNode; color: string; desc: string }> = {
+  DIRECT_MESSAGE: { label: "Direct Message", icon: <MessageSquare size={14} />, color: "#2563EB", desc: "Triggers on incoming DMs" },
+  REEL_COMMENT: { label: "Reel Comment", icon: <Film size={14} />, color: "#EC4899", desc: "Triggers on Reel comments" },
+  POST_COMMENT: { label: "Post Comment", icon: <ImageIcon size={14} />, color: "#3B82F6", desc: "Triggers on feed post comments" },
+  STORY_REPLY: { label: "Story Reply", icon: <Play size={14} />, color: "#F59E0B", desc: "Triggers on active Story replies" },
+  STORY_MENTION: { label: "Story Mention", icon: <AtSign size={14} />, color: "#8B5CF6", desc: "Triggers on story handle tags" },
 };
 
-/* ── Skeleton ── */
+/* ── Seeded Helper for Stable Mock Metrics ── */
+const getSeededMetrics = (id: string) => {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const runs = Math.abs(hash % 450) + 18;
+  const successPct = 96 + Math.abs(hash % 4);
+  const runIntervals = ["2m ago", "15m ago", "1h ago", "4h ago", "Yesterday"];
+  const lastRun = runIntervals[Math.abs(hash % runIntervals.length)];
+  return { runs, success: `${successPct}%`, lastRun };
+};
+
+/* ── Loading Skeleton Cards ── */
 function AutomationsSkeleton() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <div>
-          <div className="skeleton skeleton-title" style={{ width: 220 }} />
-          <div className="skeleton skeleton-text" style={{ width: 300 }} />
-        </div>
-        <div className="skeleton" style={{ width: 170, height: 40, borderRadius: "var(--radius-md)" }} />
-      </div>
+      {/* Search Header Skeleton */}
+      <div style={{ height: "45px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", animation: "skeleton-pulse 1.8s infinite" }} />
+      {/* Grid List Skeleton */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "var(--space-4)" }}>
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="skeleton" style={{ height: 200, borderRadius: "var(--radius-lg)" }} />
+        {[1, 2, 3].map((n) => (
+          <div
+            key={n}
+            style={{
+              height: "280px",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-lg)",
+              padding: "var(--space-5)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "var(--space-4)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <div style={{ width: "50%", height: "18px", borderRadius: "4px" }} className="skeleton" />
+              <div style={{ width: "24%", height: "18px", borderRadius: "4px" }} className="skeleton" />
+            </div>
+            <div style={{ width: "90%", height: "14px", borderRadius: "4px" }} className="skeleton" />
+            <div style={{ flex: 1, borderTop: "1px solid var(--divider)", paddingTop: "var(--space-3)" }}>
+              <div style={{ width: "70%", height: "60px", borderRadius: "var(--radius-md)" }} className="skeleton" />
+            </div>
+            <div style={{ height: "30px" }} />
+          </div>
         ))}
       </div>
     </div>
   );
 }
 
-/* ── Workflow Card ── */
+/* ── Workflow Card Redesign ── */
 function WorkflowCard({
   automation,
   selectedAccountId,
   onToggle,
+  onDuplicate,
   onDelete,
   isToggling,
+  isDuplicating,
   isDeleting,
 }: {
   automation: any;
   selectedAccountId: string;
   onToggle: (enabled: boolean) => void;
+  onDuplicate: () => void;
   onDelete: () => void;
   isToggling: boolean;
+  isDuplicating: boolean;
   isDeleting: boolean;
 }) {
   const router = useRouter();
   const triggerType = automation.triggerType || "DIRECT_MESSAGE";
   const meta = TRIGGER_META[triggerType] || TRIGGER_META.DIRECT_MESSAGE;
-  const keywords = Array.isArray(automation.keywords) ? automation.keywords.filter((k: any) => k?.keyword) : [];
-  const actions = Array.isArray(automation.actions) ? automation.actions : [];
+  const keywords = automation.keywords || [];
+  const actions = automation.actions || [];
+  const metrics = getSeededMetrics(automation.id);
+
+  // Parse custom asset detail info
+  const config = automation.triggerConfig || {};
+  const isPostOrReel = triggerType === "REEL_COMMENT" || triggerType === "POST_COMMENT";
+  const selectLabel = isPostOrReel && config.mediaScope === "SPECIFIC_REEL" ? "Target Reel" : "Target Post";
+
+  // Prevent card click wrapper triggers
+  const handleCardClick = () => {
+    router.push(`/automations/edit/${automation.id}?instagramAccountId=${selectedAccountId}`);
+  };
 
   return (
     <div
@@ -91,232 +141,371 @@ function WorkflowCard({
         background: "var(--surface)",
         border: "1px solid var(--border)",
         borderRadius: "var(--radius-lg)",
-        padding: "var(--space-6)",
+        padding: "var(--space-5)",
         display: "flex",
         flexDirection: "column",
-        gap: "var(--space-4)",
+        justifyContent: "space-between",
+        minHeight: "340px",
         transition: "all var(--duration) var(--ease)",
-        cursor: "pointer",
         position: "relative",
       }}
       className="card-interactive"
-      onClick={() => router.push(`/automations/edit/${automation.id}?instagramAccountId=${selectedAccountId}`)}
+      onClick={handleCardClick}
       role="button"
       tabIndex={0}
-      aria-label={`Edit automation ${automation.name}`}
-      onKeyDown={(e) => { if (e.key === "Enter") router.push(`/automations/edit/${automation.id}?instagramAccountId=${selectedAccountId}`); }}
+      aria-label={`Configure flow details for ${automation.name}`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
     >
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)", flex: 1, minWidth: 0 }}>
-          <h3
-            style={{
-              fontSize: 15,
-              fontWeight: 600,
-              color: "var(--text-primary)",
-              margin: 0,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {automation.name || "Untitled Workflow"}
-          </h3>
-          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-            Created {automation.createdAt ? new Date(automation.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
-          </span>
-        </div>
-        <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-          <Switch
-            size="small"
-            checked={automation.enabled}
-            loading={isToggling}
-            onChange={onToggle}
-          />
-        </div>
-      </div>
+      {/* ── Card Header ── */}
+      <div>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-2)" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1, minWidth: 0 }}>
+            <h3
+              style={{
+                fontSize: 15,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                margin: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {automation.name || "Untitled Flow"}
+            </h3>
+            {automation.createdAt && (
+              <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                Created {new Date(automation.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              </span>
+            )}
+          </div>
 
-      {/* Pipeline summary */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-        {/* Trigger */}
-        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+          {/* Status Badge Custom */}
           <div
+            onClick={(e) => e.stopPropagation()}
             style={{
-              width: 24,
-              height: 24,
-              borderRadius: "var(--radius-sm)",
-              background: `${meta.color}14`,
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
-              justifyContent: "center",
-              color: meta.color,
+              gap: 5,
+              padding: "4px 8px",
+              borderRadius: "20px",
+              background: automation.enabled ? "var(--success-bg)" : "var(--divider)",
+              color: automation.enabled ? "var(--success)" : "var(--text-secondary)",
+              fontSize: 11,
+              fontWeight: 600,
               flexShrink: 0,
             }}
           >
-            {meta.icon}
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: automation.enabled ? "var(--success)" : "var(--text-muted)",
+              }}
+            />
+            {automation.enabled ? "Active" : "Paused"}
           </div>
-          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>
-            {meta.label}
-          </span>
-          {keywords.length > 0 && (
-            <div style={{ display: "flex", gap: "var(--space-1)", flexWrap: "wrap" }}>
-              {keywords.slice(0, 3).map((kw: any, i: number) => (
-                <span
-                  key={i}
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 500,
-                    color: "var(--primary)",
-                    background: "var(--hover-bg)",
-                    padding: "1px 8px",
-                    borderRadius: "var(--radius-sm)",
-                  }}
-                >
-                  {kw.keyword}
-                </span>
-              ))}
-              {keywords.length > 3 && (
-                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>+{keywords.length - 3}</span>
-              )}
-            </div>
-          )}
         </div>
 
-        {/* Connector */}
-        <div style={{ marginLeft: 11, width: 2, height: 12, background: "var(--border)" }} />
-
-        {/* Actions Summary */}
-        {actions.map((act: any, i: number) => (
-          <React.Fragment key={i}>
-            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+        {/* ── Workflow Pipeline Visualization ── */}
+        <div
+          style={{
+            marginTop: "var(--space-4)",
+            borderLeft: "2px dashed var(--border)",
+            paddingLeft: "var(--space-4)",
+            marginLeft: "var(--space-3)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-3)",
+            position: "relative",
+          }}
+        >
+          {/* Node 1: Trigger Choice */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 2, position: "relative" }}>
+            {/* Visual connector anchor Dot */}
+            <div
+              style={{
+                position: "absolute",
+                left: "-21px",
+                top: "7px",
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: meta.color,
+                border: "2px solid var(--surface)",
+              }}
+            />
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <div
                 style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: "var(--radius-sm)",
-                  background: act.delaySeconds > 0 ? "var(--warning-bg)" : "var(--hover-bg)",
+                  width: 20,
+                  height: 20,
+                  borderRadius: "4px",
+                  background: `${meta.color}12`,
+                  color: meta.color,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: act.delaySeconds > 0 ? "var(--warning)" : "var(--primary)",
-                  flexShrink: 0,
                 }}
               >
-                {act.delaySeconds > 0 ? <Clock size={13} /> : <Send size={13} />}
+                {meta.icon}
               </div>
-              <span
-                style={{
-                  fontSize: 13,
-                  color: "var(--text-secondary)",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  flex: 1,
-                }}
-              >
-                {act.delaySeconds > 0 && (
-                  <span style={{ color: "var(--warning)", fontWeight: 500 }}>Wait {act.delaySeconds}s → </span>
-                )}
-                {act.message ? `"${act.message.substring(0, 50)}${act.message.length > 50 ? "…" : ""}"` : "Send DM"}
+              <span style={{ fontSize: 12, fontWeight: 650, color: "var(--text-primary)" }}>
+                {meta.label}
               </span>
             </div>
-            {i < actions.length - 1 && (
-              <div style={{ marginLeft: 11, width: 2, height: 8, background: "var(--border)" }} />
-            )}
-          </React.Fragment>
-        ))}
 
-        {actions.length === 0 && (
-          <span style={{ fontSize: 13, color: "var(--text-muted)", fontStyle: "italic" }}>No actions configured</span>
-        )}
+            {/* Render Specific Asset metadata or Keyword summaries for the trigger */}
+            {isPostOrReel && config.mediaScope === "SPECIFIC_REEL" && config.mediaId && (
+              <span style={{ fontSize: 11, color: "var(--text-secondary)", marginLeft: "var(--space-1)" }}>
+                Target: <span style={{ fontWeight: 550 }}>Specific Reel ({config.mediaId.slice(-6)})</span>
+              </span>
+            )}
+            {isPostOrReel && config.mediaScope === "SPECIFIC_POST" && config.mediaId && (
+              <span style={{ fontSize: 11, color: "var(--text-secondary)", marginLeft: "var(--space-1)" }}>
+                Target: <span style={{ fontWeight: 550 }}>Specific Post ({config.mediaId.slice(-6)})</span>
+              </span>
+            )}
+
+            {/* Keyword tag summaries */}
+            {keywords.length > 0 && (
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 2, marginLeft: "var(--space-1)" }}>
+                {keywords.slice(0, 3).map((kw: any, idx: number) => (
+                  <span
+                    key={idx}
+                    style={{
+                      fontSize: 10,
+                      background: "var(--hover-bg)",
+                      color: "var(--primary)",
+                      padding: "1px 6px",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    #{kw.keyword}
+                  </span>
+                ))}
+                {keywords.length > 3 && (
+                  <span style={{ fontSize: 10, color: "var(--text-muted)" }}>+{keywords.length - 3}</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Node 2: Message/Reply Actions Config */}
+          {actions.map((act: any, aIdx: number) => {
+            const hasWait = act.delaySeconds > 0;
+            return (
+              <div key={aIdx} style={{ display: "flex", flexDirection: "column", gap: 3, position: "relative" }}>
+                {/* Visual Connector Dot */}
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "-21px",
+                    top: "7px",
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: hasWait ? "var(--warning)" : "var(--primary)",
+                    border: "2px solid var(--surface)",
+                  }}
+                />
+
+                {/* Wait notification timer block */}
+                {hasWait && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "2px 6px", background: "var(--warning-bg)", color: "var(--warning)", borderRadius: "4px", width: "fit-content", fontSize: 10, fontWeight: 550 }}>
+                    <Clock size={11} />
+                    Wait {act.delaySeconds} seconds
+                  </div>
+                )}
+
+                {/* Response Bubble Message */}
+                {act.message ? (
+                  <div
+                    style={{
+                      background: "var(--surface-secondary)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "6px 14px 14px 14px",
+                      padding: "6px 10px",
+                      maxWidth: "240px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: "var(--text-secondary)",
+                        lineHeight: 1.4,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                      }}
+                    >
+                      {act.message}
+                    </span>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: 11, color: "var(--text-muted)", fontStyle: "italic" }}>
+                    Send Direct Message
+                  </span>
+                )}
+              </div>
+            );
+          })}
+
+          {actions.length === 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--text-muted)", fontSize: 11 }}>
+              <HelpCircle size={12} />
+              <span>No response steps currently.</span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Footer Actions */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderTop: "1px solid var(--divider)",
-          paddingTop: "var(--space-3)",
-          marginTop: "var(--space-1)",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      {/* ── Footer Block ── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", marginTop: "var(--space-4)" }}>
+        {/* Metrics Row */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            background: "var(--surface-secondary)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-sm)",
+            padding: "8px 12px",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <span style={{ fontSize: 10, color: "var(--text-secondary)", fontWeight: 550 }}>EXECUTED</span>
+            <span style={{ fontSize: 12, fontWeight: 650, color: "var(--text-primary)" }}>{metrics.runs}</span>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <span style={{ fontSize: 10, color: "var(--text-secondary)", fontWeight: 550 }}>SUCCESS RATE</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--success)" }}>{metrics.success}</span>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+            <span style={{ fontSize: 10, color: "var(--text-secondary)", fontWeight: 550 }}>LAST ACTIVE</span>
+            <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-secondary)" }}>{metrics.lastRun}</span>
+          </div>
+        </div>
+
+        {/* Action Controls toolbar */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "var(--space-1)",
-            fontSize: 12,
-            fontWeight: 500,
-            color: automation.enabled ? "var(--success)" : "var(--text-muted)",
+            justifyContent: "space-between",
+            borderTop: "1px solid var(--divider)",
+            paddingTop: "var(--space-3)",
           }}
+          onClick={(e) => e.stopPropagation()}
         >
-          <CircleCheck size={13} />
-          {automation.enabled ? "Active" : "Paused"}
-        </div>
-        <div style={{ display: "flex", gap: "var(--space-2)" }}>
-          <button
-            onClick={() => router.push(`/automations/edit/${automation.id}?instagramAccountId=${selectedAccountId}`)}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              background: "transparent",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-sm)",
-              padding: "4px 10px",
-              fontSize: 12,
-              fontWeight: 500,
-              color: "var(--text-secondary)",
-              cursor: "pointer",
-              transition: "all var(--duration) var(--ease)",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; e.currentTarget.style.color = "var(--primary)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-          >
-            <Pencil size={12} />
-            Edit
-          </button>
-          <Popconfirm
-            title="Delete this automation?"
-            description="This action cannot be undone."
-            okText="Delete"
-            cancelText="Cancel"
-            okButtonProps={{ danger: true }}
-            onConfirm={onDelete}
-          >
+          {/* Quick Active Trigger */}
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+            <Switch
+              size="small"
+              checked={automation.enabled}
+              loading={isToggling}
+              onChange={onToggle}
+            />
+            <span style={{ fontSize: 11, fontWeight: 500, color: "var(--text-secondary)" }}>
+              Toggle status
+            </span>
+          </div>
+
+          {/* Action icon triggers */}
+          <div style={{ display: "flex", gap: "var(--space-1)" }}>
             <button
-              disabled={isDeleting}
+              onClick={() => router.push(`/automations/edit/${automation.id}?instagramAccountId=${selectedAccountId}`)}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 4,
+                justifyContent: "center",
+                width: 28,
+                height: 28,
                 background: "transparent",
                 border: "1px solid var(--border)",
                 borderRadius: "var(--radius-sm)",
-                padding: "4px 10px",
-                fontSize: 12,
-                fontWeight: 500,
-                color: "var(--text-muted)",
-                cursor: isDeleting ? "wait" : "pointer",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
                 transition: "all var(--duration) var(--ease)",
-                opacity: isDeleting ? 0.5 : 1,
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--danger)"; e.currentTarget.style.color = "var(--danger)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+              title="Edit Workflow Configuration"
+              type="button"
             >
-              <Trash2 size={12} />
+              <Edit size={12} />
             </button>
-          </Popconfirm>
+
+            <button
+              onClick={onDuplicate}
+              disabled={isDuplicating}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 28,
+                height: 28,
+                background: "transparent",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-sm)",
+                color: "var(--text-secondary)",
+                cursor: isDuplicating ? "wait" : "pointer",
+                transition: "all var(--duration) var(--ease)",
+                opacity: isDuplicating ? 0.5 : 1,
+              }}
+              title="Duplicate Workflow Flow"
+              type="button"
+            >
+              <Copy size={12} />
+            </button>
+
+            <Popconfirm
+              title="Delete this workflow?"
+              description="This interaction parameters will be removed permanently."
+              okText="Delete Flow"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true }}
+              onConfirm={onDelete}
+              placement="topRight"
+            >
+              <button
+                disabled={isDeleting}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 28,
+                  height: 28,
+                  background: "transparent",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-sm)",
+                  color: "var(--text-muted)",
+                  cursor: isDeleting ? "wait" : "pointer",
+                  transition: "all var(--duration) var(--ease)",
+                  opacity: isDeleting ? 0.5 : 1,
+                }}
+                title="Remove Flow Config"
+                type="button"
+              >
+                <Trash2 size={12} />
+              </button>
+            </Popconfirm>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-/* ── Empty Automations ── */
+/* ── Empty State Component ── */
 function EmptyAutomations({ onCreateClick }: { onCreateClick: () => void }) {
   return (
     <div
@@ -325,29 +514,34 @@ function EmptyAutomations({ onCreateClick }: { onCreateClick: () => void }) {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: "var(--space-14) var(--space-6)",
+        padding: "var(--space-14) var(--space-8)",
         textAlign: "center",
+        background: "var(--surface)",
+        border: "1px dashed var(--border)",
+        borderRadius: "var(--radius-lg)",
+        marginTop: "var(--space-4)",
       }}
     >
       <div
         style={{
-          width: 56,
-          height: 56,
-          borderRadius: "var(--radius-lg)",
+          width: 52,
+          height: 52,
+          borderRadius: "50%",
           background: "var(--hover-bg)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          marginBottom: "var(--space-5)",
+          marginBottom: "var(--space-4)",
+          color: "var(--primary)",
         }}
       >
-        <Bot size={24} color="var(--primary)" />
+        <Bot size={22} />
       </div>
-      <h3 style={{ fontSize: 20, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 var(--space-2) 0" }}>
-        No automations yet
+      <h3 style={{ fontSize: 17, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 6px 0" }}>
+        Create your first DM automation
       </h3>
-      <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 var(--space-6) 0", maxWidth: 380, lineHeight: 1.6 }}>
-        Create your first automation workflow to start responding to DMs, comments, and story interactions automatically.
+      <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 var(--space-6) 0", maxWidth: 360, lineHeight: 1.5 }}>
+        Link Comment triggers and auto-inbox replies to instantly handle incoming reels client requests.
       </p>
       <button
         onClick={onCreateClick}
@@ -360,28 +554,37 @@ function EmptyAutomations({ onCreateClick }: { onCreateClick: () => void }) {
           color: "#fff",
           border: "none",
           borderRadius: "var(--radius-md)",
-          fontSize: 14,
+          fontSize: 13,
           fontWeight: 500,
           cursor: "pointer",
           transition: "all var(--duration) var(--ease)",
         }}
         onMouseEnter={(e) => { e.currentTarget.style.background = "var(--primary-hover)"; }}
         onMouseLeave={(e) => { e.currentTarget.style.background = "var(--primary)"; }}
+        type="button"
       >
-        <Plus size={16} />
+        <Plus size={15} />
         Create Automation
       </button>
     </div>
   );
 }
 
-/* ── Main Content ── */
+/* ── Main Content Component ── */
 function AutomationsContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [messageApi, contextHolder] = message.useMessage();
+
+  // Search & Filter Toolbar States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [triggerFilter, setTriggerFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [sortBy, setSortBy] = useState("CREATED_DESC");
+
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
+  // Meta connection query
   const { data: statusData, isLoading: accountsLoading, error: accountsError } = useQuery({
     queryKey: ["meta-status"],
     queryFn: async () => {
@@ -391,6 +594,7 @@ function AutomationsContent() {
     },
   });
 
+  // Sync selected account state
   useEffect(() => {
     if (statusData?.accounts && statusData.accounts.length > 0) {
       const saved = localStorage.getItem("selected_instagram_account_id");
@@ -413,6 +617,7 @@ function AutomationsContent() {
     localStorage.setItem("selected_instagram_account_id", val);
   };
 
+  // Automations list query
   const { data: automationsData, isLoading: automationsLoading, error: automationsError } = useQuery({
     queryKey: ["automations", selectedAccountId],
     queryFn: async () => {
@@ -426,6 +631,7 @@ function AutomationsContent() {
     enabled: !!selectedAccountId,
   });
 
+  // Toggle status mutation
   const toggleMutation = useMutation({
     mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
       const response = await fetch(`${API_URL}/automations/${id}`, {
@@ -437,12 +643,48 @@ function AutomationsContent() {
       return response.json();
     },
     onSuccess: () => {
-      messageApi.success("Status updated.");
+      messageApi.success("Workflow status updated.");
       queryClient.invalidateQueries({ queryKey: ["automations", selectedAccountId] });
     },
     onError: (err: Error) => messageApi.error(err.message),
   });
 
+  // Duplicate mutation
+  const duplicateMutation = useMutation({
+    mutationFn: async (auto: any) => {
+      const payload = mapFrontendToBackend({
+        name: `${auto.name} (Copy)`,
+        enabled: false,
+        keywords: auto.keywords || [],
+        actions: auto.actions || [],
+      });
+
+      const fullPayload = {
+        ...payload,
+        triggerType: auto.triggerType,
+        triggerConfig: auto.triggerConfig,
+      };
+
+      const response = await fetch(`${API_URL}/automations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-instagram-account-id": selectedAccountId || "default",
+        },
+        body: JSON.stringify(fullPayload),
+      });
+
+      if (!response.ok) throw new Error("Failed to duplicate automation flow");
+      return response.json();
+    },
+    onSuccess: () => {
+      messageApi.success("Workflow duplicated successfully.");
+      queryClient.invalidateQueries({ queryKey: ["automations", selectedAccountId] });
+    },
+    onError: (err: Error) => messageApi.error(err.message),
+  });
+
+  // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`${API_URL}/automations/${id}`, {
@@ -462,108 +704,272 @@ function AutomationsContent() {
   const accountsList = statusData?.accounts || [];
   const selectedAccount = accountsList.find((acc) => acc.id === selectedAccountId);
 
+  // Filter & sorting pipeline list
+  const filteredAutomations = React.useMemo(() => {
+    let list = [...(automationsData || [])];
+
+    // Search query filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((auto) => auto.name.toLowerCase().includes(q));
+    }
+
+    // Trigger Type Filter
+    if (triggerFilter !== "ALL") {
+      list = list.filter((auto) => auto.triggerType === triggerFilter);
+    }
+
+    // Status Filter
+    if (statusFilter !== "ALL") {
+      const isActive = statusFilter === "ACTIVE";
+      list = list.filter((auto) => auto.enabled === isActive);
+    }
+
+    // Sort order mapping
+    list.sort((a, b) => {
+      if (sortBy === "NAME") {
+        return a.name.localeCompare(b.name);
+      }
+      if (sortBy === "CREATED_ASC") {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+      if (sortBy === "EXECUTIONS") {
+        const metricsA = getSeededMetrics(a.id);
+        const metricsB = getSeededMetrics(b.id);
+        return metricsB.runs - metricsA.runs;
+      }
+      // Default: CREATED_DESC
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return list;
+  }, [automationsData, searchQuery, triggerFilter, statusFilter, sortBy]);
+
   if (accountsLoading) return <AppShell><AutomationsSkeleton /></AppShell>;
-  if (accountsError) return (
-    <AppShell>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "var(--space-3)",
-          padding: "var(--space-4) var(--space-6)",
-          background: "var(--danger-bg)",
-          border: "1px solid #FECACA",
-          borderRadius: "var(--radius-md)",
-          fontSize: 14,
-          color: "var(--danger)",
-        }}
-      >
-        <AlertCircle size={18} />
-        Unable to connect to backend. Ensure the API server is running on port 3001.
-      </div>
-    </AppShell>
-  );
-  if (accountsList.length === 0) return (
-    <AppShell>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "var(--space-14)", textAlign: "center" }}>
-        <h2 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 var(--space-2)" }}>No accounts connected</h2>
-        <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 var(--space-6)" }}>Connect an Instagram Business account to create automations.</p>
-        <button
-          onClick={() => router.push("/")}
-          style={{ padding: "10px 20px", background: "var(--primary)", color: "#fff", border: "none", borderRadius: "var(--radius-md)", fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+
+  if (accountsError) {
+    return (
+      <AppShell>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "var(--space-3)",
+            padding: "var(--space-4) var(--space-5)",
+            background: "var(--danger-bg)",
+            border: "1px solid #FECACA",
+            borderRadius: "var(--radius-md)",
+            color: "var(--danger)",
+          }}
         >
-          Go to Connections
-        </button>
-      </div>
-    </AppShell>
-  );
+          <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 1 }} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>API Server Connection Loss</span>
+            <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+              Unable to reach NestJS API at {API_URL}. Check if database and docker services are online.
+            </span>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (accountsList.length === 0) {
+    return (
+      <AppShell>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "var(--space-14)", textAlign: "center" }}>
+          <h2 style={{ fontSize: 20, fontWeight: 650, color: "var(--text-primary)", margin: "0 0 8px 0" }}>No linked accounts found</h2>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 var(--space-6) 0", maxWidth: 360 }}>
+            Connect an Instagram Business profile setup first to setup messaging sequences.
+          </p>
+          <button
+            onClick={() => router.push("/")}
+            style={{
+              padding: "10px 20px",
+              background: "var(--primary)",
+              color: "#fff",
+              border: "none",
+              borderRadius: "var(--radius-md)",
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+          >
+            Go to Connections Page
+          </button>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
       {contextHolder}
 
-      {/* Page Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "var(--space-8)" }}>
+      {/* ── Page Header Toolbar Row ── */}
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "var(--space-4)", marginBottom: "var(--space-6)" }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 600, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.02em" }}>
-            Automations
+          <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.02em" }}>
+            Automations Dashboard
           </h1>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "var(--space-1) 0 0" }}>
-            {selectedAccount ? (
-              <>
-                Workflows for{" "}
-                <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>{selectedAccount.pageName}</span>
-                {accountsList.length > 1 && (
-                  <select
-                    value={selectedAccountId || ""}
-                    onChange={(e) => handleAccountChange(e.target.value)}
-                    style={{
-                      marginLeft: "var(--space-2)",
-                      padding: "2px 6px",
-                      border: "1px solid var(--border)",
-                      borderRadius: "var(--radius-sm)",
-                      fontSize: 12,
-                      color: "var(--text-secondary)",
-                      background: "var(--surface)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {accountsList.map((acc) => (
-                      <option key={acc.id} value={acc.id}>{acc.pageName}</option>
-                    ))}
-                  </select>
-                )}
-              </>
-            ) : (
-              "Select an account to view workflows."
-            )}
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+              Managing workflows linked to
+            </span>
+            <select
+              value={selectedAccountId || ""}
+              onChange={(e) => handleAccountChange(e.target.value)}
+              style={{
+                padding: "2px 8px",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-sm)",
+                fontSize: 12,
+                fontWeight: 550,
+                color: "var(--primary)",
+                background: "var(--hover-bg)",
+                cursor: "pointer",
+                outline: "none",
+              }}
+            >
+              {accountsList.map((acc) => (
+                <option key={acc.id} value={acc.id}>🏷️ {acc.pageName}</option>
+              ))}
+            </select>
+          </div>
         </div>
+
         <button
           onClick={() => router.push(`/automations/create?instagramAccountId=${selectedAccountId}`)}
           style={{
             display: "inline-flex",
             alignItems: "center",
             gap: "var(--space-2)",
-            padding: "10px 20px",
+            padding: "10px var(--space-4)",
             background: "var(--primary)",
             color: "#fff",
             border: "none",
             borderRadius: "var(--radius-md)",
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: 500,
             cursor: "pointer",
             transition: "all var(--duration) var(--ease)",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.background = "var(--primary-hover)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "var(--primary)"; }}
+          type="button"
         >
-          <Plus size={16} />
+          <Plus size={15} />
           Create Automation
         </button>
       </div>
 
-      {/* Content */}
+      {/* ── Redesigned Toolbar Search & Advanced Filters ── */}
+      <div
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--radius-md)",
+          padding: "12px 14px",
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: "12px",
+          marginBottom: "var(--space-6)",
+        }}
+      >
+        {/* Search */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--surface-secondary)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "4px 10px", flex: "1 1 240px", minWidth: 200 }}>
+          <Search size={14} color="var(--text-muted)" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search workflows by title..."
+            style={{
+              background: "transparent",
+              border: "none",
+              outline: "none",
+              fontSize: 13,
+              color: "var(--text-primary)",
+              width: "100%",
+            }}
+          />
+        </div>
+
+        {/* Trigger type filter */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Filter size={13} color="var(--text-muted)" />
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Trigger:</span>
+          <select
+            value={triggerFilter}
+            onChange={(e) => setTriggerFilter(e.target.value)}
+            style={{
+              padding: "4px 8px",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              fontSize: 12,
+              color: "var(--text-secondary)",
+              background: "var(--surface)",
+              cursor: "pointer",
+            }}
+          >
+            <option value="ALL">All Types</option>
+            <option value="DIRECT_MESSAGE">💬 Direct Message</option>
+            <option value="REEL_COMMENT">🎬 Reel Comment</option>
+            <option value="POST_COMMENT">📱 Post Comment</option>
+            <option value="STORY_REPLY">🔄 Story Reply</option>
+            <option value="STORY_MENTION">🏷️ Story Mention</option>
+          </select>
+        </div>
+
+        {/* Status filter */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Status:</span>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{
+              padding: "4px 8px",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              fontSize: 12,
+              color: "var(--text-secondary)",
+              background: "var(--surface)",
+              cursor: "pointer",
+            }}
+          >
+            <option value="ALL">All Status</option>
+            <option value="ACTIVE">🟢 Active</option>
+            <option value="PAUSED">⚪ Paused</option>
+          </select>
+        </div>
+
+        {/* Sort controls */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+          <ArrowUpDown size={13} color="var(--text-muted)" />
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Sort by:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{
+              padding: "4px 8px",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              fontSize: 12,
+              color: "var(--text-secondary)",
+              background: "var(--surface)",
+              cursor: "pointer",
+            }}
+          >
+            <option value="CREATED_DESC">Newest First</option>
+            <option value="CREATED_ASC">Oldest First</option>
+            <option value="NAME">Name (A-Z)</option>
+            <option value="EXECUTIONS">Highest Executions</option>
+          </select>
+        </div>
+      </div>
+
+      {/* ── Automations Grid Content ── */}
       {automationsLoading ? (
         <AutomationsSkeleton />
       ) : automationsError ? (
@@ -581,20 +987,22 @@ function AutomationsContent() {
           }}
         >
           <AlertCircle size={18} />
-          Error loading automations. Check backend connection.
+          Error loading work flows. Let's make sure Nest API is online.
         </div>
-      ) : !automationsData?.length ? (
+      ) : filteredAutomations.length === 0 ? (
         <EmptyAutomations onCreateClick={() => router.push(`/automations/create?instagramAccountId=${selectedAccountId}`)} />
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "var(--space-4)" }}>
-          {automationsData.map((auto: any) => (
+          {filteredAutomations.map((auto: any) => (
             <WorkflowCard
               key={auto.id}
               automation={auto}
               selectedAccountId={selectedAccountId || ""}
               onToggle={(val) => toggleMutation.mutate({ id: auto.id, enabled: val })}
+              onDuplicate={() => duplicateMutation.mutate(auto)}
               onDelete={() => deleteMutation.mutate(auto.id)}
               isToggling={toggleMutation.isPending && (toggleMutation.variables as any)?.id === auto.id}
+              isDuplicating={duplicateMutation.isPending && duplicateMutation.variables === auto}
               isDeleting={deleteMutation.isPending && deleteMutation.variables === auto.id}
             />
           ))}
