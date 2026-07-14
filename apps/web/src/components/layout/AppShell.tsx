@@ -3,13 +3,14 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Zap, Link2, Bot, Settings, Image, Activity } from "lucide-react";
+import { Zap, Link2, Bot, Settings, Image, Activity, BarChart3 } from "lucide-react";
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
 const NAV_ITEMS = [
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/", label: "Connections", icon: Link2 },
   { href: "/automations", label: "Automations", icon: Bot },
   { href: "/assets", label: "Asset Library", icon: Image },
