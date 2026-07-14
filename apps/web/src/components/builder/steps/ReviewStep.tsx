@@ -1,16 +1,16 @@
 import React, { useEffect } from 'react';
-import { Card, Typography, Descriptions, List, Tag, Alert, Row, Col, Space, Divider } from 'antd';
 import { TRIGGER_REGISTRY } from '../TriggerRegistry';
 import { AutomationDraft } from '../types';
 import {
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
-  MessageOutlined,
-  ClockCircleOutlined,
-  InstagramOutlined,
-} from '@ant-design/icons';
-
-const { Title, Text } = Typography;
+  CheckCircle2,
+  AlertTriangle,
+  Zap,
+  Instagram,
+  Tag,
+  ArrowRight,
+  Clock,
+  Send,
+} from 'lucide-react';
 
 interface ReviewStepProps {
   draft: AutomationDraft;
@@ -27,7 +27,7 @@ export default function ReviewStep({
   const warnings: string[] = [];
 
   if (!draft.metadata.name.trim()) {
-    warnings.push('Flow Name is required in the review setup.');
+    warnings.push('Flow Name is required.');
   }
 
   if (!draft.trigger.type) {
@@ -36,7 +36,7 @@ export default function ReviewStep({
     const config = draft.trigger.config || {};
     if (draft.trigger.type === 'DIRECT_MESSAGE') {
       if (config.mode === 'KEYWORD' && (!config.keywords || config.keywords.length === 0)) {
-        warnings.push('Keyword match mode requires at least one keyword trigger.');
+        warnings.push('Keyword matching mode requires at least one keyword trigger tag.');
       }
     } else if (draft.trigger.type === 'REEL_COMMENT' || draft.trigger.type === 'POST_COMMENT') {
       if (config.mediaScope === 'SPECIFIC_REEL' && !config.mediaId) {
@@ -46,7 +46,7 @@ export default function ReviewStep({
         warnings.push('A specific Feed Post asset must be chosen.');
       }
       if (config.matchType === 'KEYWORD' && (!config.keywords || config.keywords.length === 0)) {
-        warnings.push('Keyword match comment mode requires at least one comment keyword filter.');
+        warnings.push('Comment keyword match mode requires at least one comment keyword filter.');
       }
     }
   }
@@ -59,7 +59,7 @@ export default function ReviewStep({
         warnings.push(`Action Step ${idx + 1} (Send Message) text payload is currently empty.`);
       }
       if (act.actionType === 'WAIT' && (act.payload.data.delaySeconds ?? 0) <= 0) {
-        warnings.push(`Action Step ${idx + 1} (Wait Timer) delay must be greater than 0.`);
+        warnings.push(`Action Step ${idx + 1} (Delay Timer) must be greater than 0.`);
       }
     });
   }
@@ -73,188 +73,322 @@ export default function ReviewStep({
   const triggerMeta = draft.trigger.type ? TRIGGER_REGISTRY[draft.trigger.type] : null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+      {/* Step Header */}
       <div>
-        <Title level={4} style={{ margin: 0, fontWeight: 700 }}>
-          Step 5: Review & Save
-        </Title>
-        <Text type="secondary">
-          Review your configured settings before activating.
-        </Text>
+        <h2 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 var(--space-1) 0' }}>
+          Review Automation Flow
+        </h2>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+          Verify your configuration settings and execution path before saving.
+        </p>
       </div>
 
-      {/* Validation Status */}
+      {/* ── Validation Alerts ── */}
       {isValid ? (
-        <Alert
-          message="Validation Successful"
-          description="Your automation flow configuration is valid. You can save and exit."
-          type="success"
-          showIcon
-          icon={<CheckCircleOutlined style={{ color: '#10b981' }} />}
-        />
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 'var(--space-3)',
+            padding: 'var(--space-4) var(--space-5)',
+            background: 'var(--success-bg)',
+            border: '1px solid #BBF7D0',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--success)',
+          }}
+        >
+          <CheckCircle2 size={18} style={{ flexShrink: 0, marginTop: 1 }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Validation Passed</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              All configuration requirements are met. The flow is ready to be saved and activated.
+            </span>
+          </div>
+        </div>
       ) : (
-        <Alert
-          message="Configuration Errors Found"
-          type="error"
-          showIcon
-          icon={<ExclamationCircleOutlined style={{ color: '#ef4444' }} />}
-          description={
-            <List
-              size="small"
-              dataSource={warnings}
-              renderItem={(item) => (
-                <List.Item style={{ padding: '4px 0', borderBottom: 'none' }}>
-                  <Text type="danger">• {item}</Text>
-                </List.Item>
-              )}
-            />
-          }
-        />
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 'var(--space-3)',
+            padding: 'var(--space-4) var(--space-5)',
+            background: 'var(--danger-bg)',
+            border: '1px solid #FECACA',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--danger)',
+          }}
+        >
+          <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: 1 }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Configuration Validation Failed</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+              {warnings.map((warn, i) => (
+                <span key={i} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                  • {warn}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} md={12}>
-          <Card title="Flow Information" style={{ borderRadius: '12px', height: '100%' }}>
-            <Descriptions column={1} layout="vertical">
-              <Descriptions.Item label={<Text strong>Automation Name</Text>}>
-                {draft.metadata.name || <Text type="danger">Not specified</Text>}
-              </Descriptions.Item>
-              <Descriptions.Item label={<Text strong>Instagram Scope Account</Text>}>
-                <Space>
-                  <InstagramOutlined style={{ color: '#4f46e5' }} />
-                  {activeAccountName || 'Unknown / Default'}
-                </Space>
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
-        </Col>
+      {/* ── Visual Execution Path ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        {/* METADATA BLOCK */}
+        <div
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--space-5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 'var(--space-4)',
+          }}
+        >
+          <div>
+            <span style={{ fontSize: 11, fontWeight: 650, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Automation Name
+            </span>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginTop: 2 }}>
+              {draft.metadata.name || <span style={{ color: 'var(--danger)', fontWeight: 500 }}>Name missing</span>}
+            </div>
+          </div>
 
-        <Col xs={24} md={12}>
-          <Card title="Trigger Configuration" style={{ borderRadius: '12px', height: '105%' }}>
-            {triggerMeta ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  {triggerMeta.icon}
-                  <Text strong style={{ fontSize: '15px' }}>{triggerMeta.title}</Text>
+          <div>
+            <span style={{ fontSize: 11, fontWeight: 650, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>
+              Instagram Target Scope
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginTop: 2 }}>
+              <Instagram size={14} color="var(--primary)" />
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+                {activeAccountName || 'Default account context'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* CONNECTED EXECUTION STEPS */}
+        <div
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--space-6)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--space-5)',
+          }}
+        >
+          {/* STEP 1: WHEN Trigger */}
+          <div style={{ display: 'flex', gap: 'var(--space-4)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  background: 'var(--hover-bg)',
+                  color: 'var(--primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 12,
+                  fontWeight: 650,
+                  flexShrink: 0,
+                }}
+              >
+                1
+              </div>
+              <div style={{ width: 2, flex: 1, background: 'var(--divider)', marginTop: 'var(--space-1)' }} />
+            </div>
+
+            <div style={{ flex: 1, paddingBottom: 'var(--space-3)' }}>
+              <span style={{ fontSize: 11, fontWeight: 650, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                WHEN Trigger Event Occurs
+              </span>
+              {triggerMeta ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-2)' }}>
+                  <div style={{ color: 'var(--primary)' }}>{triggerMeta.icon}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {triggerMeta.title}
+                    </span>
+                    {draft.trigger.type === 'DIRECT_MESSAGE' && (
+                      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                        Mode: <strong>{draft.trigger.config?.mode || 'ANY_MESSAGE'}</strong>
+                        {draft.trigger.config?.mode === 'KEYWORD' && (
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+                            {(draft.trigger.config?.keywords || []).map((kw: string) => (
+                              <span key={kw} style={{ fontSize: 11, background: 'var(--hover-bg)', color: 'var(--primary)', padding: '1px 6px', borderRadius: 'var(--radius-sm)' }}>
+                                {kw}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </span>
+                    )}
+
+                    {(draft.trigger.type === 'REEL_COMMENT' || draft.trigger.type === 'POST_COMMENT') && (
+                      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                        Matching comment scope: <strong>{draft.trigger.config?.matchType || 'ANY'}</strong> (Targeting: <strong>{draft.trigger.config?.mediaScope || 'ALL'}</strong>)
+                        {draft.trigger.config?.keywords && draft.trigger.config.keywords.length > 0 && (
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+                            {draft.trigger.config.keywords.map((kw: string) => (
+                              <span key={kw} style={{ fontSize: 11, background: 'var(--hover-bg)', color: 'var(--primary)', padding: '1px 6px', borderRadius: 'var(--radius-sm)' }}>
+                                {kw}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <Divider style={{ margin: '8px 0' }} />
-                
-                {draft.trigger.type === 'DIRECT_MESSAGE' && (
-                  <div>
-                    <Text type="secondary">Mode: </Text>
-                    <Tag color="cyan">{draft.trigger.config?.mode || 'ANY_MESSAGE'}</Tag>
-                    {draft.trigger.config?.mode === 'KEYWORD' && (
-                      <div style={{ marginTop: '8px' }}>
-                        <Text type="secondary">Keywords: </Text>
-                        {(draft.trigger.config?.keywords || []).map((kw: string) => (
-                          <Tag key={kw} color="indigo">{kw}</Tag>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+              ) : (
+                <span style={{ display: 'block', fontSize: 13, color: 'var(--danger)', marginTop: 'var(--space-1)' }}>
+                  No trigger chosen yet.
+                </span>
+              )}
+            </div>
+          </div>
 
-                {(draft.trigger.type === 'REEL_COMMENT' || draft.trigger.type === 'POST_COMMENT') && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <div>
-                      <Text type="secondary">Media Targeting: </Text>
-                      <Tag color="cyan">{draft.trigger.config?.mediaScope || 'ALL'}</Tag>
+          {/* STEP 2: IF Conditions */}
+          <div style={{ display: 'flex', gap: 'var(--space-4)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  background: 'var(--surface-secondary)',
+                  color: 'var(--text-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 12,
+                  fontWeight: 650,
+                  flexShrink: 0,
+                }}
+              >
+                2
+              </div>
+              <div style={{ width: 2, flex: 1, background: 'var(--divider)', marginTop: 'var(--space-1)' }} />
+            </div>
+
+            <div style={{ flex: 1, paddingBottom: 'var(--space-3)' }}>
+              <span style={{ fontSize: 11, fontWeight: 650, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                AND IF Filter Rules Pass
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+                {draft.conditions && draft.conditions.length > 0 ? (
+                  draft.conditions.map((cond, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-2)',
+                        fontSize: 12,
+                      }}
+                    >
+                      <span style={{ fontWeight: 550, color: 'var(--text-secondary)' }}>{cond.field}</span>
+                      <code style={{ fontSize: 11, color: 'var(--primary)', background: 'var(--hover-bg)', padding: '1px 4px', borderRadius: 'var(--radius-sm)' }}>{cond.operator}</code>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>"{cond.value}"</span>
                     </div>
-                    {draft.trigger.config?.mediaId && (
-                      <div>
-                        <Text type="secondary">Asset ID: </Text>
-                        <Text code>{draft.trigger.config.mediaId}</Text>
-                      </div>
-                    )}
-                    <div>
-                      <Text type="secondary">Comment Matching: </Text>
-                      <Tag color="cyan">{draft.trigger.config?.matchType || 'ANY'}</Tag>
-                    </div>
-                    {draft.trigger.config?.matchType === 'KEYWORD' && (
-                      <div>
-                        <Text type="secondary">Keywords: </Text>
-                        {(draft.trigger.config?.keywords || []).map((kw: string) => (
-                          <Tag key={kw} color="indigo">{kw}</Tag>
-                        ))}
-                      </div>
-                    )}
-                    {draft.trigger.config?.publicReply && (
-                      <div style={{ marginTop: '6px' }}>
-                        <Text type="secondary">Public Reply: </Text>
-                        <Text italic>"{draft.trigger.config.publicReply}"</Text>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {draft.trigger.type === 'STORY_REPLY' && (
-                  <div>
-                    <Text type="secondary">Story Scope: </Text>
-                    <Tag color="cyan">{draft.trigger.config?.storyScope || 'ANY'}</Tag>
-                  </div>
-                )}
-
-                {draft.trigger.type === 'STORY_MENTION' && (
-                  <Text type="secondary">Story references tags on publication.</Text>
+                  ))
+                ) : (
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                    No filter rules applied. Automation triggers unconditionally.
+                  </span>
                 )}
               </div>
-            ) : (
-              <Text type="danger">No trigger chosen</Text>
-            )}
-          </Card>
-        </Col>
-      </Row>
+            </div>
+          </div>
 
-      <Card title="Conditions Check Rules" style={{ borderRadius: '12px' }}>
-        <List
-          size="small"
-          dataSource={draft.conditions}
-          locale={{ emptyText: 'No conditional filters applied. Auto-executes targets unconditionally.' }}
-          renderItem={(cond, index) => (
-            <List.Item>
-              <Space>
-                <Tag color="purple">{cond.field}</Tag>
-                <Text code>{cond.operator}</Text>
-                <Text strong>"{cond.value}"</Text>
-              </Space>
-            </List.Item>
-          )}
-        />
-      </Card>
+          {/* STEP 3: THEN Action Pipeline */}
+          <div style={{ display: 'flex', gap: 'var(--space-4)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  background: 'var(--surface-secondary)',
+                  color: 'var(--text-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 12,
+                  fontWeight: 650,
+                  flexShrink: 0,
+                }}
+              >
+                3
+              </div>
+            </div>
 
-      <Card title="Sequenced Execution Actions" style={{ borderRadius: '12px' }}>
-        <List
-          size="small"
-          dataSource={draft.actions}
-          locale={{ emptyText: 'No execution actions declared.' }}
-          renderItem={(act, index) => {
-            const isMsg = act.actionType === 'SEND_MESSAGE';
-            return (
-              <List.Item>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', width: '100%' }}>
-                  <div style={{ marginTop: '4px' }}>
-                    {isMsg ? (
-                      <MessageOutlined style={{ color: '#3b82f6', fontSize: '18px' }} />
-                    ) : (
-                      <ClockCircleOutlined style={{ color: '#f59e0b', fontSize: '18px' }} />
-                    )}
-                  </div>
-                  <div>
-                    <Text strong>Step {index + 1}: {isMsg ? 'Send Massage' : 'Wait Timer'}</Text>
-                    <div style={{ marginTop: '4px' }}>
-                      {isMsg ? (
-                        <Text italic>"{act.payload.data.text}"</Text>
-                      ) : (
-                        <Tag color="orange">{act.payload.data.delaySeconds} seconds</Tag>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </List.Item>
-            );
-          }}
-        />
-      </Card>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: 11, fontWeight: 650, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                THEN Dispatch Actions Sequentially
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', marginTop: 'var(--space-2)' }}>
+                {draft.actions && draft.actions.length > 0 ? (
+                  draft.actions.map((act, index) => {
+                    const isMsg = act.actionType === 'SEND_MESSAGE';
+                    return (
+                      <div
+                        key={index}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 'var(--space-3)',
+                          padding: 'var(--space-3) var(--space-4)',
+                          background: 'var(--surface-secondary)',
+                          border: '1px solid var(--border)',
+                          borderRadius: 'var(--radius-md)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: 'var(--radius-sm)',
+                            background: isMsg ? 'var(--hover-bg)' : 'var(--warning-bg)',
+                            color: isMsg ? 'var(--primary)' : 'var(--warning)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            marginTop: 1,
+                          }}
+                        >
+                          {isMsg ? <Send size={11} /> : <Clock size={11} />}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+                            Step {index + 1}: {isMsg ? 'Send Direct Message' : 'Delay Timer'}
+                          </span>
+                          <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontStyle: isMsg ? 'italic' : 'normal' }}>
+                            {isMsg ? `"${act.payload.data.text}"` : `Wait for ${act.payload.data.delaySeconds} seconds before continuing`}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <span style={{ fontSize: 12, color: 'var(--danger)', fontWeight: 500 }}>
+                    * At least one action must be added to trigger execution.
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,9 +1,6 @@
 import React from 'react';
-import { Card, Typography } from 'antd';
 import ActionBuilder from '../action-configs/ActionBuilder';
 import { ActionItem } from '../types';
-
-const { Title, Text } = Typography;
 
 interface ActionsStepProps {
   actions: ActionItem[];
@@ -15,23 +12,26 @@ export default function ActionsStep({
   onChange,
 }: ActionsStepProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <div>
-        <Title level={4} style={{ margin: 0, fontWeight: 700 }}>
-          Step 4: Configure Execution Actions
-        </Title>
-        <Text type="secondary">
-          Define the message contents and delays in order of execution.
-        </Text>
+        <h2 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 var(--space-1) 0' }}>
+          Configure Execution Actions
+        </h2>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+          Define the response payloads and delays in chronological sequence.
+        </p>
       </div>
 
-      <Card
-        title={<span style={{ fontWeight: 'bold' }}>Actions Pipeline</span>}
-        variant="borderless"
-        style={{ borderRadius: '16px', border: '1px solid #cbd5e1' }}
+      <div
+        style={{
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)',
+          padding: 'var(--space-6)',
+        }}
       >
         <ActionBuilder actions={actions} onChange={onChange} />
-      </Card>
+      </div>
     </div>
   );
 }

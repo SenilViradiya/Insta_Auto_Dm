@@ -1,9 +1,7 @@
 import React from 'react';
-import { Card, Col, Row, Typography } from 'antd';
 import { TRIGGER_REGISTRY } from '../TriggerRegistry';
 import { TriggerType } from '../types';
-
-const { Title, Text } = Typography;
+import { Check } from 'lucide-react';
 
 interface TriggerSelectionStepProps {
   selectedType: TriggerType | undefined;
@@ -17,62 +15,105 @@ export default function TriggerSelectionStep({
   const triggerList = Object.values(TRIGGER_REGISTRY);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <div>
-        <Title level={4} style={{ margin: 0, fontWeight: 700 }}>
-          Step 1: Choose Your Trigger Event
-        </Title>
-        <Text type="secondary">
-          Select what event will kickstart this automation flow.
-        </Text>
+        <h2 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 var(--space-1) 0' }}>
+          Select Trigger Event
+        </h2>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+          Choose the Instagram action that will automatically kickstart this message flow.
+        </p>
       </div>
 
-      <Row gutter={[16, 16]}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
         {triggerList.map((trig) => {
           const isSelected = selectedType === trig.type;
           return (
-            <Col xs={24} sm={12} key={trig.type}>
-              <Card
-                hoverable
-                onClick={() => onSelect(trig.type)}
-                style={{
-                  borderRadius: '16px',
-                  border: isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1',
-                  background: isSelected ? '#f5f3ff' : 'white',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease-in-out',
-                }}
-              >
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+            <div
+              key={trig.type}
+              onClick={() => onSelect(trig.type)}
+              style={{
+                borderRadius: 'var(--radius-lg)',
+                border: isSelected ? '2px solid var(--primary)' : '1px solid var(--border)',
+                background: 'var(--surface)',
+                padding: 'var(--space-5)',
+                cursor: 'pointer',
+                transition: 'all var(--duration) var(--ease)',
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--space-3)',
+                boxShadow: isSelected ? 'var(--shadow-sm)' : 'none',
+              }}
+              className="card-interactive"
+              role="radio"
+              aria-checked={isSelected}
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') onSelect(trig.type); }}
+            >
+              {/* Top Row: Icon + Selection Indicator */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 'var(--radius-md)',
+                    background: isSelected ? 'var(--hover-bg)' : 'var(--surface-secondary)',
+                    color: isSelected ? 'var(--primary)' : 'var(--text-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all var(--duration) var(--ease)',
+                  }}
+                >
+                  {trig.icon}
+                </div>
+
+                {isSelected && (
                   <div
                     style={{
-                      background: isSelected ? '#eeebff' : '#f1f5f9',
-                      padding: '12px',
-                      borderRadius: '12px',
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      background: 'var(--primary)',
+                      color: '#fff',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    {trig.icon}
+                    <Check size={12} strokeWidth={3} />
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-                    <Text strong style={{ fontSize: '16px', color: '#1e293b' }}>
-                      {trig.title}
-                    </Text>
-                    <Text style={{ fontSize: '13px', color: '#64748b' }}>
-                      {trig.description}
-                    </Text>
-                    <Text style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-                      {trig.explanation}
-                    </Text>
-                  </div>
+                )}
+              </div>
+
+              {/* Text details */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {trig.title}
                 </div>
-              </Card>
-            </Col>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                  {trig.description}
+                </div>
+              </div>
+
+              {/* Detailed Technical Scope Tag */}
+              <div
+                style={{
+                  fontSize: 11,
+                  color: 'var(--text-muted)',
+                  borderTop: '1px solid var(--divider)',
+                  paddingTop: 'var(--space-3)',
+                  marginTop: 'var(--space-1)',
+                  lineHeight: 1.4,
+                }}
+              >
+                {trig.explanation}
+              </div>
+            </div>
           );
         })}
-      </Row>
+      </div>
     </div>
   );
 }

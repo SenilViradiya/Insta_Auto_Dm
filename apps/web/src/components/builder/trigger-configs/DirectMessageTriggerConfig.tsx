@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Radio, Input, Space, Button, Tag, Typography } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
-
-const { Text } = Typography;
+import React, { useState } from 'react';
+import { Radio, Input, Button, Tag } from 'antd';
+import { Plus } from 'lucide-react';
 
 interface DirectMessageTriggerConfigProps {
   config: any;
@@ -41,15 +39,15 @@ export default function DirectMessageTriggerConfig({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
       <div>
-        <Text strong style={{ display: 'block', marginBottom: '8px' }}>
-          Direct Message Mode
-        </Text>
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 'var(--space-2)' }}>
+          Direct Message Matching Mode
+        </label>
         <Radio.Group
           value={mode}
           onChange={(e) => handleModeChange(e.target.value)}
-          size="large"
+          size="middle"
         >
           <Radio.Button value="ANY_MESSAGE">Any Message</Radio.Button>
           <Radio.Button value="KEYWORD">Keyword Match</Radio.Button>
@@ -57,43 +55,50 @@ export default function DirectMessageTriggerConfig({
       </div>
 
       {mode === 'KEYWORD' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <Text type="secondary">
-            Provide the keywords that will trigger this automation flow:
-          </Text>
-          <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+            Trigger only when incoming DMs contain any of the following keyword tags:
+          </span>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', maxWidth: 360 }}>
             <Input
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
               placeholder="e.g. price, promo, info"
               onPressEnter={handleAddKeyword}
-              style={{ maxWidth: '300px' }}
             />
             <Button
               type="dashed"
-              icon={<PlusOutlined />}
+              icon={<Plus size={14} style={{ marginTop: 2 }} />}
               onClick={handleAddKeyword}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
             >
               Add
             </Button>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-1)', marginTop: 'var(--space-2)' }}>
             {keywords.map((kw) => (
               <Tag
                 key={kw}
                 closable
                 onClose={() => handleRemoveKeyword(kw)}
-                color="indigo"
-                style={{ fontSize: '14px', padding: '4px 8px' }}
+                color="blue"
+                style={{
+                  fontSize: 12,
+                  padding: '2px 8px',
+                  borderRadius: 'var(--radius-sm)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
               >
                 {kw}
               </Tag>
             ))}
             {keywords.length === 0 && (
-              <Text type="warning" style={{ fontSize: '12px' }}>
+              <span style={{ fontSize: 11, color: 'var(--warning)', fontWeight: 550 }}>
                 Please add at least one keyword to trigger the flow.
-              </Text>
+              </span>
             )}
           </div>
         </div>
