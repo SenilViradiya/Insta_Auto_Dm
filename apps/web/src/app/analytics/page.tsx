@@ -24,6 +24,14 @@ import {
     RefreshCw
 } from "lucide-react";
 import AppShell from "../../components/layout/AppShell";
+import {
+    PageHeader,
+    Section,
+    MetricCard,
+    EmptyState,
+    StatusBadge,
+    LoadingSkeleton,
+} from "../../components/ui";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -35,62 +43,7 @@ interface InstagramAccount {
     connectedAt: string;
 }
 
-interface MetricCardProps {
-    title: string;
-    value: string | number;
-    subtitle: string;
-    icon: React.ReactNode;
-    trend?: {
-        value: string;
-        positive: boolean;
-    };
-}
-
-// Reusable Metric Card
-function MetricCard({ title, value, subtitle, icon, trend }: MetricCardProps) {
-    return (
-        <div
-            style={{
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-lg)",
-                padding: "20px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-                minWidth: "220px",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
-            }}
-        >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "13px", fontWeight: 550, color: "var(--text-secondary)" }}>{title}</span>
-                <div style={{ color: "var(--primary)" }}>{icon}</div>
-            </div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
-                <span style={{ fontSize: "24px", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
-                    {value}
-                </span>
-                {trend && (
-                    <span
-                        style={{
-                            fontSize: "11px",
-                            fontWeight: 600,
-                            color: trend.positive ? "var(--success)" : "var(--danger)",
-                            background: trend.positive ? "var(--success-bg)" : "var(--danger-bg)",
-                            padding: "2px 6px",
-                            borderRadius: "4px"
-                        }}
-                    >
-                        {trend.value}
-                    </span>
-                )}
-            </div>
-            <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{subtitle}</span>
-        </div>
-    );
-}
-
-// Reusable Chart Card Container
+// Reusable Chart Card Container wrapping enterprise UI Section component
 interface ChartCardProps {
     title: string;
     subtitle?: string;
@@ -100,35 +53,9 @@ interface ChartCardProps {
 
 function ChartCard({ title, subtitle, children, extra }: ChartCardProps) {
     return (
-        <div
-            style={{
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-lg)",
-                padding: "24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "16px",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
-            }}
-        >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                    <h3 style={{ fontSize: "15px", fontWeight: 650, color: "var(--text-primary)", margin: 0 }}>
-                        {title}
-                    </h3>
-                    {subtitle && (
-                        <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
-                            {subtitle}
-                        </span>
-                    )}
-                </div>
-                {extra && <div>{extra}</div>}
-            </div>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "180px", justifyContent: "center" }}>
-                {children}
-            </div>
-        </div>
+        <Section title={title} description={subtitle} extra={extra}>
+            {children}
+        </Section>
     );
 }
 

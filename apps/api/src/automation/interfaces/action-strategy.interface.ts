@@ -4,6 +4,7 @@ export interface ActionStrategyResult {
   transitionToStatus?: 'WAITING' | 'SUCCESS';
   // Tells execution worker if the failure is transient / retryable or permanent
   retryable?: boolean;
+  delaySeconds?: number;
 }
 
 export interface ActionStrategy {

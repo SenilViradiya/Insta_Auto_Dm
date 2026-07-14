@@ -4,6 +4,7 @@ import { ExecutionEngine } from '../services/execution-engine';
 import { ActionStrategyResolver } from '../services/action-strategy.resolver';
 import { WaitActionStrategy } from '../strategies/wait-action.strategy';
 import { SendMessageActionStrategy } from '../strategies/send-message-action.strategy';
+import { ReplyCommentActionStrategy } from '../strategies/reply-comment-action.strategy';
 import { Operator, TriggerType, ActionType, ExecutionStatus } from '@prisma/client';
 import { DomainEvent } from '../interfaces/domain-event.interface';
 import { ExecutionContext } from '../interfaces/execution-context.interface';
@@ -133,16 +134,19 @@ describe('Action Strategies execution', () => {
   let resolver: ActionStrategyResolver;
   let waitStrategy: WaitActionStrategy;
   let sendStrategy: SendMessageActionStrategy;
+  let replyStrategy: ReplyCommentActionStrategy;
   let mockMessagingService: any;
 
   beforeEach(() => {
     waitStrategy = new WaitActionStrategy();
     mockMessagingService = {
       send: jest.fn().mockResolvedValue({ success: true }),
+      sendPublicReply: jest.fn().mockResolvedValue({ success: true }),
     };
     const varResolver = new VariableResolver();
     sendStrategy = new SendMessageActionStrategy(varResolver, mockMessagingService);
-    resolver = new ActionStrategyResolver(sendStrategy, waitStrategy);
+    replyStrategy = new ReplyCommentActionStrategy(varResolver, mockMessagingService);
+    resolver = new ActionStrategyResolver(sendStrategy, waitStrategy, replyStrategy);
   });
 
   const mockContext: ExecutionContext = {

@@ -15,6 +15,7 @@ import { ExecutionEngine } from './services/execution-engine';
 import { ActionStrategyResolver } from './services/action-strategy.resolver';
 import { SendMessageActionStrategy } from './strategies/send-message-action.strategy';
 import { WaitActionStrategy } from './strategies/wait-action.strategy';
+import { ReplyCommentActionStrategy } from './strategies/reply-comment-action.strategy';
 import { QueueService } from './services/queue.service';
 import { ActionDispatcher } from './services/action-dispatcher';
 import { IdempotencyService } from './services/idempotency.service';
@@ -69,6 +70,7 @@ import { StoryMentionTriggerStrategy } from './strategies/story-mention.strategy
     ActionStrategyResolver,
     SendMessageActionStrategy,
     WaitActionStrategy,
+    ReplyCommentActionStrategy,
     QueueService,
     ActionDispatcher,
     IdempotencyService,
@@ -108,4 +110,4 @@ import { StoryMentionTriggerStrategy } from './strategies/story-mention.strategy
     ActionStrategyResolver,
   ],
 })
-export class AutomationModule {}
+export class AutomationModule { }

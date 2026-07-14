@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ActionStrategy } from '../interfaces/action-strategy.interface';
 import { SendMessageActionStrategy } from '../strategies/send-message-action.strategy';
 import { WaitActionStrategy } from '../strategies/wait-action.strategy';
+import { ReplyCommentActionStrategy } from '../strategies/reply-comment-action.strategy';
 import { ActionException } from '../errors/automation.errors';
 
 @Injectable()
@@ -12,9 +13,11 @@ export class ActionStrategyResolver {
   constructor(
     sendMessageStrategy: SendMessageActionStrategy,
     waitStrategy: WaitActionStrategy,
+    replyCommentStrategy: ReplyCommentActionStrategy,
   ) {
     this.register(sendMessageStrategy);
     this.register(waitStrategy);
+    this.register(replyCommentStrategy);
   }
 
   register(strategy: ActionStrategy) {
