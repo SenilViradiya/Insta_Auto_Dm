@@ -146,7 +146,7 @@ function EditAutomationContent() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
         {/* Header toolbar */}
-        <div style={{ display: "flex", alignItems: "center", justifyContext: "space-between", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
             <button
               onClick={() => router.push("/automations")}
