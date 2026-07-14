@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Radio, Input, Button, Tag, Spin } from 'antd';
-import { Plus, Film, ExternalLink, Check } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+"use client";
+
+import React, { useState } from "react";
+import { Radio, Input, Button, Tag } from "antd";
+import { Plus } from "lucide-react";
+import AssetLibrary from "../../assets/AssetLibrary";
 
 const { TextArea } = Input;
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface ReelCommentTriggerConfigProps {
   config: any;
@@ -17,30 +18,13 @@ export default function ReelCommentTriggerConfig({
   onChange,
   instagramAccountId,
 }: ReelCommentTriggerConfigProps) {
-  const mediaScope = config?.mediaScope || 'ALL_REELS';
-  const mediaId = config?.mediaId || '';
-  const matchType = config?.matchType || 'ANY_COMMENT';
+  const mediaScope = config?.mediaScope || "ALL_REELS";
+  const mediaId = config?.mediaId || "";
+  const matchType = config?.matchType || "ANY_COMMENT";
   const keywords: string[] = config?.keywords || [];
-  const publicReply = config?.publicReply || '';
+  const publicReply = config?.publicReply || "";
 
-  const [inputVal, setInputVal] = useState('');
-
-  // Fetch reels from Assets API
-  const { data: reelsData, isLoading, error } = useQuery({
-    queryKey: ['assets-reels', instagramAccountId],
-    queryFn: async () => {
-      const response = await fetch(`${API_URL}/assets/reels`, {
-        headers: {
-          'x-instagram-account-id': instagramAccountId,
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to load reels assets');
-      }
-      return response.json() as Promise<{ items: any[] }>;
-    },
-    enabled: !!instagramAccountId && instagramAccountId !== 'default',
-  });
+  const [inputVal, setInputVal] = useState("");
 
   const handleUpdate = (updates: Partial<any>) => {
     onChange({
@@ -62,7 +46,7 @@ export default function ReelCommentTriggerConfig({
       if (!alreadyExists) {
         handleUpdate({ keywords: [...keywords, trimmed] });
       }
-      setInputVal('');
+      setInputVal("");
     }
   };
 
@@ -71,15 +55,15 @@ export default function ReelCommentTriggerConfig({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
       {/* ── 1. Target Scope Selection ── */}
       <div>
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 'var(--space-2)' }}>
+        <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: "var(--space-2)" }}>
           Reel Targeting Scope
         </label>
         <Radio.Group
           value={mediaScope}
-          onChange={(e) => handleUpdate({ mediaScope: e.target.value, mediaId: e.target.value === 'ALL_REELS' ? '' : mediaId })}
+          onChange={(e: any) => handleUpdate({ mediaScope: e.target.value, mediaId: e.target.value === "ALL_REELS" ? "" : mediaId })}
           size="middle"
         >
           <Radio.Button value="ALL_REELS">All Reels</Radio.Button>
@@ -87,134 +71,34 @@ export default function ReelCommentTriggerConfig({
         </Radio.Group>
       </div>
 
-      {/* ── 2. Specific Asset Selector ── */}
-      {mediaScope === 'SPECIFIC_REEL' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-          <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>
+      {/* ── 2. Specific Asset Selector (Creator Studio Style) ── */}
+      {mediaScope === "SPECIFIC_REEL" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+          <label style={{ fontSize: 13, fontWeight: 650, color: "var(--text-secondary)", marginBottom: "4px" }}>
             Select Target Reel
           </label>
-
-          {isLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--space-6)' }}>
-              <Spin size="small" />
-            </div>
-          ) : error ? (
-            <div style={{ padding: 'var(--space-3) var(--space-4)', background: 'var(--danger-bg)', color: 'var(--danger)', fontSize: 12, borderRadius: 'var(--radius-md)' }}>
-              Failed to load reels.
-            </div>
-          ) : (reelsData?.items || []).length === 0 ? (
-            <div style={{ padding: 'var(--space-4)', textAlign: 'center', border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)' }}>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>No Reels synchronized. Check Facebook/Meta connection.</span>
-            </div>
-          ) : (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
-                gap: 'var(--space-3)',
-                maxHeight: '260px',
-                overflowY: 'auto',
-                padding: 'var(--space-1) 0',
-              }}
-            >
-              {(reelsData?.items || []).map((reel: any) => {
-                const isSelected = mediaId === reel.instagramMediaId;
-                return (
-                  <div
-                    key={reel.id}
-                    onClick={() => handleUpdate({ mediaId: reel.instagramMediaId })}
-                    style={{
-                      border: isSelected ? '2px solid var(--primary)' : '1px solid var(--border)',
-                      borderRadius: 'var(--radius-md)',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      background: 'var(--surface)',
-                      transition: 'all var(--duration) var(--ease)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      position: 'relative',
-                    }}
-                    className="card-interactive"
-                  >
-                    {/* Thumbnail Cover */}
-                    {reel.thumbnailUrl ? (
-                      <img
-                        alt="Reel thumbnail"
-                        src={reel.thumbnailUrl}
-                        style={{ height: '90px', width: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div style={{ height: '90px', background: 'var(--divider)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-                        <Film size={20} />
-                      </div>
-                    )}
-
-                    {/* Meta Overlay Check */}
-                    {isSelected && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: 8,
-                          right: 8,
-                          background: 'var(--primary)',
-                          color: '#fff',
-                          width: 20,
-                          height: 20,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: 'var(--shadow-sm)',
-                        }}
-                      >
-                        <Check size={12} strokeWidth={3} />
-                      </div>
-                    )}
-
-                    {/* Info */}
-                    <div style={{ padding: 'var(--space-2)', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {reel.caption || '(No Caption)'}
-                      </span>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-                          {reel.timestamp ? new Date(reel.timestamp).toLocaleDateString() : ''}
-                        </span>
-                        {reel.permalink && (
-                          <a
-                            href={reel.permalink}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            style={{ color: 'var(--text-muted)' }}
-                          >
-                            <ExternalLink size={10} />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {mediaScope === 'SPECIFIC_REEL' && !mediaId && (
-            <span style={{ fontSize: 11, color: 'var(--warning)', fontWeight: 500 }}>
-              * Select a specific reel to apply automation rules.
+          <AssetLibrary
+            instagramAccountId={instagramAccountId}
+            selectedMediaId={mediaId}
+            onSelectMedia={(id) => handleUpdate({ mediaId: id })}
+            allowedAssetType="REEL"
+          />
+          {mediaScope === "SPECIFIC_REEL" && !mediaId && (
+            <span style={{ fontSize: 11, color: "var(--warning)", fontWeight: 500, marginTop: "4px" }}>
+              * Select a specific reel from the library to apply automation rules.
             </span>
           )}
         </div>
       )}
 
       {/* ── 3. Comment Filters ── */}
-      <div style={{ borderTop: '1px solid var(--divider)', paddingTop: 'var(--space-4)' }}>
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 'var(--space-2)' }}>
+      <div style={{ borderTop: "1px solid var(--divider)", paddingTop: "var(--space-4)" }}>
+        <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: "var(--space-2)" }}>
           Comment Matching Scope
         </label>
         <Radio.Group
           value={matchType}
-          onChange={(e) => handleUpdate({ matchType: e.target.value })}
+          onChange={(e: any) => handleUpdate({ matchType: e.target.value })}
           size="middle"
         >
           <Radio.Button value="ANY_COMMENT">Any Comment</Radio.Button>
@@ -223,15 +107,15 @@ export default function ReelCommentTriggerConfig({
       </div>
 
       {/* Keywords Setup */}
-      {matchType === 'KEYWORD' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+      {matchType === "KEYWORD" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+          <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
             Trigger only when incoming comments contain any of the following keyword tags:
           </span>
-          <div style={{ display: 'flex', gap: 'var(--space-2)', maxWidth: 360 }}>
+          <div style={{ display: "flex", gap: "var(--space-2)", maxWidth: 360 }}>
             <Input
               value={inputVal}
-              onChange={(e) => setInputVal(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputVal(e.target.value)}
               placeholder="e.g. details, price, promo"
               onPressEnter={handleAddKeyword}
             />
@@ -239,13 +123,13 @@ export default function ReelCommentTriggerConfig({
               type="dashed"
               icon={<Plus size={14} style={{ marginTop: 2 }} />}
               onClick={handleAddKeyword}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
             >
               Add
             </Button>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-1)', marginTop: 'var(--space-2)' }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-1)", marginTop: "var(--space-2)" }}>
             {keywords.map((kw) => (
               <Tag
                 key={kw}
@@ -254,10 +138,10 @@ export default function ReelCommentTriggerConfig({
                 color="blue"
                 style={{
                   fontSize: 12,
-                  padding: '2px 8px',
-                  borderRadius: 'var(--radius-sm)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
+                  padding: "2px 8px",
+                  borderRadius: "var(--radius-sm)",
+                  display: "inline-flex",
+                  alignItems: "center",
                   gap: 4,
                 }}
               >
@@ -265,7 +149,7 @@ export default function ReelCommentTriggerConfig({
               </Tag>
             ))}
             {keywords.length === 0 && (
-              <span style={{ fontSize: 11, color: 'var(--warning)', fontWeight: 550 }}>
+              <span style={{ fontSize: 11, color: "var(--warning)", fontWeight: 550 }}>
                 Please specify at least one comment keyword trigger filter.
               </span>
             )}
@@ -274,18 +158,18 @@ export default function ReelCommentTriggerConfig({
       )}
 
       {/* ── 4. Public Comment Reply ── */}
-      <div style={{ borderTop: '1px solid var(--divider)', paddingTop: 'var(--space-4)' }}>
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 'var(--space-2)' }}>
-          Public Comment Auto-Reply <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(Optional)</span>
+      <div style={{ borderTop: "1px solid var(--divider)", paddingTop: "var(--space-4)" }}>
+        <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: "var(--space-2)" }}>
+          Public Comment Auto-Reply <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>(Optional)</span>
         </label>
         <TextArea
           value={publicReply}
-          onChange={(e) => handleUpdate({ publicReply: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleUpdate({ publicReply: e.target.value })}
           placeholder="e.g. Check your direct messages! Sent you the discount link!"
           rows={2}
-          style={{ borderRadius: 'var(--radius-md)' }}
+          style={{ borderRadius: "var(--radius-md)" }}
         />
-        <span style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginTop: 'var(--space-1)' }}>
+        <span style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginTop: "var(--space-1)" }}>
           If set, this response will be posted as a public comment reply on the user's thread when the workflow is triggered.
         </span>
       </div>
