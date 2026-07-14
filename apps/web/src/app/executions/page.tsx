@@ -511,35 +511,32 @@ export default function ExecutionsPage() {
                         </p>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        {/* Account Selector */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 550 }}>
-                                Profile:
-                            </span>
-                            <select
-                                value={selectedAccountId || ""}
-                                onChange={(e) => handleAccountChange(e.target.value)}
-                                style={{
-                                    padding: "6px 12px",
-                                    border: "1px solid var(--border)",
-                                    borderRadius: "var(--radius-md)",
-                                    fontSize: "13px",
-                                    color: "var(--text-primary)",
-                                    background: "var(--surface)",
-                                    cursor: "pointer",
-                                    fontWeight: 600,
-                                    outline: "none",
-                                }}
-                            >
-                                {statusData?.accounts.map((acc) => (
-                                    <option key={acc.id} value={acc.id}>
-                                        {acc.pageName || acc.instagramUserId}
-                                    </option>
-                                ))}
-                            </select>
+                    {/* Active Profile indicators badge */}
+                    {statusData?.accounts && selectedAccountId && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            {(() => {
+                                const acc = statusData.accounts.find((a) => a.id === selectedAccountId);
+                                return acc ? (
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "6px",
+                                            fontSize: "12px",
+                                            color: "var(--text-secondary)",
+                                            background: "var(--surface-secondary)",
+                                            padding: "4px 10px",
+                                            borderRadius: "12px",
+                                            border: "1px solid var(--border)"
+                                        }}
+                                    >
+                                        <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--success)" }} />
+                                        <span>Active Profile: <strong style={{ color: "var(--text-primary)" }}>{acc.pageName}</strong></span>
+                                    </div>
+                                ) : null;
+                            })()}
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Toolbar Filter Deck */}

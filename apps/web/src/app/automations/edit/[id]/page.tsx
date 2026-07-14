@@ -1,23 +1,52 @@
 "use client";
 
 import React, { Suspense } from "react";
-import { Spin, Alert, Button, message } from "antd";
+import { message } from "antd";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { ArrowLeft, Instagram } from "lucide-react";
+import { ArrowLeft, Instagram, AlertCircle } from "lucide-react";
 import dynamic from "next/dynamic";
 import { AutomationDraft } from "../../../../components/builder/types";
 import AppShell from "../../../../components/layout/AppShell";
+
+function BuilderSkeleton() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+      {/* Top panel skeleton */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", paddingBottom: "var(--space-4)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", width: "60%" }}>
+          <div style={{ width: "30%", height: "24px" }} className="skeleton" />
+          <div style={{ width: "50%", height: "12px", marginTop: "4px" }} className="skeleton" />
+        </div>
+        <div style={{ width: "120px", height: "36px", borderRadius: "var(--radius-md)" }} className="skeleton" />
+      </div>
+
+      {/* Main split canvas */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 2fr", gap: "var(--space-6)" }}>
+        {/* Left config form card */}
+        <div style={{ padding: "var(--space-5)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", background: "var(--surface)", display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+          <div style={{ width: "40%", height: "16px" }} className="skeleton" />
+          <div style={{ width: "100%", height: "40px" }} className="skeleton" />
+          <div style={{ width: "100%", height: "60px" }} className="skeleton" />
+          <div style={{ width: "100%", height: "40px" }} className="skeleton" />
+        </div>
+
+        {/* Right canvas card */}
+        <div style={{ padding: "var(--space-6)", border: "1px dashed var(--border)", borderRadius: "var(--radius-lg)", background: "var(--surface-secondary)", minHeight: "360px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "var(--space-5)" }}>
+          <div style={{ width: "56px", height: "56px", borderRadius: "50%" }} className="skeleton" />
+          <div style={{ width: "180px", height: "16px" }} className="skeleton" />
+          <div style={{ width: "130px", height: "12px" }} className="skeleton" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const AutomationBuilder = dynamic(
   () => import("../../../../components/builder/AutomationBuilder"),
   {
     ssr: false,
-    loading: () => (
-      <div style={{ display: "flex", justifyContent: "center", padding: "var(--space-12)" }}>
-        <Spin size="large" />
-      </div>
-    ),
+    loading: () => <BuilderSkeleton />,
   }
 );
 
@@ -108,10 +137,7 @@ function EditAutomationContent() {
   if (isLoading) {
     return (
       <AppShell>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "var(--space-12)", gap: "var(--space-3)" }}>
-          <Spin size="large" />
-          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Loading flow details...</span>
-        </div>
+        <BuilderSkeleton />
       </AppShell>
     );
   }
@@ -119,22 +145,45 @@ function EditAutomationContent() {
   if (error) {
     return (
       <AppShell>
-        <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "var(--space-6)" }}>
-          <Alert
-            message="Error"
-            description="Failed to load automation details. Check the parameter ID and verify NestJS API status."
-            type="error"
-            showIcon
-            action={
-              <Button
-                size="small"
-                type="primary"
-                onClick={() => router.push("/automations")}
-              >
-                Return to List
-              </Button>
-            }
-          />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-3)",
+            padding: "var(--space-5)",
+            background: "var(--danger-bg)",
+            border: "1px solid rgba(220, 38, 38, 0.15)",
+            borderRadius: "var(--radius-lg)",
+            color: "var(--danger)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+            <AlertCircle size={18} style={{ flexShrink: 0 }} />
+            <span style={{ fontWeight: 600, fontSize: "14px" }}>Failed to Load Automation Details</span>
+          </div>
+          <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary)" }}>
+            The requested automation flow could not be loaded. Please verify the ID parameter in the URL and ensure the API server is up and reachable.
+          </p>
+          <button
+            onClick={() => router.push("/automations")}
+            style={{
+              width: "fit-content",
+              marginTop: "var(--space-2)",
+              padding: "6px 14px",
+              background: "var(--danger)",
+              color: "#fff",
+              border: "none",
+              borderRadius: "var(--radius-sm)",
+              fontSize: "12px",
+              fontWeight: 500,
+              cursor: "pointer",
+              transition: "background var(--duration) var(--ease)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#B91C1C"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "var(--danger)"; }}
+          >
+            Return to List
+          </button>
         </div>
       </AppShell>
     );
@@ -213,9 +262,7 @@ export default function Page() {
     <Suspense
       fallback={
         <AppShell>
-          <div style={{ display: "flex", justifyContent: "center", padding: "var(--space-12)" }}>
-            <Spin size="large" />
-          </div>
+          <BuilderSkeleton />
         </AppShell>
       }
     >

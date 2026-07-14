@@ -812,29 +812,26 @@ function AutomationsContent() {
           <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.02em" }}>
             Automations Dashboard
           </h1>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-              Managing workflows linked to
-            </span>
-            <select
-              value={selectedAccountId || ""}
-              onChange={(e) => handleAccountChange(e.target.value)}
-              style={{
-                padding: "2px 8px",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-sm)",
-                fontSize: 12,
-                fontWeight: 550,
-                color: "var(--primary)",
-                background: "var(--hover-bg)",
-                cursor: "pointer",
-                outline: "none",
-              }}
-            >
-              {accountsList.map((acc) => (
-                <option key={acc.id} value={acc.id}>🏷️ {acc.pageName}</option>
-              ))}
-            </select>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+            {selectedAccount && (
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--text-secondary)",
+                  background: "var(--surface-secondary)",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  border: "1px solid var(--border)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4
+                }}
+              >
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--success)" }} />
+                Active Profile: <strong style={{ color: "var(--text-primary)" }}>{selectedAccount.pageName}</strong>
+              </span>
+            )}
           </div>
         </div>
 
