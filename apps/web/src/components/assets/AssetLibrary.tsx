@@ -47,17 +47,7 @@ interface AssetLibraryProps {
     allowedAssetType?: "REEL" | "POST"; // Lock filter if needed
 }
 
-/* ── Seeded Helper for Creator Studio Metrics ── */
-const getSeededStats = (mediaId: string) => {
-    let hash = 0;
-    for (let i = 0; i < mediaId.length; i++) {
-        hash = mediaId.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const likes = Math.abs(hash % 980) + 45;
-    const comments = Math.abs(hash % 85) + 3;
-    const views = Math.abs(hash % 12500) + 1200;
-    return { likes, comments, views };
-};
+
 
 export default function AssetLibrary({
     instagramAccountId,
@@ -73,7 +63,7 @@ export default function AssetLibrary({
     const [activeTab, setActiveTab] = useState<"ALL" | "REEL" | "POST">(
         allowedAssetType || "ALL"
     );
-    const [sortBy, setSortBy] = useState<"NEWEST" | "OLDEST" | "LIKES" | "COMMENTS">("NEWEST");
+    const [sortBy, setSortBy] = useState<"NEWEST" | "OLDEST">("NEWEST");
     const [viewMode, setViewMode] = useState<"GRID" | "LIST">("GRID");
     const [previewAsset, setPreviewAsset] = useState<InstagramAsset | null>(null);
 
@@ -153,12 +143,6 @@ export default function AssetLibrary({
                     new Date(a.timestamp || 0).getTime() -
                     new Date(b.timestamp || 0).getTime()
                 );
-            }
-            if (sortBy === "LIKES") {
-                return getSeededStats(b.instagramMediaId).likes - getSeededStats(a.instagramMediaId).likes;
-            }
-            if (sortBy === "COMMENTS") {
-                return getSeededStats(b.instagramMediaId).comments - getSeededStats(a.instagramMediaId).comments;
             }
             // Default: NEWEST
             return (
@@ -300,8 +284,6 @@ export default function AssetLibrary({
                     >
                         <option value="NEWEST">Newest Date</option>
                         <option value="OLDEST">Oldest Date</option>
-                        <option value="LIKES">Most Popular</option>
-                        <option value="COMMENTS">Conversations</option>
                     </select>
                 </div>
 
@@ -443,7 +425,6 @@ export default function AssetLibrary({
                         >
                             {processedAssets.map((asset) => {
                                 const isSelected = selectedMediaId === asset.instagramMediaId;
-                                const stats = getSeededStats(asset.instagramMediaId);
                                 const isReel = asset.assetType === "REEL";
 
                                 if (viewMode === "GRID") {
@@ -525,28 +506,7 @@ export default function AssetLibrary({
                                                     </a>
                                                 )}
 
-                                                {/* Stats Info Overlay */}
-                                                <div
-                                                    style={{
-                                                        position: "absolute",
-                                                        bottom: 0,
-                                                        left: 0,
-                                                        right: 0,
-                                                        background: "linear-gradient(transparent, rgba(0,0,0,0.8))",
-                                                        padding: "6px var(--space-2) 4px",
-                                                        display: "flex",
-                                                        justifyContent: "space-between",
-                                                        color: "#fff",
-                                                        fontSize: 10,
-                                                    }}
-                                                >
-                                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-                                                        <ThumbsUp size={8} /> {stats.likes}
-                                                    </span>
-                                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-                                                        <MessageCircle size={8} /> {stats.comments}
-                                                    </span>
-                                                </div>
+                                                {/* Stats Info Overlay Omitted in Production */}
                                             </div>
 
                                             {/* Content Card Body */}
@@ -631,10 +591,10 @@ export default function AssetLibrary({
                                             {/* Stat figures */}
                                             <div style={{ display: "flex", gap: "10px", fontSize: 11, color: "var(--text-secondary)", flexShrink: 0 }}>
                                                 <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-                                                    <ThumbsUp size={10} /> {stats.likes}
+                                                    <ThumbsUp size={10} /> —
                                                 </span>
                                                 <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-                                                    <MessageCircle size={10} /> {stats.comments}
+                                                    <MessageCircle size={10} /> —
                                                 </span>
                                             </div>
 
@@ -715,23 +675,18 @@ export default function AssetLibrary({
                             )}
                         </div>
 
-                        {/* Stats row info */}
                         <div>
                             <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--divider)", paddingBottom: 6, fontSize: 11, color: "var(--text-secondary)" }}>
-                                <span>Likes</span>
-                                <span style={{ fontWeight: 650, color: "var(--text-primary)" }}>{getSeededStats(previewAsset.instagramMediaId).likes}</span>
+                                <span>Media Type</span>
+                                <span style={{ fontWeight: 650, color: "var(--text-primary)" }}>{previewAsset.assetType}</span>
                             </div>
                             <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--divider)", padding: "6px 0", fontSize: 11, color: "var(--text-secondary)" }}>
-                                <span>Comments</span>
-                                <span style={{ fontWeight: 650, color: "var(--text-primary)" }}>{getSeededStats(previewAsset.instagramMediaId).comments}</span>
-                            </div>
-                            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--divider)", padding: "6px 0", fontSize: 11, color: "var(--text-secondary)" }}>
-                                <span>Estimated Reach</span>
-                                <span style={{ fontWeight: 650, color: "var(--text-primary)" }}>{getSeededStats(previewAsset.instagramMediaId).views}</span>
+                                <span>Media ID</span>
+                                <span style={{ fontFamily: "monospace", fontSize: 9, color: "var(--text-primary)" }}>{previewAsset.instagramMediaId}</span>
                             </div>
                             <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 11, color: "var(--text-secondary)" }}>
-                                <span>Published</span>
-                                <span>{previewAsset.timestamp ? new Date(previewAsset.timestamp).toLocaleDateString() : ""}</span>
+                                <span>Published Date</span>
+                                <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{previewAsset.timestamp ? new Date(previewAsset.timestamp).toLocaleDateString() : ""}</span>
                             </div>
                         </div>
 
