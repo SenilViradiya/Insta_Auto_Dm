@@ -1,17 +1,24 @@
 export type TriggerType =
-  | 'DIRECT_MESSAGE'
-  | 'REEL_COMMENT'
-  | 'POST_COMMENT'
-  | 'STORY_REPLY'
-  | 'STORY_MENTION';
+  | "DIRECT_MESSAGE"
+  | "REEL_COMMENT"
+  | "POST_COMMENT"
+  | "STORY_REPLY"
+  | "STORY_MENTION";
 
 export interface Condition {
   field: string;
-  operator: 'EQUALS' | 'NOT_EQUALS' | 'CONTAINS' | 'NOT_CONTAINS' | 'STARTS_WITH' | 'ENDS_WITH' | 'REGEX';
+  operator:
+    | "EQUALS"
+    | "NOT_EQUALS"
+    | "CONTAINS"
+    | "NOT_CONTAINS"
+    | "STARTS_WITH"
+    | "ENDS_WITH"
+    | "REGEX";
   value: string;
 }
 
-export type ActionType = 'SEND_MESSAGE' | 'WAIT';
+export type ActionType = "SEND_MESSAGE" | "WAIT";
 
 export interface ActionItem {
   id?: string;

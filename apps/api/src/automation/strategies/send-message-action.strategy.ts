@@ -1,5 +1,8 @@
 import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
-import { ActionStrategy, ActionStrategyResult } from '../interfaces/action-strategy.interface';
+import {
+  ActionStrategy,
+  ActionStrategyResult,
+} from '../interfaces/action-strategy.interface';
 import { ExecutionContext } from '../interfaces/execution-context.interface';
 import { MessagingService } from '../../modules/messaging/services/messaging.service';
 import { VariableResolver } from '../services/variable-resolver';
@@ -23,10 +26,17 @@ export class SendMessageActionStrategy implements ActionStrategy {
   ): Promise<ActionStrategyResult> {
     const payload = action.payload || {};
     const data = payload.data || payload || {};
-    const templateText = typeof data.text === 'string' ? data.text : typeof data.message === 'string' ? data.message : '';
+    const templateText =
+      typeof data.text === 'string'
+        ? data.text
+        : typeof data.message === 'string'
+          ? data.message
+          : '';
 
     if (!templateText) {
-      throw new ActionException(`Message text payload is empty for action ${action.id}`);
+      throw new ActionException(
+        `Message text payload is empty for action ${action.id}`,
+      );
     }
 
     // Resolve variables template
@@ -70,7 +80,9 @@ export class SendMessageActionStrategy implements ActionStrategy {
       }
     } else {
       // Stub fallback when MessagingModule is not available
-      this.logger.log(`[STUB] Dispatched message to recipient "${context.sender.id}": ${secureLogText}`);
+      this.logger.log(
+        `[STUB] Dispatched message to recipient "${context.sender.id}": ${secureLogText}`,
+      );
     }
 
     return {

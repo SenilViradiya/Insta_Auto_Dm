@@ -31,7 +31,9 @@ export class MetaPlatformConfig {
   }
 
   get tokenEncryptionKey(): string {
-    return process.env.TOKEN_ENCRYPTION_KEY || 'default-secret-key-that-is-32-chars';
+    return (
+      process.env.TOKEN_ENCRYPTION_KEY || 'default-secret-key-that-is-32-chars'
+    );
   }
 
   get webhookVerifyToken(): string {

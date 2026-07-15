@@ -56,6 +56,10 @@ export class AutomationService {
           `Event ${event.eventId} already processed. Skipping duplicate execution.`,
           JSON.stringify(structuredLogContext),
         );
+        try {
+          const redis = this.lockService.getRedisClient();
+          await redis.incr('operations:webhook:duplicate_payloads');
+        } catch {}
         return response;
       }
 
@@ -108,7 +112,9 @@ export class AutomationService {
             }
 
             try {
-              const strategy = this.triggerResolver.resolve(auto.triggerType as any);
+              const strategy = this.triggerResolver.resolve(
+                auto.triggerType as any,
+              );
               const triggerResult = strategy.matchesEvent({
                 automation: auto,
                 event,
@@ -137,7 +143,8 @@ export class AutomationService {
 
               // Propagate keyword match details
               event.metadata = event.metadata || {};
-              event.metadata.matchedKeywords = triggerResult.matchedConditions || [];
+              event.metadata.matchedKeywords =
+                triggerResult.matchedConditions || [];
             } catch (err: any) {
               this.logger.error(
                 `Error evaluating trigger strategy for automation ${auto.id}: ${err.message}`,
@@ -150,7 +157,10 @@ export class AutomationService {
             }
 
             // Route matching automation to ExecutionEngine
-            const execId = await this.executionEngine.startExecution(auto, event);
+            const execId = await this.executionEngine.startExecution(
+              auto,
+              event,
+            );
             if (execId) {
               triggeredAutoIds.push(execId);
             }

@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { ProfileService, MetaProfileData } from '../../meta-platform/services/profile.service';
-import { AssetService, MetaMediaListResult, MetaMediaItemData } from '../../meta-platform/services/asset.service';
+import {
+  ProfileService,
+  MetaProfileData,
+} from '../../meta-platform/services/profile.service';
+import {
+  AssetService,
+  MetaMediaListResult,
+  MetaMediaItemData,
+} from '../../meta-platform/services/asset.service';
 
 export { MetaProfileData, MetaMediaItemData, MetaMediaListResult };
 
@@ -11,7 +18,10 @@ export class MetaAssetClient {
     private readonly assetService: AssetService,
   ) {}
 
-  async fetchProfile(instagramUserId: string, accessToken: string): Promise<MetaProfileData> {
+  async fetchProfile(
+    instagramUserId: string,
+    accessToken: string,
+  ): Promise<MetaProfileData> {
     return this.profileService.fetchProfile(instagramUserId, accessToken);
   }
 

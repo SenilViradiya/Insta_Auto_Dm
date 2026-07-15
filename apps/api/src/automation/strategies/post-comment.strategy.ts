@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { TriggerType } from '@prisma/client';
-import { TriggerStrategy, TriggerContext, TriggerMatchResult } from '../interfaces/trigger.interface';
+import {
+  TriggerStrategy,
+  TriggerContext,
+  TriggerMatchResult,
+} from '../interfaces/trigger.interface';
 import { TriggerValidationException } from '../errors/automation.errors';
 import { PostCommentTriggerSchema } from '../dto/trigger-validators';
 
@@ -28,9 +32,13 @@ export class PostCommentTriggerStrategy implements TriggerStrategy {
 
     // Check media id if mediaScope is SPECIFIC_POST
     if (config.mediaScope === 'SPECIFIC_POST') {
-      const eventMediaId = context.event.content?.mediaId || context.event.content?.media_id;
+      const eventMediaId =
+        context.event.content?.mediaId || context.event.content?.media_id;
       if (!eventMediaId || eventMediaId !== config.mediaId) {
-        return { matched: false, reason: `Event media ID "${eventMediaId}" does not match specific post ID "${config.mediaId}".` };
+        return {
+          matched: false,
+          reason: `Event media ID "${eventMediaId}" does not match specific post ID "${config.mediaId}".`,
+        };
       }
     }
 
@@ -38,15 +46,20 @@ export class PostCommentTriggerStrategy implements TriggerStrategy {
     if (config.matchType === 'KEYWORD') {
       const text = (context.event.content?.text || '').toLowerCase().trim();
       const keywords: string[] = config.keywords || [];
-      const matchedKeywords = keywords.filter(k => text.includes(k.toLowerCase().trim()));
-      
+      const matchedKeywords = keywords.filter((k) =>
+        text.includes(k.toLowerCase().trim()),
+      );
+
       if (matchedKeywords.length === 0) {
-        return { matched: false, reason: `Comment text "${text}" did not match keywords.` };
+        return {
+          matched: false,
+          reason: `Comment text "${text}" did not match keywords.`,
+        };
       }
-      return { 
-        matched: true, 
+      return {
+        matched: true,
         reason: `Matched keyword(s): ${matchedKeywords.join(', ')}`,
-        matchedConditions: matchedKeywords
+        matchedConditions: matchedKeywords,
       };
     }
 
@@ -55,12 +68,14 @@ export class PostCommentTriggerStrategy implements TriggerStrategy {
 
   explainConfiguration(config: any): string {
     this.validateConfiguration(config);
-    const scopeText = config.mediaScope === 'ALL_POSTS' 
-      ? 'all posts' 
-      : `specific post (${config.mediaId})`;
-    const matchText = config.matchType === 'KEYWORD' 
-      ? `containing keywords: ${(config.keywords || []).join(', ')}` 
-      : 'any comment';
+    const scopeText =
+      config.mediaScope === 'ALL_POSTS'
+        ? 'all posts'
+        : `specific post (${config.mediaId})`;
+    const matchText =
+      config.matchType === 'KEYWORD'
+        ? `containing keywords: ${(config.keywords || []).join(', ')}`
+        : 'any comment';
     return `Triggers on comments matching ${matchText} on ${scopeText}.`;
   }
 }

@@ -41,30 +41,55 @@ describe('PostCommentTriggerStrategy', () => {
 
   describe('Validation', () => {
     it('accepts valid ALL_POSTS configuration', () => {
-      expect(() => strategy.validateConfiguration({ mediaScope: 'ALL_POSTS' })).not.toThrow();
+      expect(() =>
+        strategy.validateConfiguration({ mediaScope: 'ALL_POSTS' }),
+      ).not.toThrow();
     });
 
     it('accepts valid SPECIFIC_POST configuration', () => {
-      expect(() => strategy.validateConfiguration({ mediaScope: 'SPECIFIC_POST', mediaId: '123' })).not.toThrow();
+      expect(() =>
+        strategy.validateConfiguration({
+          mediaScope: 'SPECIFIC_POST',
+          mediaId: '123',
+        }),
+      ).not.toThrow();
     });
 
     it('rejects SPECIFIC_POST with missing mediaId', () => {
-      expect(() => strategy.validateConfiguration({ mediaScope: 'SPECIFIC_POST' })).toThrow(TriggerValidationException);
+      expect(() =>
+        strategy.validateConfiguration({ mediaScope: 'SPECIFIC_POST' }),
+      ).toThrow(TriggerValidationException);
     });
 
     it('rejects KEYWORD matchType with empty or absent keywords', () => {
-      expect(() => strategy.validateConfiguration({ mediaScope: 'ALL_POSTS', matchType: 'KEYWORD' })).toThrow(TriggerValidationException);
-      expect(() => strategy.validateConfiguration({ mediaScope: 'ALL_POSTS', matchType: 'KEYWORD', keywords: [] })).toThrow(TriggerValidationException);
+      expect(() =>
+        strategy.validateConfiguration({
+          mediaScope: 'ALL_POSTS',
+          matchType: 'KEYWORD',
+        }),
+      ).toThrow(TriggerValidationException);
+      expect(() =>
+        strategy.validateConfiguration({
+          mediaScope: 'ALL_POSTS',
+          matchType: 'KEYWORD',
+          keywords: [],
+        }),
+      ).toThrow(TriggerValidationException);
     });
 
     it('rejects missing configuration', () => {
-      expect(() => strategy.validateConfiguration(null)).toThrow(TriggerValidationException);
+      expect(() => strategy.validateConfiguration(null)).toThrow(
+        TriggerValidationException,
+      );
     });
   });
 
   describe('Event Matching', () => {
     it('matches ALL_POSTS and ANY_COMMENT comment trigger configs', () => {
-      const automation = { ...baseAutomation, triggerConfig: { mediaScope: 'ALL_POSTS', matchType: 'ANY_COMMENT' } };
+      const automation = {
+        ...baseAutomation,
+        triggerConfig: { mediaScope: 'ALL_POSTS', matchType: 'ANY_COMMENT' },
+      };
       const event = { ...baseEvent, content: { text: 'Some comment text' } };
       const context = { automation, event, currentTime: new Date() };
 
@@ -73,7 +98,10 @@ describe('PostCommentTriggerStrategy', () => {
     });
 
     it('matches SPECIFIC_POST when mediaId matches exactly', () => {
-      const automation = { ...baseAutomation, triggerConfig: { mediaScope: 'SPECIFIC_POST', mediaId: '123' } };
+      const automation = {
+        ...baseAutomation,
+        triggerConfig: { mediaScope: 'SPECIFIC_POST', mediaId: '123' },
+      };
       const event = { ...baseEvent, content: { media_id: '123' } };
       const context = { automation, event, currentTime: new Date() };
 
@@ -82,7 +110,10 @@ describe('PostCommentTriggerStrategy', () => {
     });
 
     it('does not match SPECIFIC_POST if mediaId differs', () => {
-      const automation = { ...baseAutomation, triggerConfig: { mediaScope: 'SPECIFIC_POST', mediaId: '123' } };
+      const automation = {
+        ...baseAutomation,
+        triggerConfig: { mediaScope: 'SPECIFIC_POST', mediaId: '123' },
+      };
       const event = { ...baseEvent, content: { mediaId: '999' } };
       const context = { automation, event, currentTime: new Date() };
 
@@ -91,8 +122,18 @@ describe('PostCommentTriggerStrategy', () => {
     });
 
     it('matches keyword trigger config case-insensitively', () => {
-      const automation = { ...baseAutomation, triggerConfig: { mediaScope: 'ALL_POSTS', matchType: 'KEYWORD', keywords: ['promo'] } };
-      const event = { ...baseEvent, content: { text: 'Interested in promo details' } };
+      const automation = {
+        ...baseAutomation,
+        triggerConfig: {
+          mediaScope: 'ALL_POSTS',
+          matchType: 'KEYWORD',
+          keywords: ['promo'],
+        },
+      };
+      const event = {
+        ...baseEvent,
+        content: { text: 'Interested in promo details' },
+      };
       const context = { automation, event, currentTime: new Date() };
 
       const result = strategy.matchesEvent(context);

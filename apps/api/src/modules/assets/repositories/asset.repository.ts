@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma.service';
-import { InstagramAsset, InstagramProfile, InstagramAssetType, Prisma } from '@prisma/client';
+import {
+  InstagramAsset,
+  InstagramProfile,
+  InstagramAssetType,
+  Prisma,
+} from '@prisma/client';
 
 export interface FindAssetsFilters {
   instagramAccountId?: string;
@@ -58,7 +63,9 @@ export class AssetRepository {
     });
   }
 
-  async getProfileByAccountId(instagramAccountId: string): Promise<InstagramProfile | null> {
+  async getProfileByAccountId(
+    instagramAccountId: string,
+  ): Promise<InstagramProfile | null> {
     return this.prisma.instagramProfile.findUnique({
       where: { instagramAccountId },
     });
@@ -70,7 +77,10 @@ export class AssetRepository {
     });
   }
 
-  async findUniqueAssetByMediaId(instagramAccountId: string, instagramMediaId: string): Promise<InstagramAsset | null> {
+  async findUniqueAssetByMediaId(
+    instagramAccountId: string,
+    instagramMediaId: string,
+  ): Promise<InstagramAsset | null> {
     return this.prisma.instagramAsset.findUnique({
       where: {
         instagramAccountId_instagramMediaId: {
@@ -94,7 +104,7 @@ export class AssetRepository {
       shortCode?: string | null;
       timestamp?: Date | null;
       syncVersion: number;
-    }>
+    }>,
   ): Promise<void> {
     if (assets.length === 0) return;
 
@@ -134,12 +144,15 @@ export class AssetRepository {
             syncVersion: asset.syncVersion,
             isArchived: false,
           },
-        })
-      )
+        }),
+      ),
     );
   }
 
-  async bulkArchiveMissing(instagramAccountId: string, activeSyncVersion: number): Promise<number> {
+  async bulkArchiveMissing(
+    instagramAccountId: string,
+    activeSyncVersion: number,
+  ): Promise<number> {
     const result = await this.prisma.instagramAsset.updateMany({
       where: {
         instagramAccountId,
@@ -153,7 +166,9 @@ export class AssetRepository {
     return result.count;
   }
 
-  async findAssets(filters: FindAssetsFilters): Promise<{ total: number; items: InstagramAsset[] }> {
+  async findAssets(
+    filters: FindAssetsFilters,
+  ): Promise<{ total: number; items: InstagramAsset[] }> {
     const {
       instagramAccountId,
       assetType,

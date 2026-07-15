@@ -12,20 +12,67 @@ import AppShell from "../../../components/layout/AppShell";
 
 function BuilderSkeleton() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--space-6)",
+      }}
+    >
       {/* Top panel skeleton */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", paddingBottom: "var(--space-4)" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", width: "60%" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderBottom: "1px solid var(--border)",
+          paddingBottom: "var(--space-4)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-2)",
+            width: "60%",
+          }}
+        >
           <div style={{ width: "30%", height: "24px" }} className="skeleton" />
-          <div style={{ width: "50%", height: "12px", marginTop: "4px" }} className="skeleton" />
+          <div
+            style={{ width: "50%", height: "12px", marginTop: "4px" }}
+            className="skeleton"
+          />
         </div>
-        <div style={{ width: "120px", height: "36px", borderRadius: "var(--radius-md)" }} className="skeleton" />
+        <div
+          style={{
+            width: "120px",
+            height: "36px",
+            borderRadius: "var(--radius-md)",
+          }}
+          className="skeleton"
+        />
       </div>
 
       {/* Main split canvas */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 2fr", gap: "var(--space-6)" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1.2fr 2fr",
+          gap: "var(--space-6)",
+        }}
+      >
         {/* Left config form card */}
-        <div style={{ padding: "var(--space-5)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", background: "var(--surface)", display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+        <div
+          style={{
+            padding: "var(--space-5)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-lg)",
+            background: "var(--surface)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-4)",
+          }}
+        >
           <div style={{ width: "40%", height: "16px" }} className="skeleton" />
           <div style={{ width: "100%", height: "40px" }} className="skeleton" />
           <div style={{ width: "100%", height: "60px" }} className="skeleton" />
@@ -33,10 +80,32 @@ function BuilderSkeleton() {
         </div>
 
         {/* Right canvas card */}
-        <div style={{ padding: "var(--space-6)", border: "1px dashed var(--border)", borderRadius: "var(--radius-lg)", background: "var(--surface-secondary)", minHeight: "360px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "var(--space-5)" }}>
-          <div style={{ width: "56px", height: "56px", borderRadius: "50%" }} className="skeleton" />
-          <div style={{ width: "180px", height: "16px" }} className="skeleton" />
-          <div style={{ width: "130px", height: "12px" }} className="skeleton" />
+        <div
+          style={{
+            padding: "var(--space-6)",
+            border: "1px dashed var(--border)",
+            borderRadius: "var(--radius-lg)",
+            background: "var(--surface-secondary)",
+            minHeight: "360px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "var(--space-5)",
+          }}
+        >
+          <div
+            style={{ width: "56px", height: "56px", borderRadius: "50%" }}
+            className="skeleton"
+          />
+          <div
+            style={{ width: "180px", height: "16px" }}
+            className="skeleton"
+          />
+          <div
+            style={{ width: "130px", height: "12px" }}
+            className="skeleton"
+          />
         </div>
       </div>
     </div>
@@ -48,7 +117,7 @@ const AutomationBuilder = dynamic(
   {
     ssr: false,
     loading: () => <BuilderSkeleton />,
-  }
+  },
 );
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -77,12 +146,18 @@ function CreateAutomationContent() {
       if (!response.ok) {
         throw new Error("Failed to fetch connection status");
       }
-      return response.json() as Promise<{ accounts: Array<{ id: string; instagramUserId: string; pageName: string }> }>;
+      return response.json() as Promise<{
+        accounts: Array<{
+          id: string;
+          instagramUserId: string;
+          pageName: string;
+        }>;
+      }>;
     },
   });
 
   const activeAccount = statusData?.accounts?.find(
-    (acc) => acc.id === activeAccountId
+    (acc) => acc.id === activeAccountId,
   );
 
   const saveMutation = useMutation({
@@ -106,7 +181,9 @@ function CreateAutomationContent() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create automation flow. Make sure trigger configuration is valid.");
+        throw new Error(
+          "Failed to create automation flow. Make sure trigger configuration is valid.",
+        );
       }
 
       return response.json();
@@ -130,10 +207,28 @@ function CreateAutomationContent() {
     <AppShell>
       {contextHolder}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "var(--space-6)",
+        }}
+      >
         {/* Header toolbar */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "var(--space-3)",
+            }}
+          >
             <button
               onClick={() => router.push("/automations")}
               style={{
@@ -149,14 +244,25 @@ function CreateAutomationContent() {
                 color: "var(--text-secondary)",
                 transition: "all var(--duration) var(--ease)",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-secondary)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface)"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--surface-secondary)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--surface)";
+              }}
               aria-label="Return to automations list"
               type="button"
             >
               <ArrowLeft size={16} />
             </button>
-            <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+            <h1
+              style={{
+                fontSize: 20,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                margin: 0,
+              }}
+            >
               Create Automation Flow
             </h1>
           </div>

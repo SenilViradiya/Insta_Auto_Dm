@@ -35,7 +35,9 @@ export class ExecutionController {
   async getExecutionById(@Param('id') id: string) {
     const execution = await this.executionRepo.findById(id);
     if (!execution) {
-      throw new NotFoundException(`Automation Execution record not found for ID: ${id}`);
+      throw new NotFoundException(
+        `Automation Execution record not found for ID: ${id}`,
+      );
     }
     return execution;
   }
@@ -44,7 +46,9 @@ export class ExecutionController {
   async getExecutionLogs(@Param('id') id: string) {
     const execution = await this.executionRepo.findById(id);
     if (!execution) {
-      throw new NotFoundException(`Automation Execution record not found for ID: ${id}`);
+      throw new NotFoundException(
+        `Automation Execution record not found for ID: ${id}`,
+      );
     }
     return this.executionRepo.findLogs(id);
   }

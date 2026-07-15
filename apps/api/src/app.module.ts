@@ -8,6 +8,8 @@ import { AutomationModule } from './automation/automation.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
 import { AssetsModule } from './modules/assets/assets.module';
 import { MetaPlatformModule } from './modules/meta-platform/meta-platform.module';
+import { OperationsModule } from './modules/operations/operations.module';
+import { KeepAliveService } from './config/keep-alive.service';
 
 import { getRedisConfig } from './config/redis.config';
 
@@ -35,8 +37,9 @@ import { getRedisConfig } from './config/redis.config';
     AutomationModule,
     MessagingModule,
     AssetsModule,
+    OperationsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, KeepAliveService],
 })
 export class AppModule {}

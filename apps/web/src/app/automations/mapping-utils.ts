@@ -25,22 +25,24 @@ export function mapBackendToFrontend(backendAuto: any): Automation {
   if (!backendAuto) return {} as Automation;
 
   // 1. Map conditions -> keywords
-  const keywords: Keyword[] = (backendAuto.conditions || []).map((cond: any) => {
-    let matchType: "EXACT" | "CONTAINS" | "STARTS_WITH" = "EXACT";
-    if (cond.operator === "CONTAINS") matchType = "CONTAINS";
-    if (cond.operator === "STARTS_WITH") matchType = "STARTS_WITH";
+  const keywords: Keyword[] = (backendAuto.conditions || []).map(
+    (cond: any) => {
+      let matchType: "EXACT" | "CONTAINS" | "STARTS_WITH" = "EXACT";
+      if (cond.operator === "CONTAINS") matchType = "CONTAINS";
+      if (cond.operator === "STARTS_WITH") matchType = "STARTS_WITH";
 
-    return {
-      id: cond.id,
-      keyword: cond.value || "",
-      matchType,
-    };
-  });
+      return {
+        id: cond.id,
+        keyword: cond.value || "",
+        matchType,
+      };
+    },
+  );
 
   // 2. Map actions (WAIT & SEND_MESSAGE) -> frontend actions structure
   const actions: Action[] = [];
   const backendActions = backendAuto.actions || [];
-  
+
   let tempDelay = 0;
   for (let i = 0; i < backendActions.length; i++) {
     const act = backendActions[i];
@@ -48,13 +50,18 @@ export function mapBackendToFrontend(backendAuto: any): Automation {
     const data = payload.data || payload;
 
     if (act.actionType === "WAIT") {
-      tempDelay = typeof data.delaySeconds === 'number' ? data.delaySeconds : 0;
-    } else if (act.actionType === "SEND_MESSAGE" || act.actionType === "SEND_DM" || act.actionType === "MESSAGE_RECEIVED") {
-      const messageText = typeof data.text === 'string'
-        ? data.text
-        : typeof data.message === 'string'
-          ? data.message
-          : '';
+      tempDelay = typeof data.delaySeconds === "number" ? data.delaySeconds : 0;
+    } else if (
+      act.actionType === "SEND_MESSAGE" ||
+      act.actionType === "SEND_DM" ||
+      act.actionType === "MESSAGE_RECEIVED"
+    ) {
+      const messageText =
+        typeof data.text === "string"
+          ? data.text
+          : typeof data.message === "string"
+            ? data.message
+            : "";
 
       actions.push({
         id: act.id,
@@ -72,7 +79,12 @@ export function mapBackendToFrontend(backendAuto: any): Automation {
     const data = payload.data || payload;
     actions.push({
       id: act.id,
-      message: typeof data.text === 'string' ? data.text : (typeof data.message === 'string' ? data.message : JSON.stringify(data)),
+      message:
+        typeof data.text === "string"
+          ? data.text
+          : typeof data.message === "string"
+            ? data.message
+            : JSON.stringify(data),
       delaySeconds: tempDelay,
     });
   }
@@ -90,7 +102,8 @@ export function mapBackendToFrontend(backendAuto: any): Automation {
     name: backendAuto.name,
     enabled: backendAuto.enabled,
     createdAt: backendAuto.createdAt,
-    keywords: keywords.length > 0 ? keywords : [{ keyword: "", matchType: "EXACT" }],
+    keywords:
+      keywords.length > 0 ? keywords : [{ keyword: "", matchType: "EXACT" }],
     actions,
     triggerType: backendAuto.triggerType,
     triggerConfig: backendAuto.triggerConfig,
@@ -100,14 +113,24 @@ export function mapBackendToFrontend(backendAuto: any): Automation {
 export function mapFrontendToBackend(values: {
   name: string;
   enabled: boolean;
-  keywords: Array<{ keyword: string; matchType: "EXACT" | "CONTAINS" | "STARTS_WITH" }>;
+  keywords: Array<{
+    keyword: string;
+    matchType: "EXACT" | "CONTAINS" | "STARTS_WITH";
+  }>;
   actions: Array<{ message: string; delaySeconds: number }>;
 }) {
   // 1. triggers (V2: triggerType and triggerConfig)
-  const hasKeywords = (values.keywords || []).some(k => k.keyword && k.keyword.trim() !== "");
+  const hasKeywords = (values.keywords || []).some(
+    (k) => k.keyword && k.keyword.trim() !== "",
+  );
   const triggerType = "DIRECT_MESSAGE";
-  const triggerConfig = hasKeywords 
-    ? { mode: "KEYWORD", keywords: values.keywords.filter(k => k.keyword.trim() !== "").map(k => k.keyword) }
+  const triggerConfig = hasKeywords
+    ? {
+        mode: "KEYWORD",
+        keywords: values.keywords
+          .filter((k) => k.keyword.trim() !== "")
+          .map((k) => k.keyword),
+      }
     : { mode: "ANY_MESSAGE" };
 
   // 2. conditions (keywords)

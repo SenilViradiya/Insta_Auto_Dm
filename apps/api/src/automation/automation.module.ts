@@ -110,4 +110,4 @@ import { StoryMentionTriggerStrategy } from './strategies/story-mention.strategy
     ActionStrategyResolver,
   ],
 })
-export class AutomationModule { }
+export class AutomationModule {}

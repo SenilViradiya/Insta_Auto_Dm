@@ -22,7 +22,7 @@ export class TokenService implements OnModuleDestroy {
 
   async getToken(instagramAccountId: string): Promise<string> {
     const cacheKey = `meta:token:${instagramAccountId}`;
-    
+
     // 1. Read cache
     try {
       const cached = await this.redis.get(cacheKey);

@@ -24,15 +24,24 @@ describe('Meta Platform Error Translation Layer', () => {
   });
 
   it('should translate code 100 to InvalidParameterException', () => {
-    const error = translateMetaError({ code: 100, message: 'Invalid parameter' });
+    const error = translateMetaError({
+      code: 100,
+      message: 'Invalid parameter',
+    });
     expect(error).toBeInstanceOf(InvalidParameterException);
   });
 
   it('should translate code 10 and 200-299 to PermissionDeniedException', () => {
-    const error1 = translateMetaError({ code: 10, message: 'Permission denied' });
+    const error1 = translateMetaError({
+      code: 10,
+      message: 'Permission denied',
+    });
     expect(error1).toBeInstanceOf(PermissionDeniedException);
 
-    const error2 = translateMetaError({ code: 201, message: 'Account status restricted' });
+    const error2 = translateMetaError({
+      code: 201,
+      message: 'Account status restricted',
+    });
     expect(error2).toBeInstanceOf(PermissionDeniedException);
   });
 });
@@ -74,7 +83,7 @@ describe('GraphClient request dispatcher', () => {
         headers: expect.objectContaining({
           Authorization: 'Bearer test-token',
         }),
-      })
+      }),
     );
   });
 
@@ -87,7 +96,7 @@ describe('GraphClient request dispatcher', () => {
       client.request({
         method: 'GET',
         endpoint: 'me/accounts',
-      })
+      }),
     ).rejects.toThrow(RequestTimeoutException);
   });
 });

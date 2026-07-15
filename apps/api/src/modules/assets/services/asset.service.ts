@@ -1,13 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AssetRepository, FindAssetsFilters } from '../repositories/asset.repository';
-import { MetaAssetClient, MetaMediaItemData } from '../clients/meta-asset.client';
+import {
+  AssetRepository,
+  FindAssetsFilters,
+} from '../repositories/asset.repository';
+import {
+  MetaAssetClient,
+  MetaMediaItemData,
+} from '../clients/meta-asset.client';
 import { PrismaService } from '../../../prisma.service';
 import { decryptToken } from '../../../meta/crypto.utils';
 import {
   AssetSyncException,
   ProfileSyncException,
 } from '../exceptions/assets.exceptions';
-import { InstagramAsset, InstagramProfile, InstagramAssetType } from '@prisma/client';
+import {
+  InstagramAsset,
+  InstagramProfile,
+  InstagramAssetType,
+} from '@prisma/client';
 
 @Injectable()
 export class AssetService {
@@ -16,7 +26,7 @@ export class AssetService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly assetRepo: AssetRepository,
-    private readonly metaClient: MetaAssetClient
+    private readonly metaClient: MetaAssetClient,
   ) {}
 
   private getEncryptionKey(): string {
@@ -32,7 +42,9 @@ export class AssetService {
     syncedAssetsCount: number;
     archivedAssetsCount: number;
   }> {
-    this.logger.log(`Starting media and profile synchronization for account: ${instagramAccountId}`);
+    this.logger.log(
+      `Starting media and profile synchronization for account: ${instagramAccountId}`,
+    );
 
     // 1. Fetch Instagram Account details
     const account = await this.prisma.instagramAccount.findUnique({
@@ -40,21 +52,31 @@ export class AssetService {
     });
 
     if (!account) {
-      throw new AssetSyncException(`Instagram account with ID ${instagramAccountId} not found`);
+      throw new AssetSyncException(
+        `Instagram account with ID ${instagramAccountId} not found`,
+      );
     }
 
     // 2. Decrypt standard Meta Page/Account access token
     let decryptedToken: string;
     try {
-      decryptedToken = decryptToken(account.accessTokenEncrypted, this.getEncryptionKey());
+      decryptedToken = decryptToken(
+        account.accessTokenEncrypted,
+        this.getEncryptionKey(),
+      );
     } catch (e: any) {
-      throw new AssetSyncException(`Failed to decrypt access token: ${e.message}`);
+      throw new AssetSyncException(
+        `Failed to decrypt access token: ${e.message}`,
+      );
     }
 
     // 3. Synchronize Profile
     let profile: InstagramProfile;
     try {
-      const metaProfile = await this.metaClient.fetchProfile(account.instagramUserId, decryptedToken);
+      const metaProfile = await this.metaClient.fetchProfile(
+        account.instagramUserId,
+        decryptedToken,
+      );
       profile = await this.assetRepo.upsertProfile({
         instagramAccountId,
         username: metaProfile.username,
@@ -68,7 +90,9 @@ export class AssetService {
         lastSyncedAt: new Date(),
       });
     } catch (e: any) {
-      throw new ProfileSyncException(`Failed to sync Instagram profile info: ${e.message}`);
+      throw new ProfileSyncException(
+        `Failed to sync Instagram profile info: ${e.message}`,
+      );
     }
 
     // 4. Synchronize Assets (Loop fetch pages with cursor cursors)
@@ -83,7 +107,7 @@ export class AssetService {
           account.instagramUserId,
           decryptedToken,
           100,
-          afterCursor
+          afterCursor,
         );
 
         if (result.items.length > 0) {
@@ -97,7 +121,9 @@ export class AssetService {
         }
       }
     } catch (e: any) {
-      throw new AssetSyncException(`Failed to fetch Instagram asset list: ${e.message}`);
+      throw new AssetSyncException(
+        `Failed to fetch Instagram asset list: ${e.message}`,
+      );
     }
 
     // 5. Bulk Upsert into database
@@ -106,7 +132,7 @@ export class AssetService {
       // Map raw media types into InstagramAssetType enum
       const permalink = item.permalink || '';
       let assetType: InstagramAssetType = InstagramAssetType.POST; // explicitly set type
-      
+
       if (item.mediaType === 'CAROUSEL_ALBUM') {
         assetType = InstagramAssetType.CAROUSEL;
       } else if (item.mediaType === 'IMAGE') {
@@ -136,18 +162,27 @@ export class AssetService {
     try {
       await this.assetRepo.bulkUpsertAssets(instagramAccountId, mappedAssets);
     } catch (e: any) {
-      throw new AssetSyncException(`Failed to persist synchronized assets: ${e.message}`);
+      throw new AssetSyncException(
+        `Failed to persist synchronized assets: ${e.message}`,
+      );
     }
 
     // 6. Soft archive missing/deleted media
     let archivedCount = 0;
     try {
-      archivedCount = await this.assetRepo.bulkArchiveMissing(instagramAccountId, syncVersion);
+      archivedCount = await this.assetRepo.bulkArchiveMissing(
+        instagramAccountId,
+        syncVersion,
+      );
     } catch (e: any) {
-      throw new AssetSyncException(`Failed to archive missing Instagram assets: ${e.message}`);
+      throw new AssetSyncException(
+        `Failed to archive missing Instagram assets: ${e.message}`,
+      );
     }
 
-    this.logger.log(`Completed sync: ${mappedAssets.length} active, ${archivedCount} archived.`);
+    this.logger.log(
+      `Completed sync: ${mappedAssets.length} active, ${archivedCount} archived.`,
+    );
 
     return {
       profile,
@@ -162,7 +197,9 @@ export class AssetService {
     }
     const profile = await this.getProfile(instagramAccountId);
     if (!profile) {
-      this.logger.log(`No existing profile found for account ${instagramAccountId}. Executing initial on-the-fly assets sync.`);
+      this.logger.log(
+        `No existing profile found for account ${instagramAccountId}. Executing initial on-the-fly assets sync.`,
+      );
       try {
         await this.syncProfileAndAssets(instagramAccountId);
       } catch (err: any) {
@@ -171,7 +208,9 @@ export class AssetService {
     }
   }
 
-  async getProfile(instagramAccountId: string): Promise<InstagramProfile | null> {
+  async getProfile(
+    instagramAccountId: string,
+  ): Promise<InstagramProfile | null> {
     return this.assetRepo.getProfileByAccountId(instagramAccountId);
   }
 
@@ -179,7 +218,9 @@ export class AssetService {
     return this.assetRepo.findUniqueAsset(id);
   }
 
-  async getAssets(filters: FindAssetsFilters): Promise<{ total: number; items: InstagramAsset[] }> {
+  async getAssets(
+    filters: FindAssetsFilters,
+  ): Promise<{ total: number; items: InstagramAsset[] }> {
     if (filters.instagramAccountId) {
       await this.ensureInitialSync(filters.instagramAccountId);
     }
@@ -189,7 +230,7 @@ export class AssetService {
   async getReels(
     instagramAccountId: string,
     page = 1,
-    limit = 10
+    limit = 10,
   ): Promise<{ total: number; items: InstagramAsset[] }> {
     await this.ensureInitialSync(instagramAccountId);
     return this.assetRepo.findAssets({
@@ -203,7 +244,7 @@ export class AssetService {
   async getPosts(
     instagramAccountId: string,
     page = 1,
-    limit = 10
+    limit = 10,
   ): Promise<{ total: number; items: InstagramAsset[] }> {
     await this.ensureInitialSync(instagramAccountId);
     return this.assetRepo.findAssets({

@@ -232,18 +232,24 @@ describe('MetaGraphClient', () => {
     const result = await client.sendMessage('user-1', 'Hello', 'token');
     expect(result.recipientId).toBe('user-1');
     expect(result.messageId).toBe('mid.123');
-    expect(mockMetaMessagingService.sendMessage).toHaveBeenCalledWith('user-1', 'Hello', 'token');
+    expect(mockMetaMessagingService.sendMessage).toHaveBeenCalledWith(
+      'user-1',
+      'Hello',
+      'token',
+    );
   });
 
   it('delegates healthCheck to GraphClient search request', async () => {
     mockGraphClient.request.mockResolvedValue({ id: 'some-id' });
     const healthy = await client.healthCheck('token');
     expect(healthy).toBe(true);
-    expect(mockGraphClient.request).toHaveBeenCalledWith(expect.objectContaining({
-      method: 'GET',
-      endpoint: 'me',
-      token: 'token',
-    }));
+    expect(mockGraphClient.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'GET',
+        endpoint: 'me',
+        token: 'token',
+      }),
+    );
   });
 });
 

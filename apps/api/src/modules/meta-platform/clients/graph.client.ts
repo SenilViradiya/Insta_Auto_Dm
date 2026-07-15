@@ -25,7 +25,7 @@ export class GraphClient {
     const url = new URL(
       endpoint.startsWith('http')
         ? endpoint
-        : `${this.config.graphApiBaseUrl}/${this.config.graphApiVersion}/${endpoint.replace(/^\//, '')}`
+        : `${this.config.graphApiBaseUrl}/${this.config.graphApiVersion}/${endpoint.replace(/^\//, '')}`,
     );
 
     if (params) {
@@ -49,11 +49,14 @@ export class GraphClient {
     while (attempt < maxAttempts) {
       attempt++;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.config.httpTimeoutMs);
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        this.config.httpTimeoutMs,
+      );
 
       try {
         this.logger.debug(
-          `[GraphClient] API Request: [${method}] ${url.pathname}${url.search} (Attempt ${attempt}/${maxAttempts})`
+          `[GraphClient] API Request: [${method}] ${url.pathname}${url.search} (Attempt ${attempt}/${maxAttempts})`,
         );
 
         const response = await fetch(url.toString(), {
@@ -78,13 +81,14 @@ export class GraphClient {
           if (metaError) {
             const translated = translateMetaError(metaError);
             this.logger.error(
-              `[GraphClient] Meta returned error ${metaError.code} (subcode: ${metaError.error_subcode}): ${metaError.message}`
+              `[GraphClient] Meta returned error ${metaError.code} (subcode: ${metaError.error_subcode}): ${metaError.message}`,
             );
             throw translated;
           } else {
             throw new GraphClientException(
-              responseBody?.rawText || `HTTP response returned non-ok status: ${response.status}`,
-              response.status
+              responseBody?.rawText ||
+                `HTTP response returned non-ok status: ${response.status}`,
+              response.status,
             );
           }
         }
@@ -106,11 +110,12 @@ export class GraphClient {
             (error as Error).message?.includes('socket') ||
             (error as Error).message?.includes('ECONNRESET'));
 
-        const shouldRetry = (isTimeout || isTransientNetwork) && attempt < maxAttempts;
+        const shouldRetry =
+          (isTimeout || isTransientNetwork) && attempt < maxAttempts;
 
         if (shouldRetry) {
           this.logger.warn(
-            `[GraphClient] Transient error (timeout: ${isTimeout}, network: ${isTransientNetwork}) on attempt ${attempt}. Retrying...`
+            `[GraphClient] Transient error (timeout: ${isTimeout}, network: ${isTransientNetwork}) on attempt ${attempt}. Retrying...`,
           );
           // Simple delay before retrying
           await new Promise((res) => setTimeout(res, 500 * attempt));
@@ -119,21 +124,25 @@ export class GraphClient {
 
         if (isTimeout) {
           throw new RequestTimeoutException(
-            `Meta Graph request timed out after ${this.config.httpTimeoutMs}ms`
+            `Meta Graph request timed out after ${this.config.httpTimeoutMs}ms`,
           );
         }
 
-        throw new GraphClientException(`Network dispatch failed: ${(error as Error).message}`);
+        throw new GraphClientException(
+          `Network dispatch failed: ${(error as Error).message}`,
+        );
       }
     }
 
-    throw new GraphClientException('Failed all request execution connection strategies');
+    throw new GraphClientException(
+      'Failed all request execution connection strategies',
+    );
   }
 
   async paginate<T = any>(
     endpoint: string,
     token: string,
-    params?: Record<string, string>
+    params?: Record<string, string>,
   ): Promise<{ data: T[]; nextCursor?: string }> {
     const rawParams = {
       limit: '25',

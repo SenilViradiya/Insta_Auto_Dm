@@ -183,7 +183,12 @@ describe('AutomationController (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/automations')
-        .send({ name: '', triggerType: 'DIRECT_MESSAGE', triggerConfig: { mode: 'ANY_MESSAGE' }, actions: [] })
+        .send({
+          name: '',
+          triggerType: 'DIRECT_MESSAGE',
+          triggerConfig: { mode: 'ANY_MESSAGE' },
+          actions: [],
+        })
         .expect(400);
     });
   });

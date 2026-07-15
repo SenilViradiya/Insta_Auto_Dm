@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { TriggerType } from '@prisma/client';
-import { TriggerStrategy, TriggerContext, TriggerMatchResult } from '../interfaces/trigger.interface';
+import {
+  TriggerStrategy,
+  TriggerContext,
+  TriggerMatchResult,
+} from '../interfaces/trigger.interface';
 import { TriggerValidationException } from '../errors/automation.errors';
 import { ReelCommentTriggerSchema } from '../dto/trigger-validators';
 
@@ -28,9 +32,13 @@ export class ReelCommentTriggerStrategy implements TriggerStrategy {
 
     // Check media id if mediaScope is SPECIFIC_REEL
     if (config.mediaScope === 'SPECIFIC_REEL') {
-      const eventMediaId = context.event.content?.mediaId || context.event.content?.media_id;
+      const eventMediaId =
+        context.event.content?.mediaId || context.event.content?.media_id;
       if (!eventMediaId || eventMediaId !== config.mediaId) {
-        return { matched: false, reason: `Event media ID "${eventMediaId}" does not match specific reel ID "${config.mediaId}".` };
+        return {
+          matched: false,
+          reason: `Event media ID "${eventMediaId}" does not match specific reel ID "${config.mediaId}".`,
+        };
       }
     }
 
@@ -38,7 +46,7 @@ export class ReelCommentTriggerStrategy implements TriggerStrategy {
     if (config.matchType === 'KEYWORD') {
       const text = (context.event.content?.text || '').toLowerCase().trim();
       const rawKeywords: string[] = config.keywords || [];
-      
+
       // Trim and ignore duplicates
       const uniqueKeywords = Array.from(
         new Set(rawKeywords.map((k) => String(k).trim())),
@@ -47,14 +55,17 @@ export class ReelCommentTriggerStrategy implements TriggerStrategy {
       const matchedKeywords = uniqueKeywords.filter((k) =>
         text.includes(k.toLowerCase()),
       );
-      
+
       if (matchedKeywords.length === 0) {
-        return { matched: false, reason: `Comment text "${text}" did not match keywords.` };
+        return {
+          matched: false,
+          reason: `Comment text "${text}" did not match keywords.`,
+        };
       }
-      return { 
-        matched: true, 
+      return {
+        matched: true,
         reason: `Matched keyword(s): ${matchedKeywords.join(', ')}`,
-        matchedConditions: matchedKeywords
+        matchedConditions: matchedKeywords,
       };
     }
 
@@ -63,12 +74,14 @@ export class ReelCommentTriggerStrategy implements TriggerStrategy {
 
   explainConfiguration(config: any): string {
     this.validateConfiguration(config);
-    const scopeText = config.mediaScope === 'ALL_REELS' 
-      ? 'all reels' 
-      : `specific reel (${config.mediaId})`;
-    const matchText = config.matchType === 'KEYWORD' 
-      ? `containing keywords: ${(config.keywords || []).join(', ')}` 
-      : 'any comment';
+    const scopeText =
+      config.mediaScope === 'ALL_REELS'
+        ? 'all reels'
+        : `specific reel (${config.mediaId})`;
+    const matchText =
+      config.matchType === 'KEYWORD'
+        ? `containing keywords: ${(config.keywords || []).join(', ')}`
+        : 'any comment';
     return `Triggers on comments matching ${matchText} on ${scopeText}.`;
   }
 }

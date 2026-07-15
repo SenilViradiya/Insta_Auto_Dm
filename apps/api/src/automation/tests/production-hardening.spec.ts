@@ -228,14 +228,20 @@ describe('Production Hardening Service Suite', () => {
         data: {
           executionId: 'exe-1',
           actionId: 'act-1',
-          event: { eventId: 'evt-1', instagramAccountId: 'acc-1', metadata: {} },
+          event: {
+            eventId: 'evt-1',
+            instagramAccountId: 'acc-1',
+            metadata: {},
+          },
         },
         attemptsMade: 1,
         opts: { attempts: 3 },
         discard: jest.fn().mockResolvedValue(undefined),
       };
 
-      await expect(actionWorker.process(mockJob)).rejects.toThrow('Invalid structure');
+      await expect(actionWorker.process(mockJob)).rejects.toThrow(
+        'Invalid structure',
+      );
 
       expect(mockQueueService.enqueueDlq).toHaveBeenCalledWith({
         automationId: 'resolved-auto-1',
@@ -264,14 +270,20 @@ describe('Production Hardening Service Suite', () => {
         data: {
           executionId: 'exe-1',
           actionId: 'act-1',
-          event: { eventId: 'evt-1', instagramAccountId: 'acc-1', metadata: {} },
+          event: {
+            eventId: 'evt-1',
+            instagramAccountId: 'acc-1',
+            metadata: {},
+          },
         },
         attemptsMade: 3,
         opts: { attempts: 3 },
         discard: jest.fn().mockResolvedValue(undefined),
       };
 
-      await expect(actionWorker.process(mockJob)).rejects.toThrow('Network error');
+      await expect(actionWorker.process(mockJob)).rejects.toThrow(
+        'Network error',
+      );
 
       expect(mockQueueService.enqueueDlq).toHaveBeenCalledWith({
         automationId: 'resolved-auto-1',
@@ -294,7 +306,11 @@ describe('Production Hardening Service Suite', () => {
         data: {
           executionId: 'exe-1',
           actionId: 'act-1',
-          event: { eventId: 'evt-1', instagramAccountId: 'acc-1', metadata: {} },
+          event: {
+            eventId: 'evt-1',
+            instagramAccountId: 'acc-1',
+            metadata: {},
+          },
         },
         attemptsMade: 1,
         opts: { attempts: 3 },

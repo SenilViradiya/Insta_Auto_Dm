@@ -4,19 +4,14 @@ import React, { Suspense, useEffect, useState } from "react";
 import { message } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useRouter } from "next/navigation";
-import {
-  Link2,
-  Plus,
-  AlertCircle,
-  Database
-} from "lucide-react";
+import { Link2, Plus, AlertCircle, Database } from "lucide-react";
 import AppShell from "../components/layout/AppShell";
 import {
   WorkspaceHeader,
   ConnectionHealth,
   PermissionHealth,
   SyncStatus,
-  WorkspaceLoadingSkeleton
+  WorkspaceLoadingSkeleton,
 } from "../components/workspace/WorkspaceComponents";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -57,7 +52,7 @@ function EmptyState({ onConnect }: { onConnect: () => void }) {
         background: "var(--surface)",
         border: "1px dashed var(--border)",
         borderRadius: "var(--radius-lg)",
-        boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
       }}
     >
       <div
@@ -93,7 +88,9 @@ function EmptyState({ onConnect }: { onConnect: () => void }) {
           lineHeight: 1.6,
         }}
       >
-        Welcome! Connect your business Instagram professional profiles. Once connected, AutoDM will auto-monitor webhook feeds, evaluate Keyword Conditions and auto-reply to DMs.
+        Welcome! Connect your business Instagram professional profiles. Once
+        connected, AutoDM will auto-monitor webhook feeds, evaluate Keyword
+        Conditions and auto-reply to DMs.
       </p>
       <button
         onClick={onConnect}
@@ -110,10 +107,14 @@ function EmptyState({ onConnect }: { onConnect: () => void }) {
           fontWeight: 600,
           cursor: "pointer",
           transition: "all var(--duration) var(--ease)",
-          boxShadow: "0 2px 4px rgba(37,99,235,0.2)"
+          boxShadow: "0 2px 4px rgba(37,99,235,0.2)",
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--primary-hover)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "var(--primary)"; }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "var(--primary-hover)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "var(--primary)";
+        }}
       >
         <Plus size={16} />
         Connect Instagram Account
@@ -131,7 +132,9 @@ function WorkspaceDashboardContent() {
   const errorParam = searchParams.get("error");
   const [messageApi, contextHolder] = message.useMessage();
 
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (connectedParam === "true") {
@@ -168,16 +171,21 @@ function WorkspaceDashboardContent() {
     }
   }, [data]);
 
-  const activeAccount = data?.accounts.find((e) => e.id === selectedAccountId) || null;
+  const activeAccount =
+    data?.accounts.find((e) => e.id === selectedAccountId) || null;
 
   // Query: Fetch Synced Instagram Profile from API
-  const { data: profile, isLoading: isProfileLoading, refetch: refetchProfile } = useQuery({
+  const {
+    data: profile,
+    isLoading: isProfileLoading,
+    refetch: refetchProfile,
+  } = useQuery({
     queryKey: ["profile-details", selectedAccountId],
     queryFn: async () => {
       if (!selectedAccountId) return null;
       try {
         const response = await fetch(`${API_URL}/profile`, {
-          headers: { "x-instagram-account-id": selectedAccountId }
+          headers: { "x-instagram-account-id": selectedAccountId },
         });
         if (!response.ok) {
           // Profile row might not have synced yet, return null so UI handles fallback gracefully
@@ -198,8 +206,8 @@ function WorkspaceDashboardContent() {
       const response = await fetch(`${API_URL}/assets/sync`, {
         method: "POST",
         headers: {
-          "x-instagram-account-id": selectedAccountId
-        }
+          "x-instagram-account-id": selectedAccountId,
+        },
       });
       if (!response.ok) throw new Error("Sync failed");
       return response.json();
@@ -212,7 +220,7 @@ function WorkspaceDashboardContent() {
     },
     onError: (err: Error) => {
       messageApi.error(`Sync error: ${err.message}`);
-    }
+    },
   });
 
   // Mutation: Disconnect Account
@@ -242,7 +250,11 @@ function WorkspaceDashboardContent() {
 
   const handleDisconnect = () => {
     if (selectedAccountId) {
-      if (confirm("Disconnect this Instagram account? All configured automations will stop executing.")) {
+      if (
+        confirm(
+          "Disconnect this Instagram account? All configured automations will stop executing.",
+        )
+      ) {
         disconnectMutation.mutate(selectedAccountId);
       }
     }
@@ -260,7 +272,7 @@ function WorkspaceDashboardContent() {
           justifyContent: "space-between",
           marginBottom: "var(--space-6)",
           borderBottom: "1px solid var(--border)",
-          paddingBottom: "var(--space-4)"
+          paddingBottom: "var(--space-4)",
         }}
       >
         <div>
@@ -282,7 +294,8 @@ function WorkspaceDashboardContent() {
               margin: "4px 0 0 0",
             }}
           >
-            Configure connected Facebook Pages, audit security permission statuses, and synchronize library assets.
+            Configure connected Facebook Pages, audit security permission
+            statuses, and synchronize library assets.
           </p>
         </div>
 
@@ -301,10 +314,14 @@ function WorkspaceDashboardContent() {
             fontWeight: 600,
             cursor: "pointer",
             transition: "all var(--duration) var(--ease)",
-            boxShadow: "0 2px 4px rgba(37,99,235,0.15)"
+            boxShadow: "0 2px 4px rgba(37,99,235,0.15)",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--primary-hover)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--primary)"; }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "var(--primary-hover)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "var(--primary)";
+          }}
         >
           <Plus size={15} />
           Link New Business Account
@@ -329,13 +346,13 @@ function WorkspaceDashboardContent() {
           }}
         >
           <AlertCircle size={18} />
-          Unable to synchronize with local cluster database. Verify NestJS server is running on port 3001.
+          Unable to synchronize with local cluster database. Verify NestJS
+          server is running on port 3001.
         </div>
       ) : !data?.accounts?.length ? (
         <EmptyState onConnect={handleConnect} />
       ) : activeAccount ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-
           {/* Main Account details header */}
           <WorkspaceHeader
             account={activeAccount}
@@ -352,7 +369,7 @@ function WorkspaceDashboardContent() {
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-              gap: "20px"
+              gap: "20px",
             }}
           >
             <ConnectionHealth account={activeAccount} />
@@ -363,7 +380,6 @@ function WorkspaceDashboardContent() {
               isSyncing={syncMutation.isPending}
             />
           </div>
-
         </div>
       ) : (
         <div
@@ -372,12 +388,20 @@ function WorkspaceDashboardContent() {
             padding: "40px",
             background: "var(--surface)",
             border: "1px solid var(--border)",
-            borderRadius: "var(--radius-lg)"
+            borderRadius: "var(--radius-lg)",
           }}
         >
-          <Database size={32} color="var(--text-muted)" style={{ marginBottom: "12px" }} />
-          <h4 style={{ margin: 0, color: "var(--text-primary)" }}>No selected account workspace active</h4>
-          <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>Choose an Instagram page from the top switcher to start managing.</p>
+          <Database
+            size={32}
+            color="var(--text-muted)"
+            style={{ marginBottom: "12px" }}
+          />
+          <h4 style={{ margin: 0, color: "var(--text-primary)" }}>
+            No selected account workspace active
+          </h4>
+          <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
+            Choose an Instagram page from the top switcher to start managing.
+          </p>
         </div>
       )}
     </AppShell>

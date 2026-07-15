@@ -8,7 +8,12 @@ import { ActionStrategyResolver } from './action-strategy.resolver';
 import { DomainEvent } from '../interfaces/domain-event.interface';
 import { ExecutionContext } from '../interfaces/execution-context.interface';
 import { AutomationModel } from '../interfaces/repository.interfaces';
-import { ExecutionException, ActionException, NonRetryableException, RetryException } from '../errors/automation.errors';
+import {
+  ExecutionException,
+  ActionException,
+  NonRetryableException,
+  RetryException,
+} from '../errors/automation.errors';
 import { MetricsService } from './metrics.service';
 import { AutomationConfig } from '../config/automation.config';
 import { VariableResolver } from './variable-resolver';
@@ -26,13 +31,15 @@ export class ExecutionEngine {
     private readonly metricsService: MetricsService,
     private readonly config: AutomationConfig,
     private readonly variableResolver: VariableResolver,
-  ) { }
+  ) {}
 
   /**
    * Helper to retrieve runtime action execution steps (prepending dynamic REPLY_COMMENT actions for comments)
    */
-  private getRuntimeActions(automation: AutomationModel): Array<{ id: string; actionType: string; payload: any }> {
-    const list = [...(automation.actions || [])].map(act => ({
+  private getRuntimeActions(
+    automation: AutomationModel,
+  ): Array<{ id: string; actionType: string; payload: any }> {
+    const list = [...(automation.actions || [])].map((act) => ({
       id: act.id,
       actionType: act.actionType as string,
       payload: act.payload,
@@ -40,7 +47,8 @@ export class ExecutionEngine {
 
     if (
       automation.triggerConfig?.publicReply &&
-      (automation.triggerType === 'REEL_COMMENT' || automation.triggerType === 'POST_COMMENT')
+      (automation.triggerType === 'REEL_COMMENT' ||
+        automation.triggerType === 'POST_COMMENT')
     ) {
       list.unshift({
         id: `virtual-reply-${automation.id}`,
@@ -207,7 +215,10 @@ export class ExecutionEngine {
             caption = asset.caption;
           }
         } catch (err: any) {
-          this.logger.warn(`Could not resolve reel caption from database: ${err.message}`, err.stack);
+          this.logger.warn(
+            `Could not resolve reel caption from database: ${err.message}`,
+            err.stack,
+          );
         }
       }
     }
@@ -222,16 +233,18 @@ export class ExecutionEngine {
       triggerPayload: event,
       sender: {
         id: event.senderId,
-        username: event.content?.username || event.content?.senderUsername || undefined,
+        username:
+          event.content?.username || event.content?.senderUsername || undefined,
       },
       recipient: {
         id: event.recipientId,
       },
       variables: {
-        'user.username': event.content?.username || event.content?.senderUsername || 'User',
+        'user.username':
+          event.content?.username || event.content?.senderUsername || 'User',
         'comment.text': event.content?.text || '',
         'reel.caption': caption,
-        'current_time': new Date().toISOString(),
+        current_time: new Date().toISOString(),
       },
       metadata: {
         correlationId,
@@ -271,11 +284,18 @@ export class ExecutionEngine {
     );
 
     // Only throw retry/non-retry if the step was not completed successfully or transitioning to waiting/timer
-    if (result.transitionToStatus !== 'SUCCESS' && result.transitionToStatus !== 'WAITING') {
+    if (
+      result.transitionToStatus !== 'SUCCESS' &&
+      result.transitionToStatus !== 'WAITING'
+    ) {
       if (result.retryable) {
-        throw new RetryException(`Strategy execution failed with a retryable error`);
+        throw new RetryException(
+          `Strategy execution failed with a retryable error`,
+        );
       } else {
-        throw new NonRetryableException(`Strategy execution failed permanently`);
+        throw new NonRetryableException(
+          `Strategy execution failed permanently`,
+        );
       }
     }
 
@@ -344,7 +364,9 @@ export class ExecutionEngine {
     } else {
       // All steps executed, compile metrics and transition to SUCCESS
       const record = await this.prismaFindExecution(executionId);
-      const duration = record ? Date.now() - new Date(record.startedAt).getTime() : 0;
+      const duration = record
+        ? Date.now() - new Date(record.startedAt).getTime()
+        : 0;
 
       await this.executionRepo.updateExecutionStatus(
         executionId,
@@ -369,7 +391,8 @@ export class ExecutionEngine {
       await this.executionRepo.createLog({
         executionId,
         level: 'INFO',
-        message: '[Execution completed] Automation execution completed successfully.',
+        message:
+          '[Execution completed] Automation execution completed successfully.',
         metadata: {
           durationMs: duration,
           dmStatus: 'SENT',

@@ -30,7 +30,7 @@ export class MessagingService {
     private readonly graphClient: MetaGraphClient,
     private readonly messageRepo: MessageRepository,
     private readonly metrics: MessagingMetricsService,
-  ) { }
+  ) {}
 
   async send(request: SendMessageRequest): Promise<MessagingResult> {
     const correlationId = request.correlationId || randomUUID();
@@ -198,7 +198,13 @@ export class MessagingService {
     messageText: string;
     automationExecutionId?: string;
     correlationId?: string;
-  }): Promise<{ success: boolean; replyId?: string; errorCode?: string; errorMessage?: string; durationMs: number }> {
+  }): Promise<{
+    success: boolean;
+    replyId?: string;
+    errorCode?: string;
+    errorMessage?: string;
+    durationMs: number;
+  }> {
     const correlationId = request.correlationId || randomUUID();
     const startTime = Date.now();
 
@@ -210,10 +216,15 @@ export class MessagingService {
     };
 
     try {
-      this.logger.log(`Processing sendPublicReply request`, JSON.stringify(logContext));
+      this.logger.log(
+        `Processing sendPublicReply request`,
+        JSON.stringify(logContext),
+      );
 
       // Load access token
-      const accessToken = await this.tokenService.getToken(request.instagramAccountId);
+      const accessToken = await this.tokenService.getToken(
+        request.instagramAccountId,
+      );
 
       // Rate limit check
       await this.rateLimiter.acquire(request.instagramAccountId);

@@ -46,10 +46,15 @@ export function loadEnvFiles() {
 
 const envSchema = z
   .object({
-    DATABASE_URL: z.string().url('DATABASE_URL must be a valid PostgreSQL connection URL'),
+    DATABASE_URL: z
+      .string()
+      .url('DATABASE_URL must be a valid PostgreSQL connection URL'),
     TOKEN_ENCRYPTION_KEY: z
       .string()
-      .length(32, 'TOKEN_ENCRYPTION_KEY must be exactly 32 characters long for AES-256'),
+      .length(
+        32,
+        'TOKEN_ENCRYPTION_KEY must be exactly 32 characters long for AES-256',
+      ),
     META_APP_ID: z.string().min(1, 'META_APP_ID is required'),
     META_APP_SECRET: z.string().min(1, 'META_APP_SECRET is required'),
     META_REDIRECT_URI: z.string().url('META_REDIRECT_URI must be a valid URL'),
@@ -60,13 +65,20 @@ const envSchema = z
       z.object({
         REDIS_URL: z
           .string()
-          .url('REDIS_URL must be a valid Redis connection URL (e.g. redis:// or rediss://)'),
+          .url(
+            'REDIS_URL must be a valid Redis connection URL (e.g. redis:// or rediss://)',
+          ),
       }),
       z.object({
-        REDIS_HOST: z.string().min(1, 'REDIS_HOST is required when REDIS_URL is not provided'),
+        REDIS_HOST: z
+          .string()
+          .min(1, 'REDIS_HOST is required when REDIS_URL is not provided'),
         REDIS_PORT: z.preprocess(
           (val) => (typeof val === 'string' ? parseInt(val, 10) : val),
-          z.number({ invalid_type_error: 'REDIS_PORT must be a valid number' }).int().positive(),
+          z
+            .number({ invalid_type_error: 'REDIS_PORT must be a valid number' })
+            .int()
+            .positive(),
         ),
       }),
     ]),
@@ -75,13 +87,19 @@ const envSchema = z
 export function validateConfig() {
   const result = envSchema.safeParse(process.env);
   if (!result.success) {
-    console.error('\n==========================================================');
-    console.error('CONFIGURATION ERROR: INVALID OR MISSING ENVIRONMENT VARIABLES');
+    console.error(
+      '\n==========================================================',
+    );
+    console.error(
+      'CONFIGURATION ERROR: INVALID OR MISSING ENVIRONMENT VARIABLES',
+    );
     console.error('==========================================================');
     result.error.errors.forEach((err) => {
       console.error(`- ${err.path.join('.') || 'Global'}: ${err.message}`);
     });
-    console.error('==========================================================\n');
+    console.error(
+      '==========================================================\n',
+    );
     process.exit(1);
   }
 }

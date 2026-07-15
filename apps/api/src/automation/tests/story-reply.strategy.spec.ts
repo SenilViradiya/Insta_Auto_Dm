@@ -41,21 +41,31 @@ describe('StoryReplyTriggerStrategy', () => {
 
   describe('Validation', () => {
     it('accepts valid configuration', () => {
-      expect(() => strategy.validateConfiguration({ storyScope: 'ANY' })).not.toThrow();
+      expect(() =>
+        strategy.validateConfiguration({ storyScope: 'ANY' }),
+      ).not.toThrow();
     });
 
     it('rejects invalid storyScope', () => {
-      expect(() => strategy.validateConfiguration({ storyScope: 'INVALID' })).toThrow(TriggerValidationException);
+      expect(() =>
+        strategy.validateConfiguration({ storyScope: 'INVALID' }),
+      ).toThrow(TriggerValidationException);
     });
 
     it('rejects missing configuration', () => {
-      expect(() => strategy.validateConfiguration(null)).toThrow(TriggerValidationException);
+      expect(() => strategy.validateConfiguration(null)).toThrow(
+        TriggerValidationException,
+      );
     });
   });
 
   describe('Event Matching', () => {
     it('matches always for valid scope', () => {
-      const context = { automation: baseAutomation, event: baseEvent, currentTime: new Date() };
+      const context = {
+        automation: baseAutomation,
+        event: baseEvent,
+        currentTime: new Date(),
+      };
       const result = strategy.matchesEvent(context);
       expect(result.matched).toBe(true);
     });

@@ -11,7 +11,9 @@ export class TriggerResolver {
   resolve(type: TriggerType): TriggerStrategy {
     const strategy = this.registry.get(type);
     if (!strategy) {
-      throw new UnknownTriggerException(`No trigger strategy implementation found for type: ${type}`);
+      throw new UnknownTriggerException(
+        `No trigger strategy implementation found for type: ${type}`,
+      );
     }
     return strategy;
   }

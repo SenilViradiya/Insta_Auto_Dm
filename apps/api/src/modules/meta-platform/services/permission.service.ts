@@ -51,7 +51,7 @@ export class PermissionService {
       });
 
       const hasAllRequired = this.requiredPermissions.every((perm) =>
-        grantedPermissions.has(perm)
+        grantedPermissions.has(perm),
       );
 
       return {
@@ -59,7 +59,9 @@ export class PermissionService {
         scopes: scopes as PermissionStatus['scopes'],
       };
     } catch (error) {
-      this.logger.error(`Failed to validate Meta permissions: ${(error as Error).message}`);
+      this.logger.error(
+        `Failed to validate Meta permissions: ${(error as Error).message}`,
+      );
       throw error;
     }
   }

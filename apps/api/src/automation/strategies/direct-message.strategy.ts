@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { TriggerType } from '@prisma/client';
-import { TriggerStrategy, TriggerContext, TriggerMatchResult } from '../interfaces/trigger.interface';
+import {
+  TriggerStrategy,
+  TriggerContext,
+  TriggerMatchResult,
+} from '../interfaces/trigger.interface';
 import { TriggerValidationException } from '../errors/automation.errors';
 import { DirectMessageTriggerSchema } from '../dto/trigger-validators';
 
@@ -33,16 +37,21 @@ export class DirectMessageTriggerStrategy implements TriggerStrategy {
     if (config.mode === 'KEYWORD') {
       const text = (context.event.content?.text || '').toLowerCase().trim();
       const keywords: string[] = config.keywords || [];
-      const matchedKeywords = keywords.filter(k => text.includes(k.toLowerCase().trim()));
-      
+      const matchedKeywords = keywords.filter((k) =>
+        text.includes(k.toLowerCase().trim()),
+      );
+
       if (matchedKeywords.length > 0) {
-        return { 
-          matched: true, 
+        return {
+          matched: true,
           reason: `Matched keyword(s): ${matchedKeywords.join(', ')}`,
-          matchedConditions: matchedKeywords 
+          matchedConditions: matchedKeywords,
         };
       }
-      return { matched: false, reason: `Direct message text "${text}" did not match keywords.` };
+      return {
+        matched: false,
+        reason: `Direct message text "${text}" did not match keywords.`,
+      };
     }
 
     return { matched: false, reason: 'Unknown mode.' };

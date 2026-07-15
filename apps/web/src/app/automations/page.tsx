@@ -39,12 +39,40 @@ interface InstagramAccount {
 }
 
 /* ── Trigger Metadata ── */
-const TRIGGER_META: Record<string, { label: string; icon: React.ReactNode; color: string; desc: string }> = {
-  DIRECT_MESSAGE: { label: "Direct Message", icon: <MessageSquare size={14} />, color: "#2563EB", desc: "Triggers on incoming DMs" },
-  REEL_COMMENT: { label: "Reel Comment", icon: <Film size={14} />, color: "#EC4899", desc: "Triggers on Reel comments" },
-  POST_COMMENT: { label: "Post Comment", icon: <ImageIcon size={14} />, color: "#3B82F6", desc: "Triggers on feed post comments" },
-  STORY_REPLY: { label: "Story Reply", icon: <Play size={14} />, color: "#F59E0B", desc: "Triggers on active Story replies" },
-  STORY_MENTION: { label: "Story Mention", icon: <AtSign size={14} />, color: "#8B5CF6", desc: "Triggers on story handle tags" },
+const TRIGGER_META: Record<
+  string,
+  { label: string; icon: React.ReactNode; color: string; desc: string }
+> = {
+  DIRECT_MESSAGE: {
+    label: "Direct Message",
+    icon: <MessageSquare size={14} />,
+    color: "#2563EB",
+    desc: "Triggers on incoming DMs",
+  },
+  REEL_COMMENT: {
+    label: "Reel Comment",
+    icon: <Film size={14} />,
+    color: "#EC4899",
+    desc: "Triggers on Reel comments",
+  },
+  POST_COMMENT: {
+    label: "Post Comment",
+    icon: <ImageIcon size={14} />,
+    color: "#3B82F6",
+    desc: "Triggers on feed post comments",
+  },
+  STORY_REPLY: {
+    label: "Story Reply",
+    icon: <Play size={14} />,
+    color: "#F59E0B",
+    desc: "Triggers on active Story replies",
+  },
+  STORY_MENTION: {
+    label: "Story Mention",
+    icon: <AtSign size={14} />,
+    color: "#8B5CF6",
+    desc: "Triggers on story handle tags",
+  },
 };
 
 /* ── Seeded Helper for Stable Mock Metrics ── */
@@ -63,11 +91,31 @@ const getSeededMetrics = (id: string) => {
 /* ── Loading Skeleton Cards ── */
 function AutomationsSkeleton() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--space-6)",
+      }}
+    >
       {/* Search Header Skeleton */}
-      <div style={{ height: "45px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", animation: "skeleton-pulse 1.8s infinite" }} />
+      <div
+        style={{
+          height: "45px",
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--radius-md)",
+          animation: "skeleton-pulse 1.8s infinite",
+        }}
+      />
       {/* Grid List Skeleton */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "var(--space-4)" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))",
+          gap: "var(--space-4)",
+        }}
+      >
         {[1, 2, 3].map((n) => (
           <div
             key={n}
@@ -83,12 +131,34 @@ function AutomationsSkeleton() {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <div style={{ width: "50%", height: "18px", borderRadius: "4px" }} className="skeleton" />
-              <div style={{ width: "24%", height: "18px", borderRadius: "4px" }} className="skeleton" />
+              <div
+                style={{ width: "50%", height: "18px", borderRadius: "4px" }}
+                className="skeleton"
+              />
+              <div
+                style={{ width: "24%", height: "18px", borderRadius: "4px" }}
+                className="skeleton"
+              />
             </div>
-            <div style={{ width: "90%", height: "14px", borderRadius: "4px" }} className="skeleton" />
-            <div style={{ flex: 1, borderTop: "1px solid var(--divider)", paddingTop: "var(--space-3)" }}>
-              <div style={{ width: "70%", height: "60px", borderRadius: "var(--radius-md)" }} className="skeleton" />
+            <div
+              style={{ width: "90%", height: "14px", borderRadius: "4px" }}
+              className="skeleton"
+            />
+            <div
+              style={{
+                flex: 1,
+                borderTop: "1px solid var(--divider)",
+                paddingTop: "var(--space-3)",
+              }}
+            >
+              <div
+                style={{
+                  width: "70%",
+                  height: "60px",
+                  borderRadius: "var(--radius-md)",
+                }}
+                className="skeleton"
+              />
             </div>
             <div style={{ height: "30px" }} />
           </div>
@@ -127,12 +197,18 @@ function WorkflowCard({
 
   // Parse custom asset detail info
   const config = automation.triggerConfig || {};
-  const isPostOrReel = triggerType === "REEL_COMMENT" || triggerType === "POST_COMMENT";
-  const selectLabel = isPostOrReel && config.mediaScope === "SPECIFIC_REEL" ? "Target Reel" : "Target Post";
+  const isPostOrReel =
+    triggerType === "REEL_COMMENT" || triggerType === "POST_COMMENT";
+  const selectLabel =
+    isPostOrReel && config.mediaScope === "SPECIFIC_REEL"
+      ? "Target Reel"
+      : "Target Post";
 
   // Prevent card click wrapper triggers
   const handleCardClick = () => {
-    router.push(`/automations/edit/${automation.id}?instagramAccountId=${selectedAccountId}`);
+    router.push(
+      `/automations/edit/${automation.id}?instagramAccountId=${selectedAccountId}`,
+    );
   };
 
   return (
@@ -163,8 +239,23 @@ function WorkflowCard({
     >
       {/* ── Card Header ── */}
       <div>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-2)" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: "var(--space-2)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
             <h3
               style={{
                 fontSize: 15,
@@ -180,7 +271,12 @@ function WorkflowCard({
             </h3>
             {automation.createdAt && (
               <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                Created {new Date(automation.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                Created{" "}
+                {new Date(automation.createdAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
               </span>
             )}
           </div>
@@ -194,8 +290,12 @@ function WorkflowCard({
               gap: 5,
               padding: "4px 8px",
               borderRadius: "20px",
-              background: automation.enabled ? "var(--success-bg)" : "var(--divider)",
-              color: automation.enabled ? "var(--success)" : "var(--text-secondary)",
+              background: automation.enabled
+                ? "var(--success-bg)"
+                : "var(--divider)",
+              color: automation.enabled
+                ? "var(--success)"
+                : "var(--text-secondary)",
               fontSize: 11,
               fontWeight: 600,
               flexShrink: 0,
@@ -206,7 +306,9 @@ function WorkflowCard({
                 width: 6,
                 height: 6,
                 borderRadius: "50%",
-                background: automation.enabled ? "var(--success)" : "var(--text-muted)",
+                background: automation.enabled
+                  ? "var(--success)"
+                  : "var(--text-muted)",
               }}
             />
             {automation.enabled ? "Active" : "Paused"}
@@ -227,7 +329,14 @@ function WorkflowCard({
           }}
         >
           {/* Node 1: Trigger Choice */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 2, position: "relative" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              position: "relative",
+            }}
+          >
             {/* Visual connector anchor Dot */}
             <div
               style={{
@@ -256,26 +365,62 @@ function WorkflowCard({
               >
                 {meta.icon}
               </div>
-              <span style={{ fontSize: 12, fontWeight: 650, color: "var(--text-primary)" }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 650,
+                  color: "var(--text-primary)",
+                }}
+              >
                 {meta.label}
               </span>
             </div>
 
             {/* Render Specific Asset metadata or Keyword summaries for the trigger */}
-            {isPostOrReel && config.mediaScope === "SPECIFIC_REEL" && config.mediaId && (
-              <span style={{ fontSize: 11, color: "var(--text-secondary)", marginLeft: "var(--space-1)" }}>
-                Target: <span style={{ fontWeight: 550 }}>Specific Reel ({config.mediaId.slice(-6)})</span>
-              </span>
-            )}
-            {isPostOrReel && config.mediaScope === "SPECIFIC_POST" && config.mediaId && (
-              <span style={{ fontSize: 11, color: "var(--text-secondary)", marginLeft: "var(--space-1)" }}>
-                Target: <span style={{ fontWeight: 550 }}>Specific Post ({config.mediaId.slice(-6)})</span>
-              </span>
-            )}
+            {isPostOrReel &&
+              config.mediaScope === "SPECIFIC_REEL" &&
+              config.mediaId && (
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "var(--text-secondary)",
+                    marginLeft: "var(--space-1)",
+                  }}
+                >
+                  Target:{" "}
+                  <span style={{ fontWeight: 550 }}>
+                    Specific Reel ({config.mediaId.slice(-6)})
+                  </span>
+                </span>
+              )}
+            {isPostOrReel &&
+              config.mediaScope === "SPECIFIC_POST" &&
+              config.mediaId && (
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "var(--text-secondary)",
+                    marginLeft: "var(--space-1)",
+                  }}
+                >
+                  Target:{" "}
+                  <span style={{ fontWeight: 550 }}>
+                    Specific Post ({config.mediaId.slice(-6)})
+                  </span>
+                </span>
+              )}
 
             {/* Keyword tag summaries */}
             {keywords.length > 0 && (
-              <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 2, marginLeft: "var(--space-1)" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 4,
+                  flexWrap: "wrap",
+                  marginTop: 2,
+                  marginLeft: "var(--space-1)",
+                }}
+              >
                 {keywords.slice(0, 3).map((kw: any, idx: number) => (
                   <span
                     key={idx}
@@ -291,7 +436,9 @@ function WorkflowCard({
                   </span>
                 ))}
                 {keywords.length > 3 && (
-                  <span style={{ fontSize: 10, color: "var(--text-muted)" }}>+{keywords.length - 3}</span>
+                  <span style={{ fontSize: 10, color: "var(--text-muted)" }}>
+                    +{keywords.length - 3}
+                  </span>
                 )}
               </div>
             )}
@@ -301,7 +448,15 @@ function WorkflowCard({
           {actions.map((act: any, aIdx: number) => {
             const hasWait = act.delaySeconds > 0;
             return (
-              <div key={aIdx} style={{ display: "flex", flexDirection: "column", gap: 3, position: "relative" }}>
+              <div
+                key={aIdx}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 3,
+                  position: "relative",
+                }}
+              >
                 {/* Visual Connector Dot */}
                 <div
                   style={{
@@ -318,7 +473,20 @@ function WorkflowCard({
 
                 {/* Wait notification timer block */}
                 {hasWait && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "2px 6px", background: "var(--warning-bg)", color: "var(--warning)", borderRadius: "4px", width: "fit-content", fontSize: 10, fontWeight: 550 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      padding: "2px 6px",
+                      background: "var(--warning-bg)",
+                      color: "var(--warning)",
+                      borderRadius: "4px",
+                      width: "fit-content",
+                      fontSize: 10,
+                      fontWeight: 550,
+                    }}
+                  >
                     <Clock size={11} />
                     Wait {act.delaySeconds} seconds
                   </div>
@@ -351,7 +519,13 @@ function WorkflowCard({
                     </span>
                   </div>
                 ) : (
-                  <span style={{ fontSize: 11, color: "var(--text-muted)", fontStyle: "italic" }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: "var(--text-muted)",
+                      fontStyle: "italic",
+                    }}
+                  >
                     Send Direct Message
                   </span>
                 )}
@@ -360,7 +534,15 @@ function WorkflowCard({
           })}
 
           {actions.length === 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--text-muted)", fontSize: 11 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                color: "var(--text-muted)",
+                fontSize: 11,
+              }}
+            >
               <HelpCircle size={12} />
               <span>No response steps currently.</span>
             </div>
@@ -369,7 +551,14 @@ function WorkflowCard({
       </div>
 
       {/* ── Footer Block ── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", marginTop: "var(--space-4)" }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "var(--space-3)",
+          marginTop: "var(--space-4)",
+        }}
+      >
         {/* Metrics Row */}
         <div
           style={{
@@ -382,18 +571,74 @@ function WorkflowCard({
           }}
         >
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: 10, color: "var(--text-secondary)", fontWeight: 550 }}>EXECUTED</span>
-            <span style={{ fontSize: 12, fontWeight: 650, color: "var(--text-primary)" }}>{metrics.runs}</span>
+            <span
+              style={{
+                fontSize: 10,
+                color: "var(--text-secondary)",
+                fontWeight: 550,
+              }}
+            >
+              EXECUTED
+            </span>
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 650,
+                color: "var(--text-primary)",
+              }}
+            >
+              {metrics.runs}
+            </span>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <span style={{ fontSize: 10, color: "var(--text-secondary)", fontWeight: 550 }}>SUCCESS RATE</span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--success)" }}>{metrics.success}</span>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <span
+              style={{
+                fontSize: 10,
+                color: "var(--text-secondary)",
+                fontWeight: 550,
+              }}
+            >
+              SUCCESS RATE
+            </span>
+            <span
+              style={{ fontSize: 12, fontWeight: 600, color: "var(--success)" }}
+            >
+              {metrics.success}
+            </span>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-            <span style={{ fontSize: 10, color: "var(--text-secondary)", fontWeight: 550 }}>LAST ACTIVE</span>
-            <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-secondary)" }}>{metrics.lastRun}</span>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+            }}
+          >
+            <span
+              style={{
+                fontSize: 10,
+                color: "var(--text-secondary)",
+                fontWeight: 550,
+              }}
+            >
+              LAST ACTIVE
+            </span>
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 500,
+                color: "var(--text-secondary)",
+              }}
+            >
+              {metrics.lastRun}
+            </span>
           </div>
         </div>
 
@@ -409,14 +654,26 @@ function WorkflowCard({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Quick Active Trigger */}
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "var(--space-2)",
+            }}
+          >
             <Switch
               size="small"
               checked={automation.enabled}
               loading={isToggling}
               onChange={onToggle}
             />
-            <span style={{ fontSize: 11, fontWeight: 500, color: "var(--text-secondary)" }}>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                color: "var(--text-secondary)",
+              }}
+            >
               Toggle status
             </span>
           </div>
@@ -424,7 +681,11 @@ function WorkflowCard({
           {/* Action icon triggers */}
           <div style={{ display: "flex", gap: "var(--space-1)" }}>
             <button
-              onClick={() => router.push(`/automations/edit/${automation.id}?instagramAccountId=${selectedAccountId}`)}
+              onClick={() =>
+                router.push(
+                  `/automations/edit/${automation.id}?instagramAccountId=${selectedAccountId}`,
+                )
+              }
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -537,11 +798,27 @@ function EmptyAutomations({ onCreateClick }: { onCreateClick: () => void }) {
       >
         <Bot size={22} />
       </div>
-      <h3 style={{ fontSize: 17, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 6px 0" }}>
+      <h3
+        style={{
+          fontSize: 17,
+          fontWeight: 600,
+          color: "var(--text-primary)",
+          margin: "0 0 6px 0",
+        }}
+      >
         Create your first DM automation
       </h3>
-      <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 var(--space-6) 0", maxWidth: 360, lineHeight: 1.5 }}>
-        Link Comment triggers and auto-inbox replies to instantly handle incoming reels client requests.
+      <p
+        style={{
+          fontSize: 13,
+          color: "var(--text-secondary)",
+          margin: "0 0 var(--space-6) 0",
+          maxWidth: 360,
+          lineHeight: 1.5,
+        }}
+      >
+        Link Comment triggers and auto-inbox replies to instantly handle
+        incoming reels client requests.
       </p>
       <button
         onClick={onCreateClick}
@@ -559,8 +836,12 @@ function EmptyAutomations({ onCreateClick }: { onCreateClick: () => void }) {
           cursor: "pointer",
           transition: "all var(--duration) var(--ease)",
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--primary-hover)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "var(--primary)"; }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "var(--primary-hover)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "var(--primary)";
+        }}
         type="button"
       >
         <Plus size={15} />
@@ -582,10 +863,16 @@ function AutomationsContent() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("CREATED_DESC");
 
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    null,
+  );
 
   // Meta connection query
-  const { data: statusData, isLoading: accountsLoading, error: accountsError } = useQuery({
+  const {
+    data: statusData,
+    isLoading: accountsLoading,
+    error: accountsError,
+  } = useQuery({
     queryKey: ["meta-status"],
     queryFn: async () => {
       const response = await fetch(`${API_URL}/meta/status`);
@@ -599,10 +886,19 @@ function AutomationsContent() {
     if (statusData?.accounts && statusData.accounts.length > 0) {
       const saved = localStorage.getItem("selected_instagram_account_id");
       const exactMatch = statusData.accounts.find((acc) => acc.id === saved);
-      if (saved && exactMatch) { setSelectedAccountId(saved); return; }
+      if (saved && exactMatch) {
+        setSelectedAccountId(saved);
+        return;
+      }
       if (saved) {
-        const legacyMatch = statusData.accounts.find((acc) => acc.instagramUserId === saved);
-        if (legacyMatch) { setSelectedAccountId(legacyMatch.id); localStorage.setItem("selected_instagram_account_id", legacyMatch.id); return; }
+        const legacyMatch = statusData.accounts.find(
+          (acc) => acc.instagramUserId === saved,
+        );
+        if (legacyMatch) {
+          setSelectedAccountId(legacyMatch.id);
+          localStorage.setItem("selected_instagram_account_id", legacyMatch.id);
+          return;
+        }
       }
       const firstId = statusData.accounts[0].id;
       setSelectedAccountId(firstId);
@@ -618,11 +914,17 @@ function AutomationsContent() {
   };
 
   // Automations list query
-  const { data: automationsData, isLoading: automationsLoading, error: automationsError } = useQuery({
+  const {
+    data: automationsData,
+    isLoading: automationsLoading,
+    error: automationsError,
+  } = useQuery({
     queryKey: ["automations", selectedAccountId],
     queryFn: async () => {
       if (!selectedAccountId) return [];
-      const response = await fetch(`${API_URL}/automations`, { headers: { "x-instagram-account-id": selectedAccountId } });
+      const response = await fetch(`${API_URL}/automations`, {
+        headers: { "x-instagram-account-id": selectedAccountId },
+      });
       if (!response.ok) throw new Error("Failed to fetch automations");
       const json = await response.json();
       const items = json && Array.isArray(json.items) ? json.items : [];
@@ -636,7 +938,10 @@ function AutomationsContent() {
     mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
       const response = await fetch(`${API_URL}/automations/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "x-instagram-account-id": selectedAccountId || "default" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-instagram-account-id": selectedAccountId || "default",
+        },
         body: JSON.stringify({ enabled }),
       });
       if (!response.ok) throw new Error("Failed to update status");
@@ -644,7 +949,9 @@ function AutomationsContent() {
     },
     onSuccess: () => {
       messageApi.success("Workflow status updated.");
-      queryClient.invalidateQueries({ queryKey: ["automations", selectedAccountId] });
+      queryClient.invalidateQueries({
+        queryKey: ["automations", selectedAccountId],
+      });
     },
     onError: (err: Error) => messageApi.error(err.message),
   });
@@ -679,7 +986,9 @@ function AutomationsContent() {
     },
     onSuccess: () => {
       messageApi.success("Workflow duplicated successfully.");
-      queryClient.invalidateQueries({ queryKey: ["automations", selectedAccountId] });
+      queryClient.invalidateQueries({
+        queryKey: ["automations", selectedAccountId],
+      });
     },
     onError: (err: Error) => messageApi.error(err.message),
   });
@@ -696,13 +1005,17 @@ function AutomationsContent() {
     },
     onSuccess: () => {
       messageApi.success("Automation deleted.");
-      queryClient.invalidateQueries({ queryKey: ["automations", selectedAccountId] });
+      queryClient.invalidateQueries({
+        queryKey: ["automations", selectedAccountId],
+      });
     },
     onError: (err: Error) => messageApi.error(err.message),
   });
 
   const accountsList = statusData?.accounts || [];
-  const selectedAccount = accountsList.find((acc) => acc.id === selectedAccountId);
+  const selectedAccount = accountsList.find(
+    (acc) => acc.id === selectedAccountId,
+  );
 
   // Filter & sorting pipeline list
   const filteredAutomations = React.useMemo(() => {
@@ -731,7 +1044,9 @@ function AutomationsContent() {
         return a.name.localeCompare(b.name);
       }
       if (sortBy === "CREATED_ASC") {
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        return (
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
       }
       if (sortBy === "EXECUTIONS") {
         const metricsA = getSeededMetrics(a.id);
@@ -745,7 +1060,12 @@ function AutomationsContent() {
     return list;
   }, [automationsData, searchQuery, triggerFilter, statusFilter, sortBy]);
 
-  if (accountsLoading) return <AppShell><AutomationsSkeleton /></AppShell>;
+  if (accountsLoading)
+    return (
+      <AppShell>
+        <AutomationsSkeleton />
+      </AppShell>
+    );
 
   if (accountsError) {
     return (
@@ -764,9 +1084,12 @@ function AutomationsContent() {
         >
           <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 1 }} />
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <span style={{ fontSize: 13, fontWeight: 600 }}>API Server Connection Loss</span>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>
+              API Server Connection Loss
+            </span>
             <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-              Unable to reach NestJS API at {API_URL}. Check if database and docker services are online.
+              Unable to reach NestJS API at {API_URL}. Check if database and
+              docker services are online.
             </span>
           </div>
         </div>
@@ -777,10 +1100,36 @@ function AutomationsContent() {
   if (accountsList.length === 0) {
     return (
       <AppShell>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "var(--space-14)", textAlign: "center" }}>
-          <h2 style={{ fontSize: 20, fontWeight: 650, color: "var(--text-primary)", margin: "0 0 8px 0" }}>No linked accounts found</h2>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 var(--space-6) 0", maxWidth: 360 }}>
-            Connect an Instagram Business profile setup first to setup messaging sequences.
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "var(--space-14)",
+            textAlign: "center",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 650,
+              color: "var(--text-primary)",
+              margin: "0 0 8px 0",
+            }}
+          >
+            No linked accounts found
+          </h2>
+          <p
+            style={{
+              fontSize: 14,
+              color: "var(--text-secondary)",
+              margin: "0 0 var(--space-6) 0",
+              maxWidth: 360,
+            }}
+          >
+            Connect an Instagram Business profile setup first to setup messaging
+            sequences.
           </p>
           <button
             onClick={() => router.push("/")}
@@ -807,12 +1156,36 @@ function AutomationsContent() {
       {contextHolder}
 
       {/* ── Page Header Toolbar Row ── */}
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "var(--space-4)", marginBottom: "var(--space-6)" }}>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "var(--space-4)",
+          marginBottom: "var(--space-6)",
+        }}
+      >
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.02em" }}>
+          <h1
+            style={{
+              fontSize: 22,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+              margin: 0,
+              letterSpacing: "-0.02em",
+            }}
+          >
             Automations Dashboard
           </h1>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              marginTop: 4,
+            }}
+          >
             {selectedAccount && (
               <span
                 style={{
@@ -825,18 +1198,32 @@ function AutomationsContent() {
                   border: "1px solid var(--border)",
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: 4
+                  gap: 4,
                 }}
               >
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--success)" }} />
-                Active Profile: <strong style={{ color: "var(--text-primary)" }}>{selectedAccount.pageName}</strong>
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "var(--success)",
+                  }}
+                />
+                Active Profile:{" "}
+                <strong style={{ color: "var(--text-primary)" }}>
+                  {selectedAccount.pageName}
+                </strong>
               </span>
             )}
           </div>
         </div>
 
         <button
-          onClick={() => router.push(`/automations/create?instagramAccountId=${selectedAccountId}`)}
+          onClick={() =>
+            router.push(
+              `/automations/create?instagramAccountId=${selectedAccountId}`,
+            )
+          }
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -851,8 +1238,12 @@ function AutomationsContent() {
             cursor: "pointer",
             transition: "all var(--duration) var(--ease)",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--primary-hover)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--primary)"; }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "var(--primary-hover)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "var(--primary)";
+          }}
           type="button"
         >
           <Plus size={15} />
@@ -875,7 +1266,19 @@ function AutomationsContent() {
         }}
       >
         {/* Search */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--surface-secondary)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "4px 10px", flex: "1 1 240px", minWidth: 200 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            background: "var(--surface-secondary)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-sm)",
+            padding: "4px 10px",
+            flex: "1 1 240px",
+            minWidth: 200,
+          }}
+        >
           <Search size={14} color="var(--text-muted)" />
           <input
             type="text"
@@ -896,7 +1299,9 @@ function AutomationsContent() {
         {/* Trigger type filter */}
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Filter size={13} color="var(--text-muted)" />
-          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Trigger:</span>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+            Trigger:
+          </span>
           <select
             value={triggerFilter}
             onChange={(e) => setTriggerFilter(e.target.value)}
@@ -921,7 +1326,9 @@ function AutomationsContent() {
 
         {/* Status filter */}
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Status:</span>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+            Status:
+          </span>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -942,9 +1349,18 @@ function AutomationsContent() {
         </div>
 
         {/* Sort controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            marginLeft: "auto",
+          }}
+        >
           <ArrowUpDown size={13} color="var(--text-muted)" />
-          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Sort by:</span>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+            Sort by:
+          </span>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
@@ -987,20 +1403,42 @@ function AutomationsContent() {
           Error loading work flows. Let's make sure Nest API is online.
         </div>
       ) : filteredAutomations.length === 0 ? (
-        <EmptyAutomations onCreateClick={() => router.push(`/automations/create?instagramAccountId=${selectedAccountId}`)} />
+        <EmptyAutomations
+          onCreateClick={() =>
+            router.push(
+              `/automations/create?instagramAccountId=${selectedAccountId}`,
+            )
+          }
+        />
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "var(--space-4)" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))",
+            gap: "var(--space-4)",
+          }}
+        >
           {filteredAutomations.map((auto: any) => (
             <WorkflowCard
               key={auto.id}
               automation={auto}
               selectedAccountId={selectedAccountId || ""}
-              onToggle={(val) => toggleMutation.mutate({ id: auto.id, enabled: val })}
+              onToggle={(val) =>
+                toggleMutation.mutate({ id: auto.id, enabled: val })
+              }
               onDuplicate={() => duplicateMutation.mutate(auto)}
               onDelete={() => deleteMutation.mutate(auto.id)}
-              isToggling={toggleMutation.isPending && (toggleMutation.variables as any)?.id === auto.id}
-              isDuplicating={duplicateMutation.isPending && duplicateMutation.variables === auto}
-              isDeleting={deleteMutation.isPending && deleteMutation.variables === auto.id}
+              isToggling={
+                toggleMutation.isPending &&
+                (toggleMutation.variables as any)?.id === auto.id
+              }
+              isDuplicating={
+                duplicateMutation.isPending &&
+                duplicateMutation.variables === auto
+              }
+              isDeleting={
+                deleteMutation.isPending && deleteMutation.variables === auto.id
+              }
             />
           ))}
         </div>
@@ -1011,7 +1449,13 @@ function AutomationsContent() {
 
 export default function Page() {
   return (
-    <Suspense fallback={<AppShell><AutomationsSkeleton /></AppShell>}>
+    <Suspense
+      fallback={
+        <AppShell>
+          <AutomationsSkeleton />
+        </AppShell>
+      }
+    >
       <AutomationsContent />
     </Suspense>
   );

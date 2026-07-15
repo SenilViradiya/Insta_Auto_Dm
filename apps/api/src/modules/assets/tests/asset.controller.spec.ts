@@ -20,9 +20,7 @@ describe('AssetController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AssetController],
-      providers: [
-        { provide: AssetService, useValue: mockAssetService },
-      ],
+      providers: [{ provide: AssetService, useValue: mockAssetService }],
     }).compile();
 
     controller = module.get<AssetController>(AssetController);
@@ -36,19 +34,23 @@ describe('AssetController', () => {
   describe('syncAssets', () => {
     it('throws BadRequestException if no account ID provided', async () => {
       await expect(controller.syncAssets(undefined, undefined)).rejects.toThrow(
-        BadRequestException
+        BadRequestException,
       );
     });
 
     it('triggers sync with account ID from header', async () => {
-      mockAssetService.syncProfileAndAssets.mockResolvedValue({ success: true });
+      mockAssetService.syncProfileAndAssets.mockResolvedValue({
+        success: true,
+      });
       const res = await controller.syncAssets('acc-1', undefined);
       expect(res).toEqual({ success: true });
       expect(service.syncProfileAndAssets).toHaveBeenCalledWith('acc-1');
     });
 
     it('triggers sync with account ID from query param', async () => {
-      mockAssetService.syncProfileAndAssets.mockResolvedValue({ success: true });
+      mockAssetService.syncProfileAndAssets.mockResolvedValue({
+        success: true,
+      });
       const res = await controller.syncAssets(undefined, 'acc-2');
       expect(res).toEqual({ success: true });
       expect(service.syncProfileAndAssets).toHaveBeenCalledWith('acc-2');
@@ -58,7 +60,7 @@ describe('AssetController', () => {
   describe('getProfile', () => {
     it('throws BadRequestException if no account ID provided', async () => {
       await expect(controller.getProfile(undefined, undefined)).rejects.toThrow(
-        BadRequestException
+        BadRequestException,
       );
     });
 
@@ -72,7 +74,7 @@ describe('AssetController', () => {
     it('throws NotFoundException if profile not found', async () => {
       mockAssetService.getProfile.mockResolvedValue(null);
       await expect(controller.getProfile('acc-1', undefined)).rejects.toThrow(
-        NotFoundException
+        NotFoundException,
       );
     });
   });
@@ -105,7 +107,7 @@ describe('AssetController', () => {
         '2026-07-01',
         '2026-07-10',
         '1',
-        '20'
+        '20',
       );
       expect(service.getAssets).toHaveBeenCalledWith({
         instagramAccountId: 'acc-1',
@@ -121,7 +123,7 @@ describe('AssetController', () => {
 
     it('throws BadRequestException for invalid assetType query parameter value', async () => {
       await expect(
-        controller.getAssets('acc-1', undefined, 'INVALID_ASSET_TYPE')
+        controller.getAssets('acc-1', undefined, 'INVALID_ASSET_TYPE'),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -137,7 +139,7 @@ describe('AssetController', () => {
     it('throws NotFoundException if asset does not exist', async () => {
       mockAssetService.getAssetById.mockResolvedValue(null);
       await expect(controller.getAssetById('asset-1')).rejects.toThrow(
-        NotFoundException
+        NotFoundException,
       );
     });
   });

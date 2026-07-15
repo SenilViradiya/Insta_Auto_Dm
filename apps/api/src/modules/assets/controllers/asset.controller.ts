@@ -25,7 +25,9 @@ export class AssetController {
   ) {
     const accountId = instagramAccountIdHeader || instagramAccountIdQuery;
     if (!accountId) {
-      throw new BadRequestException('x-instagram-account-id header or query param is required');
+      throw new BadRequestException(
+        'x-instagram-account-id header or query param is required',
+      );
     }
     return this.assetService.syncProfileAndAssets(accountId);
   }
@@ -37,11 +39,15 @@ export class AssetController {
   ) {
     const accountId = instagramAccountIdHeader || instagramAccountIdQuery;
     if (!accountId) {
-      throw new BadRequestException('x-instagram-account-id header or query param is required');
+      throw new BadRequestException(
+        'x-instagram-account-id header or query param is required',
+      );
     }
     const profile = await this.assetService.getProfile(accountId);
     if (!profile) {
-      throw new NotFoundException(`Profile not found for account: ${accountId}`);
+      throw new NotFoundException(
+        `Profile not found for account: ${accountId}`,
+      );
     }
     return profile;
   }
@@ -63,7 +69,9 @@ export class AssetController {
   ) {
     const accountId = instagramAccountIdHeader || instagramAccountIdQuery;
     if (!accountId) {
-      throw new BadRequestException('x-instagram-account-id header or query param is required');
+      throw new BadRequestException(
+        'x-instagram-account-id header or query param is required',
+      );
     }
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 10;
@@ -79,7 +87,9 @@ export class AssetController {
   ) {
     const accountId = instagramAccountIdHeader || instagramAccountIdQuery;
     if (!accountId) {
-      throw new BadRequestException('x-instagram-account-id header or query param is required');
+      throw new BadRequestException(
+        'x-instagram-account-id header or query param is required',
+      );
     }
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 10;

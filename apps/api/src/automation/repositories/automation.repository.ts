@@ -88,7 +88,7 @@ export class AutomationRepository {
       if (workspaceId) {
         where.workspaceId = workspaceId;
       }
-      
+
       // Keep backward compatibility defaults if none supplied
       if (!instagramAccountId && !workspaceId) {
         where.instagramAccountId = 'default';
@@ -170,7 +170,11 @@ export class AutomationRepository {
       if (!triggerType && data.triggers && data.triggers.length > 0) {
         const primaryTrigger = data.triggers[0];
         const oldType = primaryTrigger.eventType as any;
-        if (oldType === 'MESSAGE_RECEIVED' || oldType === 'KEYWORD_MATCH' || oldType === 'FIRST_MESSAGE') {
+        if (
+          oldType === 'MESSAGE_RECEIVED' ||
+          oldType === 'KEYWORD_MATCH' ||
+          oldType === 'FIRST_MESSAGE'
+        ) {
           triggerType = TriggerType.DIRECT_MESSAGE;
           triggerConfig = { mode: 'ANY_MESSAGE' };
         } else if (oldType === 'COMMENT_CREATED') {
@@ -272,12 +276,19 @@ export class AutomationRepository {
           if (!triggerType && data.triggers && data.triggers.length > 0) {
             const primaryTrigger = data.triggers[0];
             const oldType = primaryTrigger.eventType as any;
-            if (oldType === 'MESSAGE_RECEIVED' || oldType === 'KEYWORD_MATCH' || oldType === 'FIRST_MESSAGE') {
+            if (
+              oldType === 'MESSAGE_RECEIVED' ||
+              oldType === 'KEYWORD_MATCH' ||
+              oldType === 'FIRST_MESSAGE'
+            ) {
               triggerType = TriggerType.DIRECT_MESSAGE;
               triggerConfig = { mode: 'ANY_MESSAGE' };
             } else if (oldType === 'COMMENT_CREATED') {
               triggerType = TriggerType.REEL_COMMENT;
-              triggerConfig = { mediaScope: 'ALL_REELS', matchType: 'ANY_COMMENT' };
+              triggerConfig = {
+                mediaScope: 'ALL_REELS',
+                matchType: 'ANY_COMMENT',
+              };
             } else if (oldType === 'STORY_MENTION') {
               triggerType = TriggerType.STORY_MENTION;
               triggerConfig = {};
