@@ -13,6 +13,7 @@
     "start:prod": "prisma migrate deploy --schema=prisma/schema.prisma && node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "typecheck": "tsc --noEmit",
+    "webhook:simulate": "ts-node scripts/simulate-webhook.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
