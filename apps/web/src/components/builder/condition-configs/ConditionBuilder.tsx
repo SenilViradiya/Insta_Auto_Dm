@@ -1,8 +1,7 @@
 import React from "react";
 import { Button, Select, Input } from "antd";
 import { Plus, Trash2 } from "lucide-react";
-import { Condition } from "../types";
-import { useBuilderStore } from "../builder.store";
+import { Condition } from "../types";import { useBuilderStore } from "../builder.store";
 
 interface ConditionBuilderProps {
   conditions: Condition[];
