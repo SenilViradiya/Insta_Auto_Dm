@@ -10,6 +10,7 @@ import {
   ArrowRight,
   Clock,
   Send,
+  MessageSquare,
 } from "lucide-react";
 
 interface ReviewStepProps {
@@ -71,6 +72,11 @@ export default function ReviewStep({
       if (act.actionType === "SEND_MESSAGE" && !act.payload.data.text?.trim()) {
         warnings.push(
           `Action Step ${idx + 1} (Send Message) text payload is currently empty.`,
+        );
+      }
+      if (act.actionType === "REPLY_COMMENT" && !act.payload.data.text?.trim()) {
+        warnings.push(
+          `Action Step ${idx + 1} (Reply Comment) text payload is currently empty.`,
         );
       }
       if (
@@ -619,6 +625,7 @@ export default function ReviewStep({
                 {draft.actions && draft.actions.length > 0 ? (
                   draft.actions.map((act, index) => {
                     const isMsg = act.actionType === "SEND_MESSAGE";
+                    const isReply = act.actionType === "REPLY_COMMENT";
                     return (
                       <div
                         key={index}
@@ -637,10 +644,10 @@ export default function ReviewStep({
                             width: 20,
                             height: 20,
                             borderRadius: "var(--radius-sm)",
-                            background: isMsg
+                            background: (isMsg || isReply)
                               ? "var(--hover-bg)"
                               : "var(--warning-bg)",
-                            color: isMsg ? "var(--primary)" : "var(--warning)",
+                            color: (isMsg || isReply) ? "var(--primary)" : "var(--warning)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -648,7 +655,7 @@ export default function ReviewStep({
                             marginTop: 1,
                           }}
                         >
-                          {isMsg ? <Send size={11} /> : <Clock size={11} />}
+                          {isMsg ? <Send size={11} /> : isReply ? <MessageSquare size={11} /> : <Clock size={11} />}
                         </div>
                         <div
                           style={{
@@ -665,16 +672,16 @@ export default function ReviewStep({
                             }}
                           >
                             Step {index + 1}:{" "}
-                            {isMsg ? "Send Direct Message" : "Delay Timer"}
+                            {isMsg ? "Send Direct Message" : isReply ? "Public Reply Comment" : "Delay Timer"}
                           </span>
                           <span
                             style={{
                               fontSize: 12,
                               color: "var(--text-secondary)",
-                              fontStyle: isMsg ? "italic" : "normal",
+                              fontStyle: (isMsg || isReply) ? "italic" : "normal",
                             }}
                           >
-                            {isMsg
+                            {isMsg || isReply
                               ? `"${act.payload.data.text}"`
                               : `Wait for ${act.payload.data.delaySeconds} seconds before continuing`}
                           </span>

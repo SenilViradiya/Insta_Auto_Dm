@@ -48,6 +48,7 @@ enum ActionType {
   WAIT
   ADD_TAG
   CALL_WEBHOOK
+  REPLY_COMMENT
 }
 
 enum ExecutionStatus {

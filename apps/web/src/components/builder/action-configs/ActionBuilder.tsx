@@ -10,6 +10,7 @@ import {
   Webhook,
   Tag,
   UserCheck,
+  MessageSquare,
 } from "lucide-react";
 import { ActionItem, ActionType } from "../types";
 
@@ -32,6 +33,17 @@ export default function ActionBuilder({
         payload: {
           version: 1,
           type: "SEND_MESSAGE",
+          data: {
+            text: "",
+          },
+        },
+      };
+    } else if (actionType === "REPLY_COMMENT") {
+      newItem = {
+        actionType: "REPLY_COMMENT",
+        payload: {
+          version: 1,
+          type: "REPLY_COMMENT",
           data: {
             text: "",
           },
@@ -94,6 +106,7 @@ export default function ActionBuilder({
       >
         {actions.map((act, index) => {
           const isMsg = act.actionType === "SEND_MESSAGE";
+          const isReply = act.actionType === "REPLY_COMMENT";
           return (
             <div
               key={index}
@@ -134,16 +147,16 @@ export default function ActionBuilder({
                         width: 24,
                         height: 24,
                         borderRadius: "var(--radius-sm)",
-                        background: isMsg
+                        background: (isMsg || isReply)
                           ? "var(--hover-bg)"
                           : "var(--warning-bg)",
-                        color: isMsg ? "var(--primary)" : "var(--warning)",
+                        color: (isMsg || isReply) ? "var(--primary)" : "var(--warning)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                       }}
                     >
-                      {isMsg ? <Send size={13} /> : <Clock size={13} />}
+                      {isMsg ? <Send size={13} /> : isReply ? <MessageSquare size={13} /> : <Clock size={13} />}
                     </div>
                     <span
                       style={{
@@ -153,7 +166,7 @@ export default function ActionBuilder({
                       }}
                     >
                       Step {index + 1}:{" "}
-                      {isMsg ? "Send Direct Message" : "Delay Timer"}
+                      {isMsg ? "Send Direct Message" : isReply ? "Public Reply Comment" : "Delay Timer"}
                     </span>
                   </div>
 
@@ -185,7 +198,7 @@ export default function ActionBuilder({
 
                 {/* Step Body */}
                 <div style={{ padding: "var(--space-5)" }}>
-                  {isMsg ? (
+                  {(isMsg || isReply) ? (
                     <div
                       style={{
                         display: "flex",
@@ -200,7 +213,7 @@ export default function ActionBuilder({
                           color: "var(--text-secondary)",
                         }}
                       >
-                        Response Message Contents
+                        {isMsg ? "Response Message Contents" : "Comment Reply Text"}
                       </label>
                       <TextArea
                         value={act.payload.data.text || ""}
@@ -209,7 +222,7 @@ export default function ActionBuilder({
                             text: e.target.value,
                           })
                         }
-                        placeholder="Write the DM content to dispatch to client..."
+                        placeholder={isMsg ? "Write the DM content to dispatch to client..." : "Write the public reply comment content..."}
                         rows={3}
                         style={{ borderRadius: "var(--radius-md)" }}
                       />
@@ -221,7 +234,7 @@ export default function ActionBuilder({
                             fontWeight: 500,
                           }}
                         >
-                          * Message content text represents a required
+                          * Reply content text represents a required
                           parameter.
                         </span>
                       )}
@@ -330,6 +343,35 @@ export default function ActionBuilder({
             gap: "var(--space-3)",
           }}
         >
+          <button
+            onClick={() => handleAddAction("REPLY_COMMENT")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "var(--space-2)",
+              padding: "10px var(--space-4)",
+              background: "var(--primary)",
+              color: "#fff",
+              border: "none",
+              borderRadius: "var(--radius-md)",
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: "pointer",
+              transition: "all var(--duration) var(--ease)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--primary-hover)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "var(--primary)";
+            }}
+            type="button"
+          >
+            <MessageSquare size={14} />
+            Reply Comment
+          </button>
+
           <button
             onClick={() => handleAddAction("SEND_MESSAGE")}
             style={{

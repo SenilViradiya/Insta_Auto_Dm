@@ -28,11 +28,10 @@ export default function ConditionsStep({
             margin: "0 0 var(--space-1) 0",
           }}
         >
-          Define Filter Conditions
+          Advanced Filters (Optional)
         </h2>
         <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
-          Set up filtering constraints. The execution pipeline runs only if all
-          conditions validate to true.
+          These filters are only needed if you want to further restrict who can trigger this automation. If left empty, everyone matching the trigger scope will continue to the action pipeline.
         </p>
       </div>
 

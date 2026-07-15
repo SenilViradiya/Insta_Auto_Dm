@@ -108,17 +108,20 @@ describe('Action Dispatcher & Handlers', () => {
   let mockWait: any;
   let mockAddTag: any;
   let mockCallWebhook: any;
+  let mockReplyComment: any;
   beforeEach(() => {
     mockSendMessage = { execute: jest.fn() };
     mockWait = { execute: jest.fn() };
     mockAddTag = { execute: jest.fn() };
     mockCallWebhook = { execute: jest.fn() };
+    mockReplyComment = { execute: jest.fn() };
 
     dispatcher = new ActionDispatcher(
       mockSendMessage,
       mockWait,
       mockAddTag,
       mockCallWebhook,
+      mockReplyComment,
     );
   });
 

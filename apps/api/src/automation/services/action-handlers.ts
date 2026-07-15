@@ -168,3 +168,74 @@ export class CallWebhookActionHandler implements AutomationActionHandler {
     });
   }
 }
+
+@Injectable()
+export class ReplyCommentActionHandler implements AutomationActionHandler {
+  private readonly logger = new Logger(ReplyCommentActionHandler.name);
+
+  constructor(
+    private readonly executionRepo: ExecutionRepository,
+    @Optional()
+    @Inject('MessagingService')
+    private readonly messagingService?: MessagingService,
+  ) {}
+
+  async execute(
+    action: AutomationAction,
+    event: DomainEvent,
+    context: { executionId: string },
+  ): Promise<void> {
+    const payload = normalizePayload(action.actionType, action.payload);
+    const data = payload.data as Record<string, unknown>;
+    const text = typeof data.text === 'string' ? data.text : '';
+
+    const secureLogText =
+      process.env.DEBUG_LOGGING === 'true'
+        ? `"${text}"`
+        : `[REDACTED comment reply length: ${text.length}]`;
+
+    const commentId = event.content?.eventId || event.content?.id;
+    if (!commentId) {
+      throw new Error('No valid comment ID found in event context for comment reply');
+    }
+
+    this.logger.log(
+      `[ReplyCommentActionHandler] Public reply to comment "${commentId}": ${secureLogText}`,
+    );
+
+    if (this.messagingService) {
+      const result = await this.messagingService.sendPublicReply({
+        instagramAccountId: event.instagramAccountId,
+        commentId,
+        messageText: text,
+        automationExecutionId: context.executionId,
+        correlationId: event.metadata?.correlationId,
+      });
+
+      await this.executionRepo.createLog({
+        executionId: context.executionId,
+        level: result.success ? 'INFO' : 'ERROR',
+        message: result.success
+          ? `Public reply sent successfully via MessagingService (replyId: ${result.replyId})`
+          : `Public reply send failed: ${result.errorCode} — ${result.errorMessage}`,
+        metadata: {
+          actionId: action.id,
+          success: result.success,
+        },
+      });
+
+      if (!result.success) {
+        throw new Error(
+          `MessagingService failed: ${result.errorCode} — ${result.errorMessage}`,
+        );
+      }
+    } else {
+      await this.executionRepo.createLog({
+        executionId: context.executionId,
+        level: 'INFO',
+        message: `[STUB] Public reply to comment "${commentId}": ${secureLogText}`,
+        metadata: { actionId: action.id, payload },
+      });
+    }
+  }
+}

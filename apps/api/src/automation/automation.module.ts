@@ -27,6 +27,7 @@ import {
   WaitActionHandler,
   AddTagActionHandler,
   CallWebhookActionHandler,
+  ReplyCommentActionHandler,
 } from './services/action-handlers';
 import { ActionWorker } from './workers/action.worker';
 import { MessagingModule } from '../modules/messaging/messaging.module';
@@ -84,6 +85,7 @@ import { StoryMentionTriggerStrategy } from './strategies/story-mention.strategy
     WaitActionHandler,
     AddTagActionHandler,
     CallWebhookActionHandler,
+    ReplyCommentActionHandler,
     ActionWorker,
     TriggerRegistry,
     TriggerResolver,

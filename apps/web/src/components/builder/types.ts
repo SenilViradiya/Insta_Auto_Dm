@@ -18,7 +18,7 @@ export interface Condition {
   value: string;
 }
 
-export type ActionType = "SEND_MESSAGE" | "WAIT";
+export type ActionType = "SEND_MESSAGE" | "WAIT" | "REPLY_COMMENT";
 
 export interface ActionItem {
   id?: string;
