@@ -41,30 +41,55 @@ describe('ReelCommentTriggerStrategy', () => {
 
   describe('Validation', () => {
     it('accepts valid ALL_REELS configuration', () => {
-      expect(() => strategy.validateConfiguration({ mediaScope: 'ALL_REELS' })).not.toThrow();
+      expect(() =>
+        strategy.validateConfiguration({ mediaScope: 'ALL_REELS' }),
+      ).not.toThrow();
     });
 
     it('accepts valid SPECIFIC_REEL configuration', () => {
-      expect(() => strategy.validateConfiguration({ mediaScope: 'SPECIFIC_REEL', mediaId: '123' })).not.toThrow();
+      expect(() =>
+        strategy.validateConfiguration({
+          mediaScope: 'SPECIFIC_REEL',
+          mediaId: '123',
+        }),
+      ).not.toThrow();
     });
 
     it('rejects SPECIFIC_REEL with missing mediaId', () => {
-      expect(() => strategy.validateConfiguration({ mediaScope: 'SPECIFIC_REEL' })).toThrow(TriggerValidationException);
+      expect(() =>
+        strategy.validateConfiguration({ mediaScope: 'SPECIFIC_REEL' }),
+      ).toThrow(TriggerValidationException);
     });
 
     it('rejects KEYWORD matchType with empty or absent keywords', () => {
-      expect(() => strategy.validateConfiguration({ mediaScope: 'ALL_REELS', matchType: 'KEYWORD' })).toThrow(TriggerValidationException);
-      expect(() => strategy.validateConfiguration({ mediaScope: 'ALL_REELS', matchType: 'KEYWORD', keywords: [] })).toThrow(TriggerValidationException);
+      expect(() =>
+        strategy.validateConfiguration({
+          mediaScope: 'ALL_REELS',
+          matchType: 'KEYWORD',
+        }),
+      ).toThrow(TriggerValidationException);
+      expect(() =>
+        strategy.validateConfiguration({
+          mediaScope: 'ALL_REELS',
+          matchType: 'KEYWORD',
+          keywords: [],
+        }),
+      ).toThrow(TriggerValidationException);
     });
 
     it('rejects missing configuration', () => {
-      expect(() => strategy.validateConfiguration(null)).toThrow(TriggerValidationException);
+      expect(() => strategy.validateConfiguration(null)).toThrow(
+        TriggerValidationException,
+      );
     });
   });
 
   describe('Event Matching', () => {
     it('matches ALL_REELS and ANY_COMMENT comment trigger configs', () => {
-      const automation = { ...baseAutomation, triggerConfig: { mediaScope: 'ALL_REELS', matchType: 'ANY_COMMENT' } };
+      const automation = {
+        ...baseAutomation,
+        triggerConfig: { mediaScope: 'ALL_REELS', matchType: 'ANY_COMMENT' },
+      };
       const event = { ...baseEvent, content: { text: 'Some comment text' } };
       const context = { automation, event, currentTime: new Date() };
 
@@ -73,7 +98,10 @@ describe('ReelCommentTriggerStrategy', () => {
     });
 
     it('matches SPECIFIC_REEL when mediaId matches exactly', () => {
-      const automation = { ...baseAutomation, triggerConfig: { mediaScope: 'SPECIFIC_REEL', mediaId: '123' } };
+      const automation = {
+        ...baseAutomation,
+        triggerConfig: { mediaScope: 'SPECIFIC_REEL', mediaId: '123' },
+      };
       const event = { ...baseEvent, content: { media_id: '123' } };
       const context = { automation, event, currentTime: new Date() };
 
@@ -82,7 +110,10 @@ describe('ReelCommentTriggerStrategy', () => {
     });
 
     it('does not match SPECIFIC_REEL if mediaId differs', () => {
-      const automation = { ...baseAutomation, triggerConfig: { mediaScope: 'SPECIFIC_REEL', mediaId: '123' } };
+      const automation = {
+        ...baseAutomation,
+        triggerConfig: { mediaScope: 'SPECIFIC_REEL', mediaId: '123' },
+      };
       const event = { ...baseEvent, content: { mediaId: '999' } };
       const context = { automation, event, currentTime: new Date() };
 
@@ -91,8 +122,18 @@ describe('ReelCommentTriggerStrategy', () => {
     });
 
     it('matches keyword trigger config case-insensitively', () => {
-      const automation = { ...baseAutomation, triggerConfig: { mediaScope: 'ALL_REELS', matchType: 'KEYWORD', keywords: ['promo'] } };
-      const event = { ...baseEvent, content: { text: 'Interested in promo details' } };
+      const automation = {
+        ...baseAutomation,
+        triggerConfig: {
+          mediaScope: 'ALL_REELS',
+          matchType: 'KEYWORD',
+          keywords: ['promo'],
+        },
+      };
+      const event = {
+        ...baseEvent,
+        content: { text: 'Interested in promo details' },
+      };
       const context = { automation, event, currentTime: new Date() };
 
       const result = strategy.matchesEvent(context);

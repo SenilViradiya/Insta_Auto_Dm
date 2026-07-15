@@ -5,7 +5,12 @@ import { ActionStrategyResolver } from '../services/action-strategy.resolver';
 import { WaitActionStrategy } from '../strategies/wait-action.strategy';
 import { SendMessageActionStrategy } from '../strategies/send-message-action.strategy';
 import { ReplyCommentActionStrategy } from '../strategies/reply-comment-action.strategy';
-import { Operator, TriggerType, ActionType, ExecutionStatus } from '@prisma/client';
+import {
+  Operator,
+  TriggerType,
+  ActionType,
+  ExecutionStatus,
+} from '@prisma/client';
 import { DomainEvent } from '../interfaces/domain-event.interface';
 import { ExecutionContext } from '../interfaces/execution-context.interface';
 import {
@@ -28,7 +33,11 @@ describe('ConditionEngine (AND / OR Groups)', () => {
       conjunction: 'AND' as const,
       conditions: [
         { field: 'content.text', operator: Operator.CONTAINS, value: 'target' },
-        { field: 'content.text', operator: Operator.STARTS_WITH, value: 'Hello' },
+        {
+          field: 'content.text',
+          operator: Operator.STARTS_WITH,
+          value: 'Hello',
+        },
       ],
       groups: [],
     };
@@ -42,7 +51,11 @@ describe('ConditionEngine (AND / OR Groups)', () => {
       conjunction: 'OR' as const,
       conditions: [
         { field: 'content.text', operator: Operator.CONTAINS, value: 'apples' },
-        { field: 'content.text', operator: Operator.CONTAINS, value: 'message' },
+        {
+          field: 'content.text',
+          operator: Operator.CONTAINS,
+          value: 'message',
+        },
       ],
       groups: [],
     };
@@ -73,9 +86,9 @@ describe('ConditionEngine (AND / OR Groups)', () => {
       ],
     };
 
-    expect(() => conditionEngine.evaluateGroup(group as any, mockContext)).toThrow(
-      ConditionException,
-    );
+    expect(() =>
+      conditionEngine.evaluateGroup(group as any, mockContext),
+    ).toThrow(ConditionException);
   });
 });
 
@@ -106,15 +119,15 @@ describe('VariableResolver resolution mechanics', () => {
   };
 
   it('should resolve standard system variables correctly', () => {
-    expect(variableResolver.resolve('Hello {{user.username}}!', mockContext)).toBe(
-      'Hello johndoe!',
-    );
-    expect(variableResolver.resolve('Reply: {{comment.text}}', mockContext)).toBe(
-      'Reply: hello context comment',
-    );
-    expect(variableResolver.resolve('Caption: {{reel.caption}}', mockContext)).toBe(
-      'Caption: beautiful reel caption',
-    );
+    expect(
+      variableResolver.resolve('Hello {{user.username}}!', mockContext),
+    ).toBe('Hello johndoe!');
+    expect(
+      variableResolver.resolve('Reply: {{comment.text}}', mockContext),
+    ).toBe('Reply: hello context comment');
+    expect(
+      variableResolver.resolve('Caption: {{reel.caption}}', mockContext),
+    ).toBe('Caption: beautiful reel caption');
   });
 
   it('should resolve custom nested paths in execution context', () => {
@@ -125,7 +138,10 @@ describe('VariableResolver resolution mechanics', () => {
 
   it('should throw VariableResolutionException on missing/unsupported variable template', () => {
     expect(() =>
-      variableResolver.resolve('Hello {{invalid.nested.path.expression}}', mockContext),
+      variableResolver.resolve(
+        'Hello {{invalid.nested.path.expression}}',
+        mockContext,
+      ),
     ).toThrow(VariableResolutionException);
   });
 });
@@ -144,9 +160,19 @@ describe('Action Strategies execution', () => {
       sendPublicReply: jest.fn().mockResolvedValue({ success: true }),
     };
     const varResolver = new VariableResolver();
-    sendStrategy = new SendMessageActionStrategy(varResolver, mockMessagingService);
-    replyStrategy = new ReplyCommentActionStrategy(varResolver, mockMessagingService);
-    resolver = new ActionStrategyResolver(sendStrategy, waitStrategy, replyStrategy);
+    sendStrategy = new SendMessageActionStrategy(
+      varResolver,
+      mockMessagingService,
+    );
+    replyStrategy = new ReplyCommentActionStrategy(
+      varResolver,
+      mockMessagingService,
+    );
+    resolver = new ActionStrategyResolver(
+      sendStrategy,
+      waitStrategy,
+      replyStrategy,
+    );
   });
 
   const mockContext: ExecutionContext = {
@@ -204,6 +230,8 @@ describe('Action Strategies execution', () => {
     };
 
     const strategy = resolver.resolve('WAIT');
-    await expect(strategy.execute(action, mockContext)).rejects.toThrow(ActionException);
+    await expect(strategy.execute(action, mockContext)).rejects.toThrow(
+      ActionException,
+    );
   });
 });

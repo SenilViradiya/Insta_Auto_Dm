@@ -85,7 +85,9 @@ export class MetaService {
         },
       });
     } catch (e: any) {
-      this.logger.error(`Meta API long-lived token exchange failed: ${e.message}`);
+      this.logger.error(
+        `Meta API long-lived token exchange failed: ${e.message}`,
+      );
       throw new BadRequestException('Failed to obtain long-lived token');
     }
   }

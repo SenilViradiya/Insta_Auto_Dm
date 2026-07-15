@@ -44,11 +44,17 @@ async function run() {
 
   console.log('--- Instagram Webhook Simulator ---');
   console.log(`Target Backend URL: ${API_URL}`);
-  console.log(`META_APP_SECRET configured: ${META_APP_SECRET ? 'Yes (keys masked)' : 'No'}`);
+  console.log(
+    `META_APP_SECRET configured: ${META_APP_SECRET ? 'Yes (keys masked)' : 'No'}`,
+  );
 
   if (!META_APP_SECRET) {
-    console.error('ERROR: META_APP_SECRET is not defined in any environment file.');
-    console.error('Please configure it in .env or run with environment variable: META_APP_SECRET=your_secret npx ts-node scripts/simulate-webhook.ts');
+    console.error(
+      'ERROR: META_APP_SECRET is not defined in any environment file.',
+    );
+    console.error(
+      'Please configure it in .env or run with environment variable: META_APP_SECRET=your_secret npx ts-node scripts/simulate-webhook.ts',
+    );
     process.exit(1);
   }
 
@@ -62,7 +68,9 @@ async function run() {
   const mockSenderId = '908234729384729'; // Customer's Instagram Account ID
 
   if (mode === 'comment') {
-    console.log(`\nSimulating Instagram Reel/Media Comment Event with text: "${customMessage}"`);
+    console.log(
+      `\nSimulating Instagram Reel/Media Comment Event with text: "${customMessage}"`,
+    );
     payload = {
       object: 'instagram',
       entry: [
@@ -91,7 +99,9 @@ async function run() {
       ],
     };
   } else {
-    console.log(`\nSimulating Instagram Direct Message (DM) Event with text: "${customMessage}"`);
+    console.log(
+      `\nSimulating Instagram Direct Message (DM) Event with text: "${customMessage}"`,
+    );
     payload = {
       object: 'instagram',
       entry: [
@@ -144,7 +154,9 @@ async function run() {
     console.log(`Response Body: ${text}`);
 
     if (response.ok) {
-      console.log('\nSuccess! The webhook was validated and processed by the server.');
+      console.log(
+        '\nSuccess! The webhook was validated and processed by the server.',
+      );
     } else {
       console.error('\nFailure: The webhook returned an error status.');
     }

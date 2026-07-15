@@ -15,7 +15,7 @@ export class MessagingService {
   async sendMessage(
     recipientId: string,
     messageText: string,
-    accessToken: string
+    accessToken: string,
   ): Promise<SendMessageResponse> {
     const response = await this.graphClient.request<{
       recipient_id?: string;
@@ -40,7 +40,7 @@ export class MessagingService {
   async sendPublicReply(
     commentId: string,
     messageText: string,
-    accessToken: string
+    accessToken: string,
   ): Promise<{ commentId: string; replyId: string }> {
     const response = await this.graphClient.request<{
       id?: string;

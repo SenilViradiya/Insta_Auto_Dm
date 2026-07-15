@@ -13,7 +13,15 @@ export class LockService implements OnModuleDestroy {
     });
   }
 
-  async acquireLock(key: string, ttlMs: number, value: string = 'locked'): Promise<boolean> {
+  getRedisClient(): Redis {
+    return this.redis;
+  }
+
+  async acquireLock(
+    key: string,
+    ttlMs: number,
+    value: string = 'locked',
+  ): Promise<boolean> {
     try {
       const result = await this.redis.set(key, value, 'PX', ttlMs, 'NX');
       return result === 'OK';
@@ -66,4 +74,3 @@ export class LockService implements OnModuleDestroy {
     }
   }
 }
-

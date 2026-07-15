@@ -3,7 +3,15 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Zap, Link2, Bot, Settings, Image, Activity, BarChart3 } from "lucide-react";
+import {
+  Zap,
+  Link2,
+  Bot,
+  Settings,
+  Image,
+  Activity,
+  BarChart3,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AccountSwitcher } from "../workspace/WorkspaceComponents";
 
@@ -19,11 +27,14 @@ const NAV_ITEMS = [
   { href: "/automations", label: "Automations", icon: Bot },
   { href: "/assets", label: "Asset Library", icon: Image },
   { href: "/executions", label: "Execution Logs", icon: Activity },
+  { href: "/operations", label: "Control Center", icon: Settings },
 ];
 
 export default function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    null,
+  );
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -42,7 +53,9 @@ export default function AppShell({ children }: AppShellProps) {
   useEffect(() => {
     if (statusData?.accounts && statusData.accounts.length > 0) {
       const saved = localStorage.getItem("selected_instagram_account_id");
-      const exactMatch = statusData.accounts.find((acc: any) => acc.id === saved);
+      const exactMatch = statusData.accounts.find(
+        (acc: any) => acc.id === saved,
+      );
       if (saved && exactMatch) {
         setSelectedAccountId(saved);
         return;
@@ -126,7 +139,13 @@ export default function AppShell({ children }: AppShellProps) {
 
             {statusData?.accounts && statusData.accounts.length > 0 && (
               <>
-                <div style={{ width: "1px", height: "16px", background: "var(--border)" }} />
+                <div
+                  style={{
+                    width: "1px",
+                    height: "16px",
+                    background: "var(--border)",
+                  }}
+                />
                 <AccountSwitcher
                   accounts={statusData.accounts}
                   selectedId={selectedAccountId}
@@ -138,7 +157,13 @@ export default function AppShell({ children }: AppShellProps) {
           </div>
 
           {/* Navigation Links */}
-          <nav style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>
+          <nav
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "var(--space-1)",
+            }}
+          >
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
               const Icon = item.icon;
@@ -162,7 +187,8 @@ export default function AppShell({ children }: AppShellProps) {
                   onMouseEnter={(e) => {
                     if (!active) {
                       e.currentTarget.style.color = "var(--text-primary)";
-                      e.currentTarget.style.background = "var(--surface-secondary)";
+                      e.currentTarget.style.background =
+                        "var(--surface-secondary)";
                     }
                   }}
                   onMouseLeave={(e) => {

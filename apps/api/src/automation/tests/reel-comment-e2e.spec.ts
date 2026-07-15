@@ -16,7 +16,12 @@ import { QueueService } from '../services/queue.service';
 import { MetricsService } from '../services/metrics.service';
 import { AutomationConfig } from '../config/automation.config';
 import { PrismaService } from '../../prisma.service';
-import { TriggerType, ActionType, ExecutionStatus, Operator } from '@prisma/client';
+import {
+  TriggerType,
+  ActionType,
+  ExecutionStatus,
+  Operator,
+} from '@prisma/client';
 import { SendMessageActionStrategy } from '../strategies/send-message-action.strategy';
 import { WaitActionStrategy } from '../strategies/wait-action.strategy';
 import { ReplyCommentActionStrategy } from '../strategies/reply-comment-action.strategy';
@@ -78,12 +83,18 @@ describe('Reel Comment to DM Integration E2E', () => {
 
     // 2. Setup mock services
     mockMetaMessagingService = {
-      sendPublicReply: jest.fn().mockResolvedValue({ commentId: 'comment_123', replyId: 'reply_555' }),
+      sendPublicReply: jest
+        .fn()
+        .mockResolvedValue({ commentId: 'comment_123', replyId: 'reply_555' }),
     };
 
     mockMessagingServiceOld = {
-      send: jest.fn().mockResolvedValue({ success: true, messageId: 'msg_999' }),
-      sendPublicReply: jest.fn().mockResolvedValue({ success: true, replyId: 'reply_555' }),
+      send: jest
+        .fn()
+        .mockResolvedValue({ success: true, messageId: 'msg_999' }),
+      sendPublicReply: jest
+        .fn()
+        .mockResolvedValue({ success: true, replyId: 'reply_555' }),
     };
 
     mockTokenService = {
@@ -184,14 +195,16 @@ describe('Reel Comment to DM Integration E2E', () => {
     executionRepo = module.get<ExecutionRepository>(ExecutionRepository);
 
     // Mock BullMQ queue service to act synchronously and trigger execution step immediately
-    mockQueueService.enqueueExecuteAction.mockImplementation(async (data: any) => {
-      await executionEngine.executeStep(
-        data.executionId,
-        data.actionId,
-        data.event,
-        data.correlationId,
-      );
-    });
+    mockQueueService.enqueueExecuteAction.mockImplementation(
+      async (data: any) => {
+        await executionEngine.executeStep(
+          data.executionId,
+          data.actionId,
+          data.event,
+          data.correlationId,
+        );
+      },
+    );
   });
 
   afterAll(async () => {
@@ -289,13 +302,16 @@ describe('Reel Comment to DM Integration E2E', () => {
       expect.objectContaining({
         instagramAccountId: 'instagram_account_123',
         recipientInstagramId: 'commenter_user_id',
-        messageText: 'Hey john_customer! Thanks for commenting on our promo "Latest black friday shoes!". Here is your discount code.',
+        messageText:
+          'Hey john_customer! Thanks for commenting on our promo "Latest black friday shoes!". Here is your discount code.',
         automationExecutionId: execution.id,
       }),
     );
 
     // Validate execution logging containing all requested parameters
-    const startLog = execution.logs.find((l) => l.message.includes('[Trigger matched]'));
+    const startLog = execution.logs.find((l) =>
+      l.message.includes('[Trigger matched]'),
+    );
     expect(startLog).toBeDefined();
 
     const meta = startLog?.metadata as any;

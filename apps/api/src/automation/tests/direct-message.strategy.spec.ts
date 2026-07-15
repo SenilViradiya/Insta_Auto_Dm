@@ -41,24 +41,36 @@ describe('DirectMessageTriggerStrategy', () => {
 
   describe('Validation', () => {
     it('accepts valid ANY_MESSAGE configuration', () => {
-      expect(() => strategy.validateConfiguration({ mode: 'ANY_MESSAGE' })).not.toThrow();
+      expect(() =>
+        strategy.validateConfiguration({ mode: 'ANY_MESSAGE' }),
+      ).not.toThrow();
     });
 
     it('accepts valid KEYWORD configuration', () => {
-      expect(() => strategy.validateConfiguration({ mode: 'KEYWORD', keywords: ['test'] })).not.toThrow();
+      expect(() =>
+        strategy.validateConfiguration({ mode: 'KEYWORD', keywords: ['test'] }),
+      ).not.toThrow();
     });
 
     it('rejects invalid mode', () => {
-      expect(() => strategy.validateConfiguration({ mode: 'INVALID' })).toThrow(TriggerValidationException);
+      expect(() => strategy.validateConfiguration({ mode: 'INVALID' })).toThrow(
+        TriggerValidationException,
+      );
     });
 
     it('rejects empty keywords array for KEYWORD mode', () => {
-      expect(() => strategy.validateConfiguration({ mode: 'KEYWORD', keywords: [] })).toThrow(TriggerValidationException);
+      expect(() =>
+        strategy.validateConfiguration({ mode: 'KEYWORD', keywords: [] }),
+      ).toThrow(TriggerValidationException);
     });
 
     it('rejects missing configuration', () => {
-      expect(() => strategy.validateConfiguration(null)).toThrow(TriggerValidationException);
-      expect(() => strategy.validateConfiguration(undefined)).toThrow(TriggerValidationException);
+      expect(() => strategy.validateConfiguration(null)).toThrow(
+        TriggerValidationException,
+      );
+      expect(() => strategy.validateConfiguration(undefined)).toThrow(
+        TriggerValidationException,
+      );
     });
   });
 
@@ -74,15 +86,28 @@ describe('DirectMessageTriggerStrategy', () => {
 
   describe('Explanation', () => {
     it('generates correct explanations', () => {
-      expect(strategy.explainConfiguration({ mode: 'ANY_MESSAGE' })).toBe('Triggers on any incoming direct message.');
-      expect(strategy.explainConfiguration({ mode: 'KEYWORD', keywords: ['a', 'b'] })).toBe('Triggers when direct message contains keyword(s): a, b.');
+      expect(strategy.explainConfiguration({ mode: 'ANY_MESSAGE' })).toBe(
+        'Triggers on any incoming direct message.',
+      );
+      expect(
+        strategy.explainConfiguration({
+          mode: 'KEYWORD',
+          keywords: ['a', 'b'],
+        }),
+      ).toBe('Triggers when direct message contains keyword(s): a, b.');
     });
   });
 
   describe('Event Matching', () => {
     it('matches ANY_MESSAGE regardless of payload text', () => {
-      const automation = { ...baseAutomation, triggerConfig: { mode: 'ANY_MESSAGE' } };
-      const event = { ...baseEvent, content: { text: 'Some random message text' } };
+      const automation = {
+        ...baseAutomation,
+        triggerConfig: { mode: 'ANY_MESSAGE' },
+      };
+      const event = {
+        ...baseEvent,
+        content: { text: 'Some random message text' },
+      };
       const context = { automation, event, currentTime: new Date() };
 
       const result = strategy.matchesEvent(context);
@@ -90,7 +115,10 @@ describe('DirectMessageTriggerStrategy', () => {
     });
 
     it('matches exact case-insensitive keyword', () => {
-      const automation = { ...baseAutomation, triggerConfig: { mode: 'KEYWORD', keywords: ['hello'] } };
+      const automation = {
+        ...baseAutomation,
+        triggerConfig: { mode: 'KEYWORD', keywords: ['hello'] },
+      };
       const event = { ...baseEvent, content: { text: 'Hello, world!' } };
       const context = { automation, event, currentTime: new Date() };
 
@@ -100,7 +128,10 @@ describe('DirectMessageTriggerStrategy', () => {
     });
 
     it('does not match when keyword is missing from text', () => {
-      const automation = { ...baseAutomation, triggerConfig: { mode: 'KEYWORD', keywords: ['goodbye'] } };
+      const automation = {
+        ...baseAutomation,
+        triggerConfig: { mode: 'KEYWORD', keywords: ['goodbye'] },
+      };
       const event = { ...baseEvent, content: { text: 'Hello, world!' } };
       const context = { automation, event, currentTime: new Date() };
 
@@ -109,7 +140,10 @@ describe('DirectMessageTriggerStrategy', () => {
     });
 
     it('handles null description and missing content.text gracefully', () => {
-      const automation = { ...baseAutomation, triggerConfig: { mode: 'KEYWORD', keywords: ['goodbye'] } };
+      const automation = {
+        ...baseAutomation,
+        triggerConfig: { mode: 'KEYWORD', keywords: ['goodbye'] },
+      };
       const event = { ...baseEvent, content: {} };
       const context = { automation, event, currentTime: new Date() };
 

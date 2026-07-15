@@ -27,9 +27,10 @@ export class AssetService {
     instagramUserId: string,
     accessToken: string,
     limit = 100,
-    after?: string
+    after?: string,
   ): Promise<MetaMediaListResult> {
-    const fields = 'id,caption,media_type,thumbnail_url,media_url,permalink,timestamp';
+    const fields =
+      'id,caption,media_type,thumbnail_url,media_url,permalink,timestamp';
     const params: Record<string, string> = {
       fields,
       limit: String(limit),
@@ -41,7 +42,7 @@ export class AssetService {
     const { data: rawItems, nextCursor } = await this.graphClient.paginate<any>(
       `${instagramUserId}/media`,
       accessToken,
-      params
+      params,
     );
 
     const items: MetaMediaItemData[] = rawItems.map((raw: any) => {

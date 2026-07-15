@@ -13,17 +13,23 @@ import {
 import { TriggerType } from '@prisma/client';
 import { AutomationService } from '../automation/services/automation.service';
 import { DomainEvent } from '../automation/interfaces/domain-event.interface';
+import { LockService } from '../automation/services/lock.service';
 import * as crypto from 'crypto';
 
 @Controller('webhook')
 export class WebhookController {
   private readonly logger = new Logger('WebhookController');
 
-  constructor(private readonly automationService: AutomationService) {}
+  constructor(
+    private readonly automationService: AutomationService,
+    private readonly lockService: LockService,
+  ) {}
 
   @Get()
   verify(@Query() query: Record<string, string>): string {
-    this.logger.log(`Received Meta Webhook Verification: ${JSON.stringify(query)}`);
+    this.logger.log(
+      `Received Meta Webhook Verification: ${JSON.stringify(query)}`,
+    );
 
     const mode = query['hub.mode'];
     const token = query['hub.verify_token'];
@@ -37,24 +43,38 @@ export class WebhookController {
       return challenge;
     }
 
-    this.logger.error('Webhook verification failed: token mismatch or invalid mode.');
+    this.logger.error(
+      'Webhook verification failed: token mismatch or invalid mode.',
+    );
     throw new ForbiddenException('Verification failed');
   }
 
   @Post()
   @HttpCode(HttpStatus.OK)
   async handleEvent(@Body() payload: any, @Req() req?: any) {
+    const redis = this.lockService.getRedisClient();
+    const timestampStr = new Date().toISOString();
+    try {
+      await redis.set('operations:webhook:last_received', timestampStr);
+    } catch {}
+
     const isTest = process.env.NODE_ENV === 'test';
     if (!isTest) {
       const signature = req.headers?.['x-hub-signature-256'] as string;
       if (!signature) {
         this.logger.error('Missing X-Hub-Signature-256 header');
+        try {
+          await redis.incr('operations:webhook:invalid_signatures');
+        } catch {}
         throw new ForbiddenException('Missing signature');
       }
 
       const parts = signature.split('=');
       if (parts.length !== 2 || parts[0] !== 'sha256') {
         this.logger.error('Invalid signature format');
+        try {
+          await redis.incr('operations:webhook:invalid_signatures');
+        } catch {}
         throw new ForbiddenException('Invalid signature format');
       }
 
@@ -77,14 +97,35 @@ export class WebhookController {
 
       if (calculatedSignature !== expectedSignature) {
         this.logger.error('HMAC signature mismatch');
+        try {
+          await redis.incr('operations:webhook:invalid_signatures');
+        } catch {}
         throw new ForbiddenException('Signature verification failed');
       }
     }
 
     this.logger.log(`Received Meta Webhook Event: ${JSON.stringify(payload)}`);
 
+    if (payload?.entry) {
+      for (const ent of payload.entry) {
+        if (ent?.id) {
+          try {
+            await redis.set(
+              `operations:webhook:last_received:${ent.id}`,
+              timestampStr,
+            );
+          } catch {}
+        }
+      }
+    }
+
     if (payload.object !== 'instagram') {
-      this.logger.warn(`Unsupported webhook event object type: ${payload.object}`);
+      this.logger.warn(
+        `Unsupported webhook event object type: ${payload.object}`,
+      );
+      try {
+        await redis.incr('operations:webhook:rejected_payloads');
+      } catch {}
       return { success: false, message: 'Unsupported object' };
     }
 
@@ -109,11 +150,21 @@ export class WebhookController {
              - Recipient ID: ${eventRecipientId} (Biz: ${recipientId})
              - Message ID: ${messageId}
              - Timestamp: ${timestamp}
-             - Text: "${text}"`
+             - Text: "${text}"`,
           );
 
-          if (!senderId || !eventRecipientId || !messageId || text === undefined) {
-            this.logger.error('Payload validation failed: senderId, recipientId, messageId, or text is missing.');
+          if (
+            !senderId ||
+            !eventRecipientId ||
+            !messageId ||
+            text === undefined
+          ) {
+            this.logger.error(
+              'Payload validation failed: senderId, recipientId, messageId, or text is missing.',
+            );
+            try {
+              await redis.incr('operations:webhook:rejected_payloads');
+            } catch {}
             continue;
           }
 
@@ -134,12 +185,19 @@ export class WebhookController {
             },
           };
 
-          this.logger.log(`Pipeline Triggered - Forwarding Domain Event: ${JSON.stringify(domainEvent)}`);
+          this.logger.log(
+            `Pipeline Triggered - Forwarding Domain Event: ${JSON.stringify(domainEvent)}`,
+          );
 
           try {
             await this.automationService.processDomainEvent(domainEvent);
           } catch (error) {
-            this.logger.error(`Failed to process webhook event: ${(error as Error).message}`);
+            this.logger.error(
+              `Failed to process webhook event: ${(error as Error).message}`,
+            );
+            try {
+              await redis.incr('operations:webhook:failures');
+            } catch {}
           }
         }
       }
@@ -165,11 +223,16 @@ export class WebhookController {
              - Media ID: ${mediaId}
              - Media Product Type: ${mediaProductType}
              - Sender: ${senderUsername} (${senderId})
-             - Text: "${text}"`
+             - Text: "${text}"`,
           );
 
           if (!senderId || !commentId || text === undefined) {
-            this.logger.error('Payload validation failed: senderId, commentId, or text is missing.');
+            this.logger.error(
+              'Payload validation failed: senderId, commentId, or text is missing.',
+            );
+            try {
+              await redis.incr('operations:webhook:rejected_payloads');
+            } catch {}
             continue;
           }
 
@@ -195,12 +258,19 @@ export class WebhookController {
             },
           };
 
-          this.logger.log(`Pipeline Triggered - Forwarding Comment Domain Event: ${JSON.stringify(domainEvent)}`);
+          this.logger.log(
+            `Pipeline Triggered - Forwarding Comment Domain Event: ${JSON.stringify(domainEvent)}`,
+          );
 
           try {
             await this.automationService.processDomainEvent(domainEvent);
           } catch (error) {
-            this.logger.error(`Failed to process webhook comment event: ${(error as Error).message}`);
+            this.logger.error(
+              `Failed to process webhook comment event: ${(error as Error).message}`,
+            );
+            try {
+              await redis.incr('operations:webhook:failures');
+            } catch {}
           }
         }
       }
@@ -209,4 +279,3 @@ export class WebhookController {
     return { success: true };
   }
 }
-

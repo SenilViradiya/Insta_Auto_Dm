@@ -19,9 +19,13 @@ export class ProfileService {
 
   constructor(private readonly graphClient: GraphClient) {}
 
-  async fetchProfile(instagramUserId: string, accessToken: string): Promise<MetaProfileData> {
-    const fields = 'id,username,name,profile_picture_url,followers_count,follows_count,media_count,biography,website';
-    
+  async fetchProfile(
+    instagramUserId: string,
+    accessToken: string,
+  ): Promise<MetaProfileData> {
+    const fields =
+      'id,username,name,profile_picture_url,followers_count,follows_count,media_count,biography,website';
+
     const body = await this.graphClient.request({
       method: 'GET',
       endpoint: instagramUserId,

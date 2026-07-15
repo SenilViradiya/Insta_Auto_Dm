@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Radio, Input, Button, Tag } from 'antd';
-import { Plus } from 'lucide-react';
+import React, { useState } from "react";
+import { Radio, Input, Button, Tag } from "antd";
+import { Plus } from "lucide-react";
 
 interface DirectMessageTriggerConfigProps {
   config: any;
@@ -11,16 +11,19 @@ export default function DirectMessageTriggerConfig({
   config,
   onChange,
 }: DirectMessageTriggerConfigProps) {
-  const mode = config?.mode || 'ANY_MESSAGE';
+  const mode = config?.mode || "ANY_MESSAGE";
   const keywords: string[] = config?.keywords || [];
 
-  const [inputVal, setInputVal] = useState('');
+  const [inputVal, setInputVal] = useState("");
 
   const handleModeChange = (newMode: string) => {
-    if (newMode === 'ANY_MESSAGE') {
-      onChange({ mode: 'ANY_MESSAGE' });
+    if (newMode === "ANY_MESSAGE") {
+      onChange({ mode: "ANY_MESSAGE" });
     } else {
-      onChange({ mode: 'KEYWORD', keywords: keywords.length > 0 ? keywords : [] });
+      onChange({
+        mode: "KEYWORD",
+        keywords: keywords.length > 0 ? keywords : [],
+      });
     }
   };
 
@@ -28,20 +31,34 @@ export default function DirectMessageTriggerConfig({
     const trimmed = inputVal.trim();
     if (trimmed && !keywords.includes(trimmed)) {
       const updated = [...keywords, trimmed];
-      onChange({ mode: 'KEYWORD', keywords: updated });
-      setInputVal('');
+      onChange({ mode: "KEYWORD", keywords: updated });
+      setInputVal("");
     }
   };
 
   const handleRemoveKeyword = (kwToRemove: string) => {
     const updated = keywords.filter((kw) => kw !== kwToRemove);
-    onChange({ mode: 'KEYWORD', keywords: updated });
+    onChange({ mode: "KEYWORD", keywords: updated });
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--space-5)",
+      }}
+    >
       <div>
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 'var(--space-2)' }}>
+        <label
+          style={{
+            display: "block",
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--text-primary)",
+            marginBottom: "var(--space-2)",
+          }}
+        >
           Direct Message Matching Mode
         </label>
         <Radio.Group
@@ -54,12 +71,21 @@ export default function DirectMessageTriggerConfig({
         </Radio.Group>
       </div>
 
-      {mode === 'KEYWORD' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            Trigger only when incoming DMs contain any of the following keyword tags:
+      {mode === "KEYWORD" && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-2)",
+          }}
+        >
+          <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+            Trigger only when incoming DMs contain any of the following keyword
+            tags:
           </span>
-          <div style={{ display: 'flex', gap: 'var(--space-2)', maxWidth: 360 }}>
+          <div
+            style={{ display: "flex", gap: "var(--space-2)", maxWidth: 360 }}
+          >
             <Input
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
@@ -70,13 +96,20 @@ export default function DirectMessageTriggerConfig({
               type="dashed"
               icon={<Plus size={14} style={{ marginTop: 2 }} />}
               onClick={handleAddKeyword}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
             >
               Add
             </Button>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-1)', marginTop: 'var(--space-2)' }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "var(--space-1)",
+              marginTop: "var(--space-2)",
+            }}
+          >
             {keywords.map((kw) => (
               <Tag
                 key={kw}
@@ -85,10 +118,10 @@ export default function DirectMessageTriggerConfig({
                 color="blue"
                 style={{
                   fontSize: 12,
-                  padding: '2px 8px',
-                  borderRadius: 'var(--radius-sm)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
+                  padding: "2px 8px",
+                  borderRadius: "var(--radius-sm)",
+                  display: "inline-flex",
+                  alignItems: "center",
                   gap: 4,
                 }}
               >
@@ -96,7 +129,13 @@ export default function DirectMessageTriggerConfig({
               </Tag>
             ))}
             {keywords.length === 0 && (
-              <span style={{ fontSize: 11, color: 'var(--warning)', fontWeight: 550 }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "var(--warning)",
+                  fontWeight: 550,
+                }}
+              >
                 Please add at least one keyword to trigger the flow.
               </span>
             )}

@@ -18,10 +18,17 @@ export class KeepAliveService implements OnModuleInit {
       'http://localhost:3001';
 
     // If we're on localhost and not explicitly forced, we can skip or run it
-    const isLocal = targetUrl.includes('localhost') || targetUrl.includes('127.0.0.1');
+    const isLocal =
+      targetUrl.includes('localhost') || targetUrl.includes('127.0.0.1');
 
-    if (isLocal && process.env.NODE_ENV !== 'production' && !process.env.FORCE_KEEP_ALIVE) {
-      this.logger.log(`Skipping keep-alive ping for local URL: ${targetUrl}. Set FORCE_KEEP_ALIVE=true to force pinging.`);
+    if (
+      isLocal &&
+      process.env.NODE_ENV !== 'production' &&
+      !process.env.FORCE_KEEP_ALIVE
+    ) {
+      this.logger.log(
+        `Skipping keep-alive ping for local URL: ${targetUrl}. Set FORCE_KEEP_ALIVE=true to force pinging.`,
+      );
       return;
     }
 
@@ -29,7 +36,9 @@ export class KeepAliveService implements OnModuleInit {
     const intervalMs = 10 * 60 * 1000;
     const healthUrl = `${targetUrl.replace(/\/$/, '')}/health`;
 
-    this.logger.log(`Starting self-ping service targeting: ${healthUrl} (interval: 10 minutes)`);
+    this.logger.log(
+      `Starting self-ping service targeting: ${healthUrl} (interval: 10 minutes)`,
+    );
 
     // Perform initial ping after 30 seconds to let application fully start up
     setTimeout(() => this.ping(healthUrl), 30000);
@@ -45,9 +54,13 @@ export class KeepAliveService implements OnModuleInit {
       const response = await fetch(url);
       if (response.ok) {
         const data = (await response.json().catch(() => ({}))) as any;
-        this.logger.log(`Keep-alive ping successful: status ${response.status}. App Status: ${data?.status || 'unknown'}`);
+        this.logger.log(
+          `Keep-alive ping successful: status ${response.status}. App Status: ${data?.status || 'unknown'}`,
+        );
       } else {
-        this.logger.warn(`Keep-alive ping returned non-OK status: ${response.status}`);
+        this.logger.warn(
+          `Keep-alive ping returned non-OK status: ${response.status}`,
+        );
       }
     } catch (error) {
       this.logger.error(`Keep-alive ping failed: ${(error as Error).message}`);

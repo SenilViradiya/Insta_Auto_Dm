@@ -8,7 +8,7 @@ export class MetaGraphClient {
   constructor(
     private readonly metaMessagingService: MetaMessagingService,
     private readonly graphClient: GraphClient,
-  ) { }
+  ) {}
 
   async sendMessage(
     recipientId: string,

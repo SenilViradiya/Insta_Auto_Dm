@@ -3,7 +3,10 @@ import { AssetService } from '../services/asset.service';
 import { AssetRepository } from '../repositories/asset.repository';
 import { MetaAssetClient } from '../clients/meta-asset.client';
 import { PrismaService } from '../../../prisma.service';
-import { AssetSyncException, ProfileSyncException } from '../exceptions/assets.exceptions';
+import {
+  AssetSyncException,
+  ProfileSyncException,
+} from '../exceptions/assets.exceptions';
 import { InstagramAssetType } from '@prisma/client';
 import { encryptToken } from '../../../meta/crypto.utils';
 
@@ -28,7 +31,9 @@ describe('Asset Management Module', () => {
       count: jest.fn(),
       findMany: jest.fn(),
     },
-    $transaction: jest.fn().mockImplementation((promises) => Promise.all(promises)),
+    $transaction: jest
+      .fn()
+      .mockImplementation((promises) => Promise.all(promises)),
   };
 
   const mockMetaClient = {
@@ -135,19 +140,24 @@ describe('Asset Management Module', () => {
       mockPrismaService.instagramAccount.findUnique.mockResolvedValue(null);
 
       await expect(service.syncProfileAndAssets('unknown-acc')).rejects.toThrow(
-        AssetSyncException
+        AssetSyncException,
       );
     });
 
     it('should sync profile and media assets successfully', async () => {
-      const encrypted = encryptToken('raw-token', process.env.TOKEN_ENCRYPTION_KEY!);
+      const encrypted = encryptToken(
+        'raw-token',
+        process.env.TOKEN_ENCRYPTION_KEY!,
+      );
 
       const mockAccount = {
         id: 'acc-1',
         instagramUserId: 'insta-usr-id',
         accessTokenEncrypted: encrypted,
       };
-      mockPrismaService.instagramAccount.findUnique.mockResolvedValue(mockAccount);
+      mockPrismaService.instagramAccount.findUnique.mockResolvedValue(
+        mockAccount,
+      );
 
       const mockProfile = { id: 'prof-1', username: 'john_doe' };
       mockMetaClient.fetchProfile.mockResolvedValue({
@@ -179,7 +189,10 @@ describe('Asset Management Module', () => {
 
       expect(result.profile).toEqual(mockProfile);
       expect(result.syncedAssetsCount).toBe(1);
-      expect(mockMetaClient.fetchProfile).toHaveBeenCalledWith('insta-usr-id', 'raw-token');
+      expect(mockMetaClient.fetchProfile).toHaveBeenCalledWith(
+        'insta-usr-id',
+        'raw-token',
+      );
       expect(mockAssetRepository.bulkUpsertAssets).toHaveBeenCalledWith(
         'acc-1',
         expect.arrayContaining([
@@ -187,7 +200,7 @@ describe('Asset Management Module', () => {
             instagramMediaId: 'media-1',
             assetType: InstagramAssetType.REEL,
           }),
-        ])
+        ]),
       );
       expect(mockAssetRepository.bulkArchiveMissing).toHaveBeenCalled();
     });

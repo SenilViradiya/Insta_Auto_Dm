@@ -7,7 +7,10 @@ export interface TriggerValidator {
 
 const registry = new Map<string, TriggerValidator>();
 
-export function registerTriggerValidator(type: string, validator: TriggerValidator) {
+export function registerTriggerValidator(
+  type: string,
+  validator: TriggerValidator,
+) {
   registry.set(type, validator);
 }
 
@@ -26,7 +29,9 @@ export const DirectMessageTriggerSchema = z.discriminatedUnion('mode', [
   }),
   z.object({
     mode: z.literal('KEYWORD'),
-    keywords: z.array(z.string().min(1)).min(1, 'At least one keyword is required'),
+    keywords: z
+      .array(z.string().min(1))
+      .min(1, 'At least one keyword is required'),
   }),
 ]);
 
@@ -37,28 +42,36 @@ class DirectMessageValidator implements TriggerValidator {
 }
 
 // 2. REEL_COMMENT Validator
-export const ReelCommentTriggerSchema = z.object({
-  mediaScope: z.enum(['ALL_REELS', 'SPECIFIC_REEL']),
-  mediaId: z.string().optional(),
-  matchType: z.enum(['ANY_COMMENT', 'KEYWORD']).optional().default('ANY_COMMENT'),
-  keywords: z.array(z.string().min(1)).optional(),
-  publicReply: z.string().optional(),
-}).superRefine((data, ctx) => {
-  if (data.mediaScope === 'SPECIFIC_REEL' && !data.mediaId) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'mediaId is required for SPECIFIC_REEL mediaScope',
-      path: ['mediaId'],
-    });
-  }
-  if (data.matchType === 'KEYWORD' && (!data.keywords || data.keywords.length === 0)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'keywords are required for KEYWORD matchType',
-      path: ['keywords'],
-    });
-  }
-});
+export const ReelCommentTriggerSchema = z
+  .object({
+    mediaScope: z.enum(['ALL_REELS', 'SPECIFIC_REEL']),
+    mediaId: z.string().optional(),
+    matchType: z
+      .enum(['ANY_COMMENT', 'KEYWORD'])
+      .optional()
+      .default('ANY_COMMENT'),
+    keywords: z.array(z.string().min(1)).optional(),
+    publicReply: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.mediaScope === 'SPECIFIC_REEL' && !data.mediaId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'mediaId is required for SPECIFIC_REEL mediaScope',
+        path: ['mediaId'],
+      });
+    }
+    if (
+      data.matchType === 'KEYWORD' &&
+      (!data.keywords || data.keywords.length === 0)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'keywords are required for KEYWORD matchType',
+        path: ['keywords'],
+      });
+    }
+  });
 
 class ReelCommentValidator implements TriggerValidator {
   validate(config: any) {
@@ -67,28 +80,36 @@ class ReelCommentValidator implements TriggerValidator {
 }
 
 // 3. POST_COMMENT Validator
-export const PostCommentTriggerSchema = z.object({
-  mediaScope: z.enum(['ALL_POSTS', 'SPECIFIC_POST']),
-  mediaId: z.string().optional(),
-  matchType: z.enum(['ANY_COMMENT', 'KEYWORD']).optional().default('ANY_COMMENT'),
-  keywords: z.array(z.string().min(1)).optional(),
-  publicReply: z.string().optional(),
-}).superRefine((data, ctx) => {
-  if (data.mediaScope === 'SPECIFIC_POST' && !data.mediaId) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'mediaId is required for SPECIFIC_POST mediaScope',
-      path: ['mediaId'],
-    });
-  }
-  if (data.matchType === 'KEYWORD' && (!data.keywords || data.keywords.length === 0)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'keywords are required for KEYWORD matchType',
-      path: ['keywords'],
-    });
-  }
-});
+export const PostCommentTriggerSchema = z
+  .object({
+    mediaScope: z.enum(['ALL_POSTS', 'SPECIFIC_POST']),
+    mediaId: z.string().optional(),
+    matchType: z
+      .enum(['ANY_COMMENT', 'KEYWORD'])
+      .optional()
+      .default('ANY_COMMENT'),
+    keywords: z.array(z.string().min(1)).optional(),
+    publicReply: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.mediaScope === 'SPECIFIC_POST' && !data.mediaId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'mediaId is required for SPECIFIC_POST mediaScope',
+        path: ['mediaId'],
+      });
+    }
+    if (
+      data.matchType === 'KEYWORD' &&
+      (!data.keywords || data.keywords.length === 0)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'keywords are required for KEYWORD matchType',
+        path: ['keywords'],
+      });
+    }
+  });
 
 class PostCommentValidator implements TriggerValidator {
   validate(config: any) {
@@ -117,8 +138,14 @@ class StoryMentionValidator implements TriggerValidator {
 }
 
 // Register initial validators
-registerTriggerValidator(TriggerType.DIRECT_MESSAGE, new DirectMessageValidator());
+registerTriggerValidator(
+  TriggerType.DIRECT_MESSAGE,
+  new DirectMessageValidator(),
+);
 registerTriggerValidator(TriggerType.REEL_COMMENT, new ReelCommentValidator());
 registerTriggerValidator(TriggerType.POST_COMMENT, new PostCommentValidator());
 registerTriggerValidator(TriggerType.STORY_REPLY, new StoryReplyValidator());
-registerTriggerValidator(TriggerType.STORY_MENTION, new StoryMentionValidator());
+registerTriggerValidator(
+  TriggerType.STORY_MENTION,
+  new StoryMentionValidator(),
+);

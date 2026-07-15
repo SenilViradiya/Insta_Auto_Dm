@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MetaService } from './meta.service';
 import { PrismaService } from '../prisma.service';
 import { BadRequestException } from '@nestjs/common';
-import { encryptToken, decryptToken } from '../modules/meta-platform/utils/crypto.utils';
+import {
+  encryptToken,
+  decryptToken,
+} from '../modules/meta-platform/utils/crypto.utils';
 import { GraphClient } from '../modules/meta-platform/clients/graph.client';
 
 describe('MetaService', () => {

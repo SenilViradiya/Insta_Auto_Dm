@@ -87,13 +87,17 @@ export class ConditionEngine {
       const matched = conditionResults.every((r) => r === true);
       return {
         matched,
-        reason: matched ? undefined : 'One or more conditional rules failed in AND group.',
+        reason: matched
+          ? undefined
+          : 'One or more conditional rules failed in AND group.',
       };
     } else {
       const matched = conditionResults.some((r) => r === true);
       return {
         matched,
-        reason: matched ? undefined : 'All conditional rules failed in OR group.',
+        reason: matched
+          ? undefined
+          : 'All conditional rules failed in OR group.',
       };
     }
   }

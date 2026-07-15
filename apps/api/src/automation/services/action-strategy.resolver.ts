@@ -28,7 +28,9 @@ export class ActionStrategyResolver {
   resolve(actionType: string): ActionStrategy {
     const strategy = this.strategies.get(actionType);
     if (!strategy) {
-      throw new ActionException(`Action type "${actionType}" is not supported or registered`);
+      throw new ActionException(
+        `Action type "${actionType}" is not supported or registered`,
+      );
     }
     return strategy;
   }

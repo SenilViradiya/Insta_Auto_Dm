@@ -9,15 +9,7 @@ import { MetaPlatformModule } from '../meta-platform/meta-platform.module';
 @Module({
   imports: [MetaPlatformModule],
   controllers: [AssetController],
-  providers: [
-    PrismaService,
-    AssetService,
-    AssetRepository,
-    MetaAssetClient,
-  ],
-  exports: [
-    AssetService,
-    AssetRepository,
-  ],
+  providers: [PrismaService, AssetService, AssetRepository, MetaAssetClient],
+  exports: [AssetService, AssetRepository],
 })
 export class AssetsModule {}

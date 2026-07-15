@@ -104,7 +104,9 @@ export class ActionWorker extends WorkerHost {
         try {
           await job.discard();
         } catch (discardErr) {
-          this.logger.warn(`Failed to discard job attempts in BullMQ: ${String(discardErr)}`);
+          this.logger.warn(
+            `Failed to discard job attempts in BullMQ: ${String(discardErr)}`,
+          );
         }
 
         // Retrieve actual automationId from the database execution record
@@ -115,7 +117,9 @@ export class ActionWorker extends WorkerHost {
             resolvedAutomationId = execution.automationId;
           }
         } catch (dbErr) {
-          this.logger.warn(`Could not resolve actual automationId for execution ${executionId} on failure: ${String(dbErr)}`);
+          this.logger.warn(
+            `Could not resolve actual automationId for execution ${executionId} on failure: ${String(dbErr)}`,
+          );
         }
 
         // Move execution record to DLQ and mark FAILED status

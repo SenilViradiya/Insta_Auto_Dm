@@ -49,7 +49,11 @@ describe('StoryMentionTriggerStrategy', () => {
 
   describe('Event Matching', () => {
     it('matches always', () => {
-      const context = { automation: baseAutomation, event: baseEvent, currentTime: new Date() };
+      const context = {
+        automation: baseAutomation,
+        event: baseEvent,
+        currentTime: new Date(),
+      };
       const result = strategy.matchesEvent(context);
       expect(result.matched).toBe(true);
     });

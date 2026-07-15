@@ -40,7 +40,9 @@ describe('Trigger Registry and Resolver Framework', () => {
     });
 
     it('throws UnknownTriggerException for unregistered types', () => {
-      expect(() => resolver.resolve('UNREGISTERED' as any)).toThrow(UnknownTriggerException);
+      expect(() => resolver.resolve('UNREGISTERED' as any)).toThrow(
+        UnknownTriggerException,
+      );
     });
   });
 });

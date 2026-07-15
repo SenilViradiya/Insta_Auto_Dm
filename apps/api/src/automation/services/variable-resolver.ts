@@ -22,7 +22,10 @@ export class VariableResolver {
     });
   }
 
-  private resolveExpression(variableName: string, context: ExecutionContext): string {
+  private resolveExpression(
+    variableName: string,
+    context: ExecutionContext,
+  ): string {
     if (context.variables && context.variables[variableName] !== undefined) {
       return context.variables[variableName];
     }
@@ -40,7 +43,9 @@ export class VariableResolver {
         const resolved = this.getValueByPath(context, variableName);
         if (resolved !== undefined) return resolved;
 
-        throw new VariableResolutionException(`Unknown variable expression: "${variableName}"`);
+        throw new VariableResolutionException(
+          `Unknown variable expression: "${variableName}"`,
+        );
     }
   }
 
@@ -48,7 +53,11 @@ export class VariableResolver {
     const parts = path.split('.');
     let current = obj;
     for (const part of parts) {
-      if (current === null || current === undefined || typeof current !== 'object') {
+      if (
+        current === null ||
+        current === undefined ||
+        typeof current !== 'object'
+      ) {
         return undefined;
       }
       current = current[part];
@@ -56,6 +65,8 @@ export class VariableResolver {
     if (current === null || current === undefined) {
       return '';
     }
-    return typeof current === 'object' ? JSON.stringify(current) : String(current);
+    return typeof current === 'object'
+      ? JSON.stringify(current)
+      : String(current);
   }
 }

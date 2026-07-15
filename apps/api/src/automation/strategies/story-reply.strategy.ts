@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { TriggerType } from '@prisma/client';
-import { TriggerStrategy, TriggerContext, TriggerMatchResult } from '../interfaces/trigger.interface';
+import {
+  TriggerStrategy,
+  TriggerContext,
+  TriggerMatchResult,
+} from '../interfaces/trigger.interface';
 import { TriggerValidationException } from '../errors/automation.errors';
 import { StoryReplyTriggerSchema } from '../dto/trigger-validators';
 

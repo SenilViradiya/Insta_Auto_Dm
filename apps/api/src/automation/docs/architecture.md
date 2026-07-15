@@ -7,6 +7,7 @@ This document describes the production-grade, highly reliable, and fault-toleran
 ## 1. Modular Registry Architecture Overview
 
 Our platform is separated into distinct, decoupled domains:
+
 1. **Automation Engine Module**: Manages execution state transitions, trigger strategies, distributed locking, idempotency, and action execution workers.
 2. **Instagram Asset Module**: Acts as the single source of truth for all Meta page profile metrics, feed media, carousel items, standard videos, and reels syncing.
 
@@ -36,11 +37,12 @@ Our platform is separated into distinct, decoupled domains:
 
 ## 2. Instagram Asset Management Module
 
-The Instagram Asset Module tracks Instagram-specific media and profiles. 
+The Instagram Asset Module tracks Instagram-specific media and profiles.
 
 ### Synchronization Flow:
+
 ```
-[ Instagram Account ] 
+[ Instagram Account ]
         │
         ▼ (Decrypt access token using crypto.utils)
 [ MetaAssetClient.fetchProfile ]
@@ -66,6 +68,7 @@ The Instagram Asset Module tracks Instagram-specific media and profiles.
   - Fields: `username`, `name`, `profilePictureUrl`, `followers`, `following`, `mediaCount`, `biography`, `website`, `lastSyncedAt`.
 
 ### REST APIs:
+
 - `POST /assets/sync` - Runs profile and media list sync for an Instagram account.
 - `GET /profile` - Retrieves the synced profile details.
 - `GET /assets` - Retrieves paginated assets with search/filters (caption, mediaType, assetType, createdAfter, createdBefore).
@@ -119,10 +122,10 @@ The Automation Engine uses a polymorphic trigger-driven strategy framework. This
 
 ## 4. SOLID & Framework Extensibility
 
-* **Open-Closed Principle (OCP)**: Adding new triggers or support for future platform integrations (e.g. WhatsApp / Facebook) requires no modification of existing code. You write a self-contained strategy class conforming to the registry contracts.
-* **Single Responsibility Principle (SRP)**: The Asset Module only manages synchronization and asset mapping. The Automation Engine manages processing lifecycles, and webhook events only parse core payload identifiers, avoiding mixed scopes.
-* **Liskov Substitution Principle (LSP)**: Any subclass of `TriggerStrategy` integrates cleanly without altering resolution behaviors.
-* **Dependency Inversion Principle (DIP)**: Abstract contracts (like `TriggerStrategy`) completely isolate database models from API routing and domain logic orchestration.
+- **Open-Closed Principle (OCP)**: Adding new triggers or support for future platform integrations (e.g. WhatsApp / Facebook) requires no modification of existing code. You write a self-contained strategy class conforming to the registry contracts.
+- **Single Responsibility Principle (SRP)**: The Asset Module only manages synchronization and asset mapping. The Automation Engine manages processing lifecycles, and webhook events only parse core payload identifiers, avoiding mixed scopes.
+- **Liskov Substitution Principle (LSP)**: Any subclass of `TriggerStrategy` integrates cleanly without altering resolution behaviors.
+- **Dependency Inversion Principle (DIP)**: Abstract contracts (like `TriggerStrategy`) completely isolate database models from API routing and domain logic orchestration.
 
 ---
 
@@ -174,26 +177,31 @@ With the completion of **Execution Engine V2**, we have established a fully deco
 ## 6. Planning Future Integrations Without Redesigning the Engine
 
 ### A. AI Actions
-* To add an `AI_REPLY` action, construct `AiReplyActionStrategy` fulfilling `ActionStrategy`.
-* The strategy queries models (e.g. OpenAI / Gemini) using the resolved variable data (e.g., `{{comment.text}}`), and generates a response dynamically before calling `MessagingService`.
+
+- To add an `AI_REPLY` action, construct `AiReplyActionStrategy` fulfilling `ActionStrategy`.
+- The strategy queries models (e.g. OpenAI / Gemini) using the resolved variable data (e.g., `{{comment.text}}`), and generates a response dynamically before calling `MessagingService`.
 
 ### B. Parallel Execution
-* Currently, execution steps execute sequentially (`currentIndex + 1`).
-* To support parallel forks, the pipeline scheduler in `ExecutionEngine` can inspect step lists to find nodes grouped by a parallel block identifier.
-* Instead of enqueuing a single action, the engine compiles a list and enqueues multiple distinct `execute-action` BullMQ jobs for all parallel nodes simultaneously.
+
+- Currently, execution steps execute sequentially (`currentIndex + 1`).
+- To support parallel forks, the pipeline scheduler in `ExecutionEngine` can inspect step lists to find nodes grouped by a parallel block identifier.
+- Instead of enqueuing a single action, the engine compiles a list and enqueues multiple distinct `execute-action` BullMQ jobs for all parallel nodes simultaneously.
 
 ### C. Branching & Decision Nodes
-* Introduce conditional decision actions that route based on logic outcomes.
-* If a step executes a branch action, `ExecutionEngine` evaluates the group condition parameters and determines whether to schedule `nextIndex` or jump path sequences to a specified branch target node.
+
+- Introduce conditional decision actions that route based on logic outcomes.
+- If a step executes a branch action, `ExecutionEngine` evaluates the group condition parameters and determines whether to schedule `nextIndex` or jump path sequences to a specified branch target node.
 
 ### D. Human Handoff
-* A human handoff request creates a pending wait transition. By mapping status to `WAITING` under a manual lock state (e.g., `PAUSED_FOR_HUMAN`), webhook triggers are temporarily paused.
-* When the human resolves the thread, the workspace dashboard triggers an API update that unlocks the execution back to `RUNNING` or `SUCCESS` state.
+
+- A human handoff request creates a pending wait transition. By mapping status to `WAITING` under a manual lock state (e.g., `PAUSED_FOR_HUMAN`), webhook triggers are temporarily paused.
+- When the human resolves the thread, the workspace dashboard triggers an API update that unlocks the execution back to `RUNNING` or `SUCCESS` state.
 
 ### E. CRM Integrations
-* Integrate CRM events (such as adding leads to Salesforce / HubSpot) using `CrmWebhookActionStrategy`.
-* It calls CRM connector modules passing normalized user and tag metadata computed by the Variable system.
+
+- Integrate CRM events (such as adding leads to Salesforce / HubSpot) using `CrmWebhookActionStrategy`.
+- It calls CRM connector modules passing normalized user and tag metadata computed by the Variable system.
 
 ### F. Visual Workflow Nodes
-* By mapping visual builder nodes directly to `ActionType` and edges to the order database records index list, any flowchart layout compiles straight to the DB schema. No changes to execution runner or queue loaders are required!
 
+- By mapping visual builder nodes directly to `ActionType` and edges to the order database records index list, any flowchart layout compiles straight to the DB schema. No changes to execution runner or queue loaders are required!
