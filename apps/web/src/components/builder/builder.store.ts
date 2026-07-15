@@ -71,6 +71,10 @@ const runValidation = (
       if (!act.payload.data.text || act.payload.data.text.trim() === "") {
         warnings.push(`Action ${index + 1} (Send Message) text is empty.`);
       }
+    } else if (act.actionType === "REPLY_COMMENT") {
+      if (!act.payload.data.text || act.payload.data.text.trim() === "") {
+        warnings.push(`Action ${index + 1} (Reply Comment) text is empty.`);
+      }
     } else if (act.actionType === "WAIT") {
       const delay = act.payload.data.delaySeconds;
       if (delay === undefined || delay < 0) {

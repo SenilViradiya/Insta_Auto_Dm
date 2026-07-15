@@ -1,17 +1,12 @@
 import React from "react";
 import { Button, Select, Input } from "antd";
 import { Plus, Trash2 } from "lucide-react";
-import { Condition } from "../types";
+import { Condition } from "../types";import { useBuilderStore } from "../builder.store";
 
 interface ConditionBuilderProps {
   conditions: Condition[];
   onChange: (conditions: Condition[]) => void;
 }
-
-const FIELD_OPTIONS = [
-  { label: "Message Content Text", value: "content.text" },
-  { label: "Sender Username", value: "sender.username" },
-];
 
 const OPERATOR_OPTIONS = [
   { label: "Equals", value: "EQUALS" },
@@ -25,6 +20,36 @@ export default function ConditionBuilder({
   conditions = [],
   onChange,
 }: ConditionBuilderProps) {
+  const triggerType = useBuilderStore((state) => state.draft.trigger.type);
+
+  const getFieldOptions = () => {
+    switch (triggerType) {
+      case "REEL_COMMENT":
+      case "POST_COMMENT":
+        return [
+          { label: "Comment Text", value: "content.text" },
+          { label: "Sender Username", value: "sender.username" },
+        ];
+      case "STORY_REPLY":
+        return [
+          { label: "Reply Text", value: "content.text" },
+          { label: "Sender Username", value: "sender.username" },
+        ];
+      case "DIRECT_MESSAGE":
+        return [
+          { label: "Message Text", value: "content.text" },
+          { label: "Sender Username", value: "sender.username" },
+        ];
+      default:
+        return [
+          { label: "Content Text", value: "content.text" },
+          { label: "Sender Username", value: "sender.username" },
+        ];
+    }
+  };
+
+  const fieldOptions = getFieldOptions();
+
   const handleAddCondition = () => {
     const newCond: Condition = {
       field: "content.text",
@@ -112,7 +137,7 @@ export default function ConditionBuilder({
               <Select
                 value={cond.field}
                 onChange={(val) => handleUpdateCondition(index, { field: val })}
-                options={FIELD_OPTIONS}
+                options={fieldOptions}
                 style={{ width: "100%" }}
               />
             </div>

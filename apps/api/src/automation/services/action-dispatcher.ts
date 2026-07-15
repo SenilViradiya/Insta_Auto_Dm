@@ -7,6 +7,7 @@ import {
   WaitActionHandler,
   AddTagActionHandler,
   CallWebhookActionHandler,
+  ReplyCommentActionHandler,
 } from './action-handlers';
 
 @Injectable()
@@ -19,12 +20,14 @@ export class ActionDispatcher {
     waitHandler: WaitActionHandler,
     addTagHandler: AddTagActionHandler,
     callWebhookHandler: CallWebhookActionHandler,
+    replyCommentHandler: ReplyCommentActionHandler,
   ) {
     this.handlers = {
       [ActionType.SEND_MESSAGE]: sendMessageHandler,
       [ActionType.WAIT]: waitHandler,
       [ActionType.ADD_TAG]: addTagHandler,
       [ActionType.CALL_WEBHOOK]: callWebhookHandler,
+      [ActionType.REPLY_COMMENT]: replyCommentHandler,
     };
   }
 

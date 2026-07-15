@@ -33,9 +33,6 @@ export class ExecutionEngine {
     private readonly variableResolver: VariableResolver,
   ) {}
 
-  /**
-   * Helper to retrieve runtime action execution steps (prepending dynamic REPLY_COMMENT actions for comments)
-   */
   private getRuntimeActions(
     automation: AutomationModel,
   ): Array<{ id: string; actionType: string; payload: any }> {
@@ -45,7 +42,10 @@ export class ExecutionEngine {
       payload: act.payload,
     }));
 
+    const hasReplyComment = list.some((act) => act.actionType === 'REPLY_COMMENT');
+
     if (
+      !hasReplyComment &&
       automation.triggerConfig?.publicReply &&
       (automation.triggerType === 'REEL_COMMENT' ||
         automation.triggerType === 'POST_COMMENT')

@@ -22,7 +22,6 @@ export default function PostCommentTriggerConfig({
   const mediaId = config?.mediaId || "";
   const matchType = config?.matchType || "ANY_COMMENT";
   const keywords: string[] = config?.keywords || [];
-  const publicReply = config?.publicReply || "";
 
   const [inputVal, setInputVal] = useState("");
 
@@ -32,7 +31,6 @@ export default function PostCommentTriggerConfig({
       mediaId,
       matchType,
       keywords,
-      publicReply,
       ...updates,
     });
   };
@@ -233,49 +231,6 @@ export default function PostCommentTriggerConfig({
           </div>
         </div>
       )}
-
-      {/* ── 4. Public Comment Reply ── */}
-      <div
-        style={{
-          borderTop: "1px solid var(--divider)",
-          paddingTop: "var(--space-4)",
-        }}
-      >
-        <label
-          style={{
-            display: "block",
-            fontSize: 13,
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            marginBottom: "var(--space-2)",
-          }}
-        >
-          Public Comment Auto-Reply{" "}
-          <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>
-            (Optional)
-          </span>
-        </label>
-        <TextArea
-          value={publicReply}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-            handleUpdate({ publicReply: e.target.value })
-          }
-          placeholder="e.g. Sent you a DM with details!"
-          rows={2}
-          style={{ borderRadius: "var(--radius-md)" }}
-        />
-        <span
-          style={{
-            display: "block",
-            fontSize: 11,
-            color: "var(--text-muted)",
-            marginTop: "var(--space-1)",
-          }}
-        >
-          If set, this response will be posted as a public comment reply on the
-          user's thread when the workflow is triggered.
-        </span>
-      </div>
     </div>
   );
 }

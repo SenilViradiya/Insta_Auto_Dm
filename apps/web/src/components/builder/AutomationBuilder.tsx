@@ -54,12 +54,10 @@ export default function AutomationBuilder({
           const payloadData = act.payload?.data || {};
           return {
             id: act.id,
-            actionType: act.actionType === "WAIT" ? "WAIT" : "SEND_MESSAGE",
+            actionType: act.actionType as any,
             payload: {
               version: act.payload?.version ?? 1,
-              type:
-                act.payload?.type ??
-                (act.actionType === "WAIT" ? "WAIT" : "SEND_MESSAGE"),
+              type: act.payload?.type ?? act.actionType,
               data: {
                 text: payloadData.text || payloadData.message || "",
                 delaySeconds: payloadData.delaySeconds ?? 0,
@@ -173,8 +171,8 @@ export default function AutomationBuilder({
 
   const stepsList = [
     { label: "Trigger Event" },
-    { label: "Rules Config" },
-    { label: "Conditions" },
+    { label: "Trigger Scope" },
+    { label: "Advanced Filters" },
     { label: "Actions Setup" },
     { label: "Final Review" },
   ];
