@@ -91,9 +91,51 @@ export class WebhookController {
         throw new ForbiddenException('Verification error');
       }
 
+      // Calculate SHA256 of rawBody (NOT HMAC) to verify contents safely
+      const rawBodySha256 = rawBody
+        ? crypto.createHash('sha256').update(rawBody).digest('hex')
+        : 'none';
+
+      const diagnosticInfo = {
+        requestId: req.headers?.['x-render-id'] || req.headers?.['x-request-id'] || crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        appId: process.env.META_APP_ID || 'none',
+        secretLength: appSecret?.length || 0,
+        nodeEnv: process.env.NODE_ENV,
+        rawBodyExists: !!rawBody,
+        rawBodyType: typeof rawBody,
+        rawBodyIsBuffer: Buffer.isBuffer(rawBody),
+        rawBodyInstanceofBuffer: rawBody instanceof Buffer,
+        rawBodyLength: rawBody ? (Buffer.isBuffer(rawBody) ? rawBody.length : (rawBody as any).length || 0) : 0,
+        rawBodySha256,
+        receivedHeaderExists: !!signature,
+        headerName: 'x-hub-signature-256',
+        algorithm: parts[0],
+        expectedSignatureLength: expectedSignature.length,
+        contentType: req.headers?.['content-type'],
+        contentLength: req.headers?.['content-length'],
+        transferEncoding: req.headers?.['transfer-encoding'],
+        contentEncoding: req.headers?.['content-encoding'],
+        reqBodyConstructor: req.body ? req.body.constructor?.name : 'none',
+        reqRawBodyConstructor: req.rawBody ? req.rawBody.constructor?.name : 'none',
+        port: process.env.PORT,
+        platform: process.platform,
+      };
+
+      this.logger.warn(`HMAC Diagnostic Webhook Received (Before createHmac): ${JSON.stringify(diagnosticInfo, null, 2)}`);
+
       const hmac = crypto.createHmac('sha256', appSecret);
       hmac.update(rawBody);
       const calculatedSignature = hmac.digest('hex');
+
+      const postDiagnosticInfo = {
+        ...diagnosticInfo,
+        calculatedSignatureLength: calculatedSignature.length,
+        expectedSignaturePrefix: expectedSignature.substring(0, 16),
+        calculatedSignaturePrefix: calculatedSignature.substring(0, 16),
+      };
+
+      this.logger.warn(`HMAC Diagnostic Webhook Output (After digest): ${JSON.stringify(postDiagnosticInfo, null, 2)}`);
 
       if (calculatedSignature !== expectedSignature) {
         this.logger.error('HMAC signature mismatch');
