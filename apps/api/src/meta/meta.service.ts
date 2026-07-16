@@ -169,14 +169,22 @@ export class MetaService {
       if (pageDetails?.instagram_business_account?.id) {
         const instagramUserId = pageDetails.instagram_business_account.id;
 
-        // Automatically register Webhook App Subscription for this connected Page
+        // Automatically register Webhook App Subscription for this connected Page.
+        //
+        // IMPORTANT: Instagram comment/mention events are configured in the Meta App Dashboard
+        // (Webhooks → Instagram object → subscribe to 'comments','mentions' fields).
+        // This subscribed_apps API call only activates the Page-level subscription so
+        // Meta will route any Page events (DMs, postbacks) through our webhook URL.
+        // "instagram_manage_comments" is an OAuth scope, NOT a valid subscribed_field.
         try {
           this.logger.log(`Registering webhook app subscription for page ${page.id}...`);
           await this.graphClient.request({
             method: 'POST',
             endpoint: `${page.id}/subscribed_apps`,
             params: {
-              subscribed_fields: 'messages,messaging_postbacks,feed,instagram_manage_comments',
+              // Valid Page-level webhook fields only.
+              // Instagram-level fields (comments, mentions) are managed in App Dashboard.
+              subscribed_fields: 'messages,messaging_postbacks,mention',
               access_token: page.access_token,
             },
           });
