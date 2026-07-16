@@ -30,6 +30,7 @@ export class MetaService {
       'instagram_manage_messages',
       'pages_show_list',
       'business_management',
+      "pages_manage_metadata",
       'pages_read_engagement',
     ];
 
