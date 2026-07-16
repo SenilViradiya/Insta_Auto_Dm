@@ -28,9 +28,9 @@ export class MetaService {
     const scopes = [
       'instagram_basic',
       'instagram_manage_messages',
+      'instagram_manage_comments',
       'pages_show_list',
       'business_management',
-      "pages_manage_metadata",
       'pages_read_engagement',
     ];
 
