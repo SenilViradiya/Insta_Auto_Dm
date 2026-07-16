@@ -168,6 +168,32 @@ function AutomationsSkeleton() {
   );
 }
 
+const formatRelativeTime = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return "Never";
+  try {
+    const elapsed = Date.now() - new Date(dateStr).getTime();
+    if (elapsed < 0) return "Just now";
+    const msPerMinute = 60 * 1000;
+    const msPerHour = msPerMinute * 60;
+    const msPerDay = msPerHour * 24;
+
+    if (elapsed < msPerMinute) {
+      return "Just now";
+    } else if (elapsed < msPerHour) {
+      const mins = Math.round(elapsed / msPerMinute);
+      return `${mins}m ago`;
+    } else if (elapsed < msPerDay) {
+      const hrs = Math.round(elapsed / msPerHour);
+      return `${hrs}h ago`;
+    } else {
+      const days = Math.round(elapsed / msPerDay);
+      return `${days}d ago`;
+    }
+  } catch {
+    return "Never";
+  }
+};
+
 /* ── Workflow Card Redesign ── */
 function WorkflowCard({
   automation,
@@ -193,7 +219,9 @@ function WorkflowCard({
   const meta = TRIGGER_META[triggerType] || TRIGGER_META.DIRECT_MESSAGE;
   const keywords = automation.keywords || [];
   const actions = automation.actions || [];
-  const metrics = getSeededMetrics(automation.id);
+  const runsCount = automation.metrics?.runs ?? 0;
+  const successPct = automation.metrics?.successRate || "—";
+  const lastActiveStr = formatRelativeTime(automation.metrics?.lastActive);
 
   // Parse custom asset detail info
   const config = automation.triggerConfig || {};
@@ -587,7 +615,7 @@ function WorkflowCard({
                 color: "var(--text-primary)",
               }}
             >
-              {metrics.runs}
+              {automation.metrics?.runs || 0}
             </span>
           </div>
 
@@ -610,7 +638,7 @@ function WorkflowCard({
             <span
               style={{ fontSize: 12, fontWeight: 600, color: "var(--success)" }}
             >
-              {metrics.success}
+              {automation.metrics?.successRate || "0%"}
             </span>
           </div>
 
@@ -637,7 +665,7 @@ function WorkflowCard({
                 color: "var(--text-secondary)",
               }}
             >
-              {metrics.lastRun}
+              {automation.metrics?.lastActive ? formatRelativeTime(automation.metrics.lastActive) : "Never"}
             </span>
           </div>
         </div>
