@@ -68,14 +68,18 @@ export class OperationsService {
       const versionMatch = info.match(/redis_version:([0-9.]+)/);
       if (versionMatch) redisVersion = versionMatch[1];
 
-      if (this.automationQueue) {
-        const queueClient = (this.automationQueue as any).client;
-        if (queueClient) {
-          await queueClient.ping();
-          queueConnectivity = 'Healthy';
+      try {
+        if (this.automationQueue) {
+          const queueClient = await (this.automationQueue as any).client;
+          if (queueClient && typeof queueClient.ping === 'function') {
+            await queueClient.ping();
+            queueConnectivity = 'Healthy';
+          }
         }
+      } catch (queueErr) {
+        this.logger.warn(`Queue health check failed: ${(queueErr as Error).message}`);
       }
-    } catch {
+    } catch (err) {
       redisStatus = 'Offline';
     }
 
