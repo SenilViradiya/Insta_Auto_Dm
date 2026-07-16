@@ -31,7 +31,6 @@ export class MetaService {
       'instagram_manage_comments',
       'pages_show_list',
       'business_management',
-      'pages_messaging',
       'pages_read_engagement',
     ];
 
@@ -185,7 +184,7 @@ export class MetaService {
             params: {
               // Valid Page-level webhook fields only.
               // Instagram-level fields (comments, mentions) are managed in App Dashboard.
-              subscribed_fields: 'messages,messaging_postbacks',
+              subscribed_fields: 'messages,messaging_postbacks,mention',
               access_token: page.access_token,
             },
           });
