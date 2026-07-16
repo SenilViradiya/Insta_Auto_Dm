@@ -6,6 +6,7 @@ export interface PermissionStatus {
   scopes: {
     instagram_basic: boolean;
     instagram_manage_messages: boolean;
+    instagram_manage_comments: boolean;
     pages_show_list: boolean;
     pages_read_engagement: boolean;
     business_management: boolean;
@@ -19,6 +20,7 @@ export class PermissionService {
   private readonly requiredPermissions = [
     'instagram_basic',
     'instagram_manage_messages',
+    'instagram_manage_comments',
     'pages_show_list',
     'pages_read_engagement',
     'business_management',

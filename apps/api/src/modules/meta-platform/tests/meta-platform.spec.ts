@@ -115,6 +115,7 @@ describe('PermissionService validation checks', () => {
       data: [
         { permission: 'instagram_basic', status: 'granted' },
         { permission: 'instagram_manage_messages', status: 'granted' },
+        { permission: 'instagram_manage_comments', status: 'granted' },
         { permission: 'pages_show_list', status: 'granted' },
         { permission: 'pages_read_engagement', status: 'granted' },
         { permission: 'business_management', status: 'granted' },

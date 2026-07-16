@@ -32,6 +32,7 @@ interface InstagramAccount {
   pageId: string;
   pageName: string;
   connectedAt: string;
+  tokenExpiresAt?: string | null;
 }
 
 interface InstagramProfile {
@@ -323,36 +324,71 @@ export function AccountSwitcher({
   );
 }
 
+export interface PermissionStatus {
+  hasAllRequired: boolean;
+  scopes: {
+    instagram_basic: boolean;
+    instagram_manage_messages: boolean;
+    instagram_manage_comments: boolean;
+    pages_show_list: boolean;
+    pages_read_engagement: boolean;
+    business_management: boolean;
+    [key: string]: boolean;
+  };
+}
+
 // ── 2. CONNECTION HEALTH ──
-export function ConnectionHealth({ account }: { account: InstagramAccount }) {
-  // Realistic scopes verification list
+export function ConnectionHealth({
+  account,
+  permissions,
+  isLoading,
+}: {
+  account: InstagramAccount;
+  permissions: PermissionStatus | null;
+  isLoading?: boolean;
+}) {
+  const isExpired = account.tokenExpiresAt
+    ? new Date(account.tokenExpiresAt) < new Date()
+    : false;
+
   const scopes = [
     {
       name: "instagram_manage_messages",
       description: "Read & trigger DM automated replies",
-      active: true,
+      active: !!permissions?.scopes?.instagram_manage_messages,
     },
     {
       name: "instagram_manage_comments",
       description: "Listen & filter comment text fields",
-      active: true,
+      active: !!permissions?.scopes?.instagram_manage_comments,
     },
     {
       name: "instagram_basic",
       description: "Access Instagram profile handle/stats",
-      active: true,
+      active: !!permissions?.scopes?.instagram_basic,
     },
     {
-      name: "pages_messaging",
-      description: "Dispatch webhooks on comment payloads",
-      active: true,
+      name: "pages_show_list",
+      description: "Link and sync workspace content",
+      active: !!permissions?.scopes?.pages_show_list,
     },
     {
       name: "pages_read_engagement",
-      description: "Index story replies & post assets",
-      active: true,
+      description: "Examine story replies and message posts",
+      active: !!permissions?.scopes?.pages_read_engagement,
+    },
+    {
+      name: "business_management",
+      description: "Meta business setup management access",
+      active: !!permissions?.scopes?.business_management,
     },
   ];
+
+  const expiryLabel = account.tokenExpiresAt
+    ? new Date(account.tokenExpiresAt).toLocaleDateString()
+    : "Never / Auto-Refresh";
+
+  const hasAll = !!permissions?.hasAllRequired && !isExpired;
 
   return (
     <div
@@ -392,13 +428,25 @@ export function ConnectionHealth({ account }: { account: InstagramAccount }) {
           style={{
             fontSize: "11px",
             fontWeight: 600,
-            background: "var(--success-bg)",
-            color: "var(--success)",
+            background: isLoading
+              ? "var(--hover-bg)"
+              : isExpired
+                ? "var(--danger-bg)"
+                : !permissions?.hasAllRequired
+                  ? "var(--warning-bg)"
+                  : "var(--success-bg)",
+            color: isLoading
+              ? "var(--text-muted)"
+              : isExpired
+                ? "var(--danger)"
+                : !permissions?.hasAllRequired
+                  ? "var(--warning-text)"
+                  : "var(--success)",
             padding: "3px 8px",
             borderRadius: "12px",
           }}
         >
-          ● Active Token
+          ● {isLoading ? "Synching..." : isExpired ? "Token Expired" : !permissions?.hasAllRequired ? "Missing Scopes" : "Active Token"}
         </span>
       </div>
 
@@ -429,8 +477,8 @@ export function ConnectionHealth({ account }: { account: InstagramAccount }) {
           >
             <Server size={13} color="var(--text-muted)" /> Webhook Status
           </span>
-          <span style={{ fontWeight: 600, color: "var(--success)" }}>
-            Online / Listening
+          <span style={{ fontWeight: 600, color: hasAll ? "var(--success)" : "var(--danger)" }}>
+            {hasAll ? "Online / Listening" : "Offline / Actions restricted"}
           </span>
         </div>
 
@@ -475,8 +523,13 @@ export function ConnectionHealth({ account }: { account: InstagramAccount }) {
           >
             <Clock size={13} color="var(--text-muted)" /> Session Expiry
           </span>
-          <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
-            Never / Auto-Refresh
+          <span
+            style={{
+              fontWeight: 600,
+              color: isExpired ? "var(--danger)" : "var(--text-primary)",
+            }}
+          >
+            {isExpired ? "Token Expired" : expiryLabel}
           </span>
         </div>
       </div>
@@ -500,16 +553,17 @@ export function ConnectionHealth({ account }: { account: InstagramAccount }) {
               key={idx}
               style={{
                 fontSize: "10px",
-                background: "var(--surface-secondary)",
+                background: s.active ? "var(--success-bg)" : "var(--surface-secondary)",
                 border: "1px solid var(--border)",
-                color: "var(--text-secondary)",
+                color: s.active ? "var(--success)" : "var(--text-muted)",
                 padding: "2px 6px",
                 borderRadius: "4px",
                 fontFamily: "monospace",
+                textDecoration: s.active ? "none" : "line-through",
               }}
               title={s.description}
             >
-              ✓ {s.name}
+              {s.active ? "✓" : "✗"} {s.name}
             </span>
           ))}
         </div>
@@ -519,22 +573,47 @@ export function ConnectionHealth({ account }: { account: InstagramAccount }) {
 }
 
 // ── 3. PERMISSION HEALTH ──
-export function PermissionHealth() {
+export function PermissionHealth({
+  permissions,
+  isLoading,
+}: {
+  permissions: PermissionStatus | null;
+  isLoading?: boolean;
+}) {
   const permissionsList = [
     {
       title: "Inbox Messenger Read/Write",
       spec: "instagram_manage_messages",
-      ok: true,
+      ok: !!permissions?.scopes?.instagram_manage_messages,
     },
     {
       title: "Direct Comments Read/Write",
       spec: "instagram_manage_comments",
-      ok: true,
+      ok: !!permissions?.scopes?.instagram_manage_comments,
     },
-    { title: "Story Mention Capture", spec: "instagram_basic", ok: true },
-    { title: "Callback Webhook Relay", spec: "pages_messaging", ok: true },
-    { title: "Instagram Content Sync", spec: "pages_show_list", ok: true },
+    {
+      title: "Story Mention Capture",
+      spec: "instagram_basic",
+      ok: !!permissions?.scopes?.instagram_basic,
+    },
+    {
+      title: "Instagram Content Sync",
+      spec: "pages_show_list",
+      ok: !!permissions?.scopes?.pages_show_list,
+    },
+    {
+      title: "Page Engagement Telemetry",
+      spec: "pages_read_engagement",
+      ok: !!permissions?.scopes?.pages_read_engagement,
+    },
+    {
+      title: "Meta Settings Management",
+      spec: "business_management",
+      ok: !!permissions?.scopes?.business_management,
+    },
   ];
+
+  const hasAll = !!permissions?.hasAllRequired;
 
   return (
     <div
@@ -574,9 +653,17 @@ export function PermissionHealth() {
           style={{
             fontSize: "11px",
             fontWeight: 650,
-            background: "var(--success-bg)",
-            color: "var(--success)",
-            display: "flex",
+            background: isLoading
+              ? "var(--hover-bg)"
+              : hasAll
+                ? "var(--success-bg)"
+                : "var(--warning-bg)",
+            color: isLoading
+              ? "var(--text-muted)"
+              : hasAll
+                ? "var(--success)"
+                : "var(--warning-text)",
+            display: "inline-flex",
             alignItems: "center",
             gap: "4px",
             padding: "2px 8px",
@@ -584,7 +671,7 @@ export function PermissionHealth() {
           }}
         >
           <ShieldCheck size={12} />
-          All Sync'd
+          {isLoading ? "Validating..." : hasAll ? "All Sync'd" : "Attention Required"}
         </span>
       </div>
 
@@ -628,11 +715,15 @@ export function PermissionHealth() {
                 width: "18px",
                 height: "18px",
                 borderRadius: "50%",
-                background: "var(--success-bg)",
-                color: "var(--success)",
+                background: perm.ok ? "var(--success-bg)" : "var(--danger-bg)",
+                color: perm.ok ? "var(--success)" : "var(--danger)",
               }}
             >
-              <Check size={10} strokeWidth={3} />
+              {perm.ok ? (
+                <Check size={10} strokeWidth={3} />
+              ) : (
+                <span style={{ fontSize: "10px", fontWeight: "bold", lineHeight: 1 }}>!</span>
+              )}
             </div>
           </div>
         ))}

@@ -69,6 +69,7 @@ describe('MetaService', () => {
           pageId: 'pg-123',
           pageName: 'My page',
           connectedAt: new Date(),
+          tokenExpiresAt: null,
         },
       ];
       prismaMock.instagramAccount.findMany.mockResolvedValue(mockResult);

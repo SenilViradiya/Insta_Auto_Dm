@@ -12,6 +12,7 @@ import {
   PermissionHealth,
   SyncStatus,
   WorkspaceLoadingSkeleton,
+  PermissionStatus,
 } from "../components/workspace/WorkspaceComponents";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -22,6 +23,7 @@ interface InstagramAccount {
   pageId: string;
   pageName: string;
   connectedAt: string;
+  tokenExpiresAt?: string | null;
 }
 
 interface InstagramProfile {
@@ -154,6 +156,20 @@ function WorkspaceDashboardContent() {
       if (!response.ok) throw new Error("Failed to fetch connection status");
       return response.json() as Promise<{ accounts: InstagramAccount[] }>;
     },
+  });
+
+  // Query: Permissions Status Verification
+  const { data: permissionsData, isLoading: isPermissionsLoading } = useQuery({
+    queryKey: ["permissions-check", selectedAccountId],
+    queryFn: async () => {
+      if (!selectedAccountId) return null;
+      const response = await fetch(
+        `${API_URL}/meta/permissions?accountId=${selectedAccountId}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch permissions status");
+      return response.json() as Promise<PermissionStatus>;
+    },
+    enabled: !!selectedAccountId,
   });
 
   // Sync selected account state from local storage or pick first
@@ -372,8 +388,15 @@ function WorkspaceDashboardContent() {
               gap: "20px",
             }}
           >
-            <ConnectionHealth account={activeAccount} />
-            <PermissionHealth />
+            <ConnectionHealth
+              account={activeAccount}
+              permissions={permissionsData || null}
+              isLoading={isPermissionsLoading}
+            />
+            <PermissionHealth
+              permissions={permissionsData || null}
+              isLoading={isPermissionsLoading}
+            />
             <SyncStatus
               profile={profile || null}
               onSyncNow={() => syncMutation.mutate()}
