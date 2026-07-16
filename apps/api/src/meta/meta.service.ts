@@ -168,6 +168,24 @@ export class MetaService {
       if (pageDetails?.instagram_business_account?.id) {
         const instagramUserId = pageDetails.instagram_business_account.id;
 
+        // Automatically register Webhook App Subscription for this connected Page
+        try {
+          this.logger.log(`Registering webhook app subscription for page ${page.id}...`);
+          await this.graphClient.request({
+            method: 'POST',
+            endpoint: `${page.id}/subscribed_apps`,
+            params: {
+              subscribed_fields: 'messages,messaging_postbacks,feed,instagram_manage_comments',
+              access_token: page.access_token,
+            },
+          });
+          this.logger.log(`Successfully registered webhook app subscription for page ${page.id}`);
+        } catch (subErr: any) {
+          this.logger.warn(
+            `Failed to register webhook app subscription for page ${page.id}: ${subErr.message}`,
+          );
+        }
+
         // Upsert connected Account in database
         await this.prisma.instagramAccount.upsert({
           where: { instagramUserId },
