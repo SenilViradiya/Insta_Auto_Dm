@@ -137,7 +137,7 @@ export class WebhookController {
 
       this.logger.warn(`HMAC Diagnostic Webhook Output (After digest): ${JSON.stringify(postDiagnosticInfo, null, 2)}`);
 
-      if (calcula    tedSignature !== expectedSignature) {
+      if (calculatedSignature !== expectedSignature) {
         this.logger.error('HMAC signature mismatch');
         try {
           await redis.incr('operations:webhook:invalid_signatures');
