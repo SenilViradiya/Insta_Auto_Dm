@@ -10,6 +10,8 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { MetaService } from './meta.service';
+import { TokenService } from '../modules/meta-platform/services/token.service';
+import { PermissionService } from '../modules/meta-platform/services/permission.service';
 import { z } from 'zod';
 
 const DisconnectSchema = z.object({
@@ -18,7 +20,11 @@ const DisconnectSchema = z.object({
 
 @Controller('meta')
 export class MetaController {
-  constructor(private readonly metaService: MetaService) {}
+  constructor(
+    private readonly metaService: MetaService,
+    private readonly tokenService: TokenService,
+    private readonly permissionService: PermissionService,
+  ) {}
 
   @Get('login')
   @Redirect()
@@ -63,6 +69,19 @@ export class MetaController {
   async status() {
     const accounts = await this.metaService.getStatus();
     return { accounts };
+  }
+
+  @Get('permissions')
+  async permissions(@Query('accountId') accountId: string) {
+    if (!accountId) {
+      throw new BadRequestException('accountId query parameter is required');
+    }
+    try {
+      const token = await this.tokenService.getToken(accountId);
+      return await this.permissionService.validatePermissions(token);
+    } catch (e: any) {
+      throw new BadRequestException(e.message || 'Failed to validate permissions');
+    }
   }
 
   @Post('disconnect')

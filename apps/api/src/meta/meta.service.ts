@@ -226,6 +226,7 @@ export class MetaService {
       pageId: string;
       pageName: string;
       connectedAt: Date;
+      tokenExpiresAt: Date | null;
     }>
   > {
     return this.prisma.instagramAccount.findMany({
@@ -235,6 +236,7 @@ export class MetaService {
         pageId: true,
         pageName: true,
         connectedAt: true,
+        tokenExpiresAt: true,
       },
     });
   }
