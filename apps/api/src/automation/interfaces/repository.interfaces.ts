@@ -43,4 +43,9 @@ export interface AutomationModel {
   actions: AutomationActionModel[];
   createdAt: Date;
   updatedAt: Date;
+  metrics?: {
+    runs: number;
+    successRate: string;
+    lastActive: string | null;
+  };
 }

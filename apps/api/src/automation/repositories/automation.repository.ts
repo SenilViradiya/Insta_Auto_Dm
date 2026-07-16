@@ -33,7 +33,27 @@ interface AutomationRecord {
 export class AutomationRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private mapToDomainModel(record: AutomationRecord): AutomationModel {
+  private mapToDomainModel(record: AutomationRecord & { executions?: Array<{ status: string; startedAt: Date }> }): AutomationModel {
+    const executions = record.executions || [];
+    const runs = executions.length;
+    let successRate = 'N/A';
+    let lastActive: string | null = null;
+
+    if (runs > 0) {
+      const completedExecutions = executions.filter(
+        (e) => e.status === 'SUCCESS' || e.status === 'FAILED',
+      );
+      if (completedExecutions.length > 0) {
+        const successes = completedExecutions.filter(
+          (e) => e.status === 'SUCCESS',
+        ).length;
+        successRate = `${Math.round((successes / completedExecutions.length) * 100)}%`;
+      } else {
+        successRate = '100%';
+      }
+      lastActive = executions[0].startedAt.toISOString();
+    }
+
     return {
       id: record.id,
       instagramAccountId: record.instagramAccountId,
@@ -56,6 +76,11 @@ export class AutomationRepository {
         actionType: a.actionType,
         payload: (a.payload as Record<string, any>) || {},
       })),
+      metrics: {
+        runs,
+        successRate,
+        lastActive,
+      },
     };
   }
 
@@ -111,6 +136,13 @@ export class AutomationRepository {
           include: {
             conditions: true,
             actions: true,
+            executions: {
+              select: {
+                status: true,
+                startedAt: true,
+              },
+              orderBy: { startedAt: 'desc' },
+            },
           },
           orderBy: { createdAt: 'desc' },
           skip,
@@ -136,6 +168,13 @@ export class AutomationRepository {
         include: {
           conditions: true,
           actions: true,
+          executions: {
+            select: {
+              status: true,
+              startedAt: true,
+            },
+            orderBy: { startedAt: 'desc' },
+          },
         },
       });
       return record ? this.mapToDomainModel(record) : null;
@@ -218,6 +257,13 @@ export class AutomationRepository {
             include: {
               conditions: true,
               actions: true,
+              executions: {
+                select: {
+                  status: true,
+                  startedAt: true,
+                },
+                orderBy: { startedAt: 'desc' },
+              },
             },
           });
         },
@@ -323,6 +369,13 @@ export class AutomationRepository {
             include: {
               conditions: true,
               actions: true,
+              executions: {
+                select: {
+                  status: true,
+                  startedAt: true,
+                },
+                orderBy: { startedAt: 'desc' },
+              },
             },
           });
         },
@@ -343,6 +396,13 @@ export class AutomationRepository {
         include: {
           conditions: true,
           actions: true,
+          executions: {
+            select: {
+              status: true,
+              startedAt: true,
+            },
+            orderBy: { startedAt: 'desc' },
+          },
         },
       });
       return this.mapToDomainModel(deleted);
@@ -367,6 +427,13 @@ export class AutomationRepository {
         include: {
           conditions: true,
           actions: true,
+          executions: {
+            select: {
+              status: true,
+              startedAt: true,
+            },
+            orderBy: { startedAt: 'desc' },
+          },
         },
       });
 

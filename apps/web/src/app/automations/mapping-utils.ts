@@ -19,6 +19,11 @@ interface Automation {
   actions: Action[];
   triggerType?: string | null;
   triggerConfig?: any;
+  metrics?: {
+    runs: number;
+    successRate: string;
+    lastActive: string | null;
+  };
 }
 
 export function mapBackendToFrontend(backendAuto: any): Automation {
@@ -107,6 +112,7 @@ export function mapBackendToFrontend(backendAuto: any): Automation {
     actions,
     triggerType: backendAuto.triggerType,
     triggerConfig: backendAuto.triggerConfig,
+    metrics: backendAuto.metrics,
   };
 }
 
