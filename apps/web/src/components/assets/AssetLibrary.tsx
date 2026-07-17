@@ -64,6 +64,12 @@ export default function AssetLibrary({
   const [sortBy, setSortBy] = useState<"NEWEST" | "OLDEST">("NEWEST");
   const [viewMode, setViewMode] = useState<"GRID" | "LIST">("GRID");
   const [previewAsset, setPreviewAsset] = useState<InstagramAsset | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset pagination when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery, sortBy]);
 
   // Fetch full asset library from backend
   const {
@@ -74,7 +80,7 @@ export default function AssetLibrary({
   } = useQuery({
     queryKey: ["assets", instagramAccountId],
     queryFn: async () => {
-      const response = await fetch(`${API_URL}/assets`, {
+      const response = await fetch(`${API_URL}/assets?limit=1000`, {
         headers: {
           "x-instagram-account-id": instagramAccountId,
         },
@@ -158,6 +164,21 @@ export default function AssetLibrary({
 
     return filtered;
   }, [assetData, activeTab, searchQuery, sortBy, allowedAssetType]);
+
+  const itemsPerPage = viewMode === "GRID" ? 12 : 10;
+
+  const paginatedAssets = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return processedAssets.slice(startIndex, startIndex + itemsPerPage);
+  }, [processedAssets, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(processedAssets.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   // Loading shimmer grid
   const renderSkeletons = () => (
@@ -484,352 +505,443 @@ export default function AssetLibrary({
               </button>
             </div>
           ) : (
-            /* Asset Render Layout Mode */
-            <div
-              style={{
-                display: viewMode === "GRID" ? "grid" : "flex",
-                gridTemplateColumns:
-                  viewMode === "GRID"
-                    ? "repeat(auto-fill, minmax(160px, 1fr))"
-                    : "none",
-                flexDirection: viewMode === "LIST" ? "column" : "row",
-                gap: "10px",
-                maxHeight: "360px",
-                overflowY: "auto",
-                padding: "2px 0",
-              }}
-            >
-              {processedAssets.map((asset) => {
-                const isSelected = selectedMediaId === asset.instagramMediaId;
-                const isReel = asset.assetType === "REEL";
+            <>
+              {/* Asset Render Layout Mode */}
+              <div
+                style={{
+                  display: viewMode === "GRID" ? "grid" : "flex",
+                  gridTemplateColumns:
+                    viewMode === "GRID"
+                      ? "repeat(auto-fill, minmax(160px, 1fr))"
+                      : "none",
+                  flexDirection: viewMode === "LIST" ? "column" : "row",
+                  gap: "10px",
+                  maxHeight: "360px",
+                  overflowY: "auto",
+                  padding: "2px 0",
+                }}
+              >
+                {paginatedAssets.map((asset) => {
+                  const isSelected = selectedMediaId === asset.instagramMediaId;
+                  const isReel = asset.assetType === "REEL";
 
-                if (viewMode === "GRID") {
-                  return (
-                    <div
-                      key={asset.id}
-                      onClick={() => onSelectMedia(asset.instagramMediaId)}
-                      onDoubleClick={() => setPreviewAsset(asset)}
-                      style={{
-                        border: isSelected
-                          ? "2px solid var(--primary)"
-                          : "1px solid var(--border)",
-                        borderRadius: "var(--radius-md)",
-                        overflow: "hidden",
-                        cursor: "pointer",
-                        background: "var(--surface)",
-                        transition: "all var(--duration) var(--ease)",
-                        display: "flex",
-                        flexDirection: "column",
-                        position: "relative",
-                      }}
-                      className="card-interactive"
-                    >
-                      {/* Media Card Cover */}
+                  if (viewMode === "GRID") {
+                    return (
                       <div
+                        key={asset.id}
+                        onClick={() => onSelectMedia(asset.instagramMediaId)}
+                        onDoubleClick={() => setPreviewAsset(asset)}
                         style={{
+                          border: isSelected
+                            ? "2px solid var(--primary)"
+                            : "1px solid var(--border)",
+                          borderRadius: "var(--radius-md)",
+                          overflow: "hidden",
+                          cursor: "pointer",
+                          background: "var(--surface)",
+                          transition: "all var(--duration) var(--ease)",
+                          display: "flex",
+                          flexDirection: "column",
                           position: "relative",
-                          width: "100%",
-                          height: "95px",
                         }}
+                        className="card-interactive"
                       >
-                        {asset.thumbnailUrl || asset.mediaUrl ? (
-                          <img
-                            alt="Media cover"
-                            src={asset.thumbnailUrl || asset.mediaUrl || ""}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              background: "var(--divider)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "var(--text-muted)",
-                            }}
-                          >
-                            {isReel ? (
-                              <Film size={18} />
-                            ) : (
-                              <ImageIcon size={18} />
-                            )}
-                          </div>
-                        )}
-
-                        {/* Top Overlays: Type Tag & Ext Link */}
+                        {/* Media Card Cover */}
                         <div
                           style={{
-                            position: "absolute",
-                            top: 6,
-                            left: 6,
-                            background: "rgba(0,0,0,0.6)",
-                            color: "#fff",
-                            padding: "2px 6px",
-                            borderRadius: "4px",
-                            fontSize: 9,
-                            fontWeight: 650,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 3,
+                            position: "relative",
+                            width: "100%",
+                            height: "95px",
                           }}
                         >
-                          {isReel ? <Film size={9} /> : <ImageIcon size={9} />}
-                          {asset.assetType}
-                        </div>
+                          {asset.thumbnailUrl || asset.mediaUrl ? (
+                            <img
+                              alt="Media cover"
+                              src={asset.thumbnailUrl || asset.mediaUrl || ""}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                background: "var(--divider)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "var(--text-muted)",
+                              }}
+                            >
+                              {isReel ? (
+                                <Film size={18} />
+                              ) : (
+                                <ImageIcon size={18} />
+                              )}
+                            </div>
+                          )}
 
-                        {asset.permalink && (
-                          <a
-                            href={asset.permalink}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
+                          {/* Top Overlays: Type Tag & Ext Link */}
+                          <div
                             style={{
                               position: "absolute",
                               top: 6,
-                              right: 6,
-                              background: "rgba(255,255,255,0.95)",
-                              color: "var(--text-primary)",
+                              left: 6,
+                              background: "rgba(0,0,0,0.6)",
+                              color: "#fff",
+                              padding: "2px 6px",
                               borderRadius: "4px",
-                              width: 18,
-                              height: 18,
+                              fontSize: 9,
+                              fontWeight: 650,
                               display: "flex",
                               alignItems: "center",
-                              justifyContent: "center",
+                              gap: 3,
                             }}
-                            title="Open native Instagram post link"
                           >
-                            <ExternalLink size={10} />
-                          </a>
-                        )}
+                            {isReel ? <Film size={9} /> : <ImageIcon size={9} />}
+                            {asset.assetType}
+                          </div>
 
-                        {/* Stats Info Overlay Omitted in Production */}
-                      </div>
+                          {asset.permalink && (
+                            <a
+                              href={asset.permalink}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                position: "absolute",
+                                top: 6,
+                                right: 6,
+                                background: "rgba(255,255,255,0.95)",
+                                color: "var(--text-primary)",
+                                borderRadius: "4px",
+                                width: 18,
+                                height: 18,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                              title="Open native Instagram post link"
+                            >
+                              <ExternalLink size={10} />
+                            </a>
+                          )}
 
-                      {/* Content Card Body */}
-                      <div
-                        style={{
-                          padding: "8px 10px",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 2,
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 500,
-                            color: "var(--text-primary)",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {asset.caption || "(No Caption)"}
-                        </span>
+                          {/* Stats Info Overlay Omitted in Production */}
+                        </div>
+
+                        {/* Content Card Body */}
                         <div
                           style={{
+                            padding: "8px 10px",
                             display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
+                            flexDirection: "column",
+                            gap: 2,
                           }}
                         >
                           <span
-                            style={{ fontSize: 9, color: "var(--text-muted)" }}
-                          >
-                            {asset.timestamp
-                              ? new Date(asset.timestamp).toLocaleDateString()
-                              : ""}
-                          </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPreviewAsset(asset);
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 500,
+                              color: "var(--text-primary)",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
                             }}
+                          >
+                            {asset.caption || "(No Caption)"}
+                          </span>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <span
+                              style={{ fontSize: 9, color: "var(--text-muted)" }}
+                            >
+                              {asset.timestamp
+                                ? new Date(asset.timestamp).toLocaleDateString()
+                                : ""}
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewAsset(asset);
+                              }}
+                              style={{
+                                border: "none",
+                                background: "transparent",
+                                color: "var(--primary)",
+                                fontSize: 9,
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                padding: 0,
+                              }}
+                              type="button"
+                            >
+                              Details
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    // LIST MODE DISPLAY
+                    return (
+                      <div
+                        key={asset.id}
+                        onClick={() => onSelectMedia(asset.instagramMediaId)}
+                        style={{
+                          border: isSelected
+                            ? "2px solid var(--primary)"
+                            : "1px solid var(--border)",
+                          borderRadius: "var(--radius-sm)",
+                          padding: "6px 12px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                          background: "var(--surface)",
+                          cursor: "pointer",
+                          transition: "all var(--duration) var(--ease)",
+                        }}
+                        className="card-interactive"
+                      >
+                        {/* Left Thumbnail */}
+                        <div
+                          style={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: 4,
+                            overflow: "hidden",
+                            flexShrink: 0,
+                            position: "relative",
+                          }}
+                        >
+                          {asset.thumbnailUrl || asset.mediaUrl ? (
+                            <img
+                              alt=""
+                              src={asset.thumbnailUrl || asset.mediaUrl || ""}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                background: "var(--divider)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              {isReel ? (
+                                <Film size={12} />
+                              ) : (
+                                <ImageIcon size={12} />
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Title & Caption */}
+                        <div
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 2,
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 550,
+                              color: "var(--text-primary)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {asset.caption || "(No Caption)"}
+                          </span>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                              fontSize: 10,
+                              color: "var(--text-muted)",
+                            }}
+                          >
+                            <span>
+                              Published{" "}
+                              {asset.timestamp
+                                ? new Date(asset.timestamp).toLocaleDateString()
+                                : ""}
+                            </span>
+                            <span>•</span>
+                            <span
+                              style={{ color: "var(--primary)", fontWeight: 650 }}
+                            >
+                              {asset.assetType}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Stat figures */}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "10px",
+                            fontSize: 11,
+                            color: "var(--text-secondary)",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 3,
+                            }}
+                          >
+                            <ThumbsUp size={10} /> —
+                          </span>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 3,
+                            }}
+                          >
+                            <MessageCircle size={10} /> —
+                          </span>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div
+                          style={{ display: "flex", gap: 6 }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            onClick={() => setPreviewAsset(asset)}
                             style={{
                               border: "none",
                               background: "transparent",
-                              color: "var(--primary)",
-                              fontSize: 9,
-                              fontWeight: 600,
+                              color: "var(--text-secondary)",
                               cursor: "pointer",
-                              padding: 0,
                             }}
+                            title="Open Details Drawer"
                             type="button"
                           >
-                            Details
+                            <ChevronRight size={14} />
                           </button>
                         </div>
                       </div>
-                    </div>
-                  );
-                } else {
-                  // LIST MODE DISPLAY
-                  return (
-                    <div
-                      key={asset.id}
-                      onClick={() => onSelectMedia(asset.instagramMediaId)}
+                    );
+                  }
+                })}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-sm)",
+                    padding: "8px 12px",
+                    marginTop: "12px",
+                  }}
+                >
+                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                    Showing {Math.min((currentPage - 1) * itemsPerPage + 1, processedAssets.length)}-
+                    {Math.min(currentPage * itemsPerPage, processedAssets.length)} of {processedAssets.length} items
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
                       style={{
-                        border: isSelected
-                          ? "2px solid var(--primary)"
-                          : "1px solid var(--border)",
+                        padding: "4px 8px",
+                        border: "1px solid var(--border)",
                         borderRadius: "var(--radius-sm)",
-                        padding: "6px 12px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        background: "var(--surface)",
-                        cursor: "pointer",
-                        transition: "all var(--duration) var(--ease)",
+                        background: currentPage === 1 ? "var(--hover-bg)" : "var(--surface)",
+                        color: currentPage === 1 ? "var(--text-muted)" : "var(--text-primary)",
+                        cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                        fontSize: 11,
                       }}
-                      className="card-interactive"
+                      type="button"
                     >
-                      {/* Left Thumbnail */}
-                      <div
-                        style={{
-                          width: 34,
-                          height: 34,
-                          borderRadius: 4,
-                          overflow: "hidden",
-                          flexShrink: 0,
-                          position: "relative",
-                        }}
-                      >
-                        {asset.thumbnailUrl || asset.mediaUrl ? (
-                          <img
-                            alt=""
-                            src={asset.thumbnailUrl || asset.mediaUrl || ""}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              background: "var(--divider)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            {isReel ? (
-                              <Film size={12} />
-                            ) : (
-                              <ImageIcon size={12} />
-                            )}
-                          </div>
-                        )}
-                      </div>
+                      Previous
+                    </button>
 
-                      {/* Title & Caption */}
-                      <div
-                        style={{
-                          flex: 1,
-                          minWidth: 0,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 2,
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: 12,
-                            fontWeight: 550,
-                            color: "var(--text-primary)",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {asset.caption || "(No Caption)"}
-                        </span>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            fontSize: 10,
-                            color: "var(--text-muted)",
-                          }}
-                        >
-                          <span>
-                            Published{" "}
-                            {asset.timestamp
-                              ? new Date(asset.timestamp).toLocaleDateString()
-                              : ""}
-                          </span>
-                          <span>•</span>
-                          <span
-                            style={{ color: "var(--primary)", fontWeight: 650 }}
-                          >
-                            {asset.assetType}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Stat figures */}
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "10px",
-                          fontSize: 11,
-                          color: "var(--text-secondary)",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 3,
-                          }}
-                        >
-                          <ThumbsUp size={10} /> —
-                        </span>
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 3,
-                          }}
-                        >
-                          <MessageCircle size={10} /> —
-                        </span>
-                      </div>
-
-                      {/* Action buttons */}
-                      <div
-                        style={{ display: "flex", gap: 6 }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                    {Array.from({ length: totalPages }).map((_, idx) => {
+                      const pageNum = idx + 1;
+                      if (totalPages > 5 && Math.abs(pageNum - currentPage) > 1 && pageNum !== 1 && pageNum !== totalPages) {
+                        if (pageNum === 2 && currentPage > 3) {
+                          return <span key="ellipsis-start" style={{ fontSize: 11, padding: "0 4px", color: "var(--text-muted)" }}>...</span>;
+                        }
+                        if (pageNum === totalPages - 1 && currentPage < totalPages - 2) {
+                          return <span key="ellipsis-end" style={{ fontSize: 11, padding: "0 4px", color: "var(--text-muted)" }}>...</span>;
+                        }
+                        return null;
+                      }
+                      return (
                         <button
-                          onClick={() => setPreviewAsset(asset)}
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
                           style={{
-                            border: "none",
-                            background: "transparent",
-                            color: "var(--text-secondary)",
+                            padding: "4px 8px",
+                            minWidth: "26px",
+                            border: "1px solid " + (currentPage === pageNum ? "var(--primary)" : "var(--border)"),
+                            borderRadius: "var(--radius-sm)",
+                            background: currentPage === pageNum ? "var(--primary)" : "var(--surface)",
+                            color: currentPage === pageNum ? "#fff" : "var(--text-primary)",
+                            fontWeight: currentPage === pageNum ? 600 : 400,
                             cursor: "pointer",
+                            fontSize: 11,
                           }}
-                          title="Open Details Drawer"
                           type="button"
                         >
-                          <ChevronRight size={14} />
+                          {pageNum}
                         </button>
-                      </div>
-                    </div>
-                  );
-                }
-              })}
-            </div>
+                      );
+                    })}
+
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      style={{
+                        padding: "4px 8px",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-sm)",
+                        background: currentPage === totalPages ? "var(--hover-bg)" : "var(--surface)",
+                        color: currentPage === totalPages ? "var(--text-muted)" : "var(--text-primary)",
+                        cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                        fontSize: 11,
+                      }}
+                      type="button"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
