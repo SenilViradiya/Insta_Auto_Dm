@@ -1,11 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MetaController } from './meta.controller';
 import { MetaService } from './meta.service';
+import { TokenService } from '../modules/meta-platform/services/token.service';
+import { PermissionService } from '../modules/meta-platform/services/permission.service';
 import { BadRequestException } from '@nestjs/common';
 
 describe('MetaController', () => {
   let controller: MetaController;
   let metaServiceMock: any;
+  let tokenServiceMock: any;
+  let permissionServiceMock: any;
 
   beforeEach(async () => {
     metaServiceMock = {
@@ -15,9 +19,21 @@ describe('MetaController', () => {
       disconnect: jest.fn().mockResolvedValue(undefined),
     };
 
+    tokenServiceMock = {
+      getToken: jest.fn(),
+    };
+
+    permissionServiceMock = {
+      validatePermissions: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MetaController],
-      providers: [{ provide: MetaService, useValue: metaServiceMock }],
+      providers: [
+        { provide: MetaService, useValue: metaServiceMock },
+        { provide: TokenService, useValue: tokenServiceMock },
+        { provide: PermissionService, useValue: permissionServiceMock },
+      ],
     }).compile();
 
     controller = module.get<MetaController>(MetaController);
@@ -104,6 +120,32 @@ describe('MetaController', () => {
       await expect(
         controller.disconnect({ id: 'invalid-uuid' }),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('permissions', () => {
+    it('should return validation status of permissions', async () => {
+      tokenServiceMock.getToken.mockResolvedValue('decrypted-token');
+      const mockPerms = { scopes: { pages_messaging: true }, missing: [] };
+      permissionServiceMock.validatePermissions.mockResolvedValue(mockPerms);
+
+      const result = await controller.permissions('acc-1');
+      expect(tokenServiceMock.getToken).toHaveBeenCalledWith('acc-1');
+      expect(permissionServiceMock.validatePermissions).toHaveBeenCalledWith('decrypted-token');
+      expect(result).toEqual(mockPerms);
+    });
+
+    it('should throw BadRequestException if accountId is missing', async () => {
+      await expect(controller.permissions('')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException if token or validation fails', async () => {
+      tokenServiceMock.getToken.mockRejectedValue(new Error('Token error'));
+      await expect(controller.permissions('acc-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

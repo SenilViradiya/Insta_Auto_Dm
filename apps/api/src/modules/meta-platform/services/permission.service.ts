@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GraphClient } from '../clients/graph.client';
+import { REQUIRED_PERMISSIONS } from '../constants/permission.constants';
 
 export interface PermissionStatus {
   hasAllRequired: boolean;
@@ -17,16 +18,9 @@ export interface PermissionStatus {
 @Injectable()
 export class PermissionService {
   private readonly logger = new Logger(PermissionService.name);
-  private readonly requiredPermissions = [
-    'instagram_basic',
-    'instagram_manage_messages',
-    'instagram_manage_comments',
-    'pages_show_list',
-    'pages_read_engagement',
-    'business_management',
-  ];
+  private readonly requiredPermissions = [...REQUIRED_PERMISSIONS];
 
-  constructor(private readonly graphClient: GraphClient) {}
+  constructor(private readonly graphClient: GraphClient) { }
 
   async validatePermissions(accessToken: string): Promise<PermissionStatus> {
     try {

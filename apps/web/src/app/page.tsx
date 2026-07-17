@@ -310,7 +310,7 @@ function WorkspaceDashboardContent() {
               margin: "4px 0 0 0",
             }}
           >
-            Configure connected Facebook Pages, audit security permission
+            Configure connected Instagram Professional Accounts, audit security permission
             statuses, and synchronize library assets.
           </p>
         </div>

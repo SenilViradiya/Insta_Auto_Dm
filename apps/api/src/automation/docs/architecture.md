@@ -122,7 +122,7 @@ The Automation Engine uses a polymorphic trigger-driven strategy framework. This
 
 ## 4. SOLID & Framework Extensibility
 
-- **Open-Closed Principle (OCP)**: Adding new triggers or support for future platform integrations (e.g. WhatsApp / Facebook) requires no modification of existing code. You write a self-contained strategy class conforming to the registry contracts.
+- **Open-Closed Principle (OCP)**: Adding new triggers or support for future platform integrations (e.g. WhatsApp / Instagram Login) requires no modification of existing code. You write a self-contained strategy class conforming to the registry contracts.
 - **Single Responsibility Principle (SRP)**: The Asset Module only manages synchronization and asset mapping. The Automation Engine manages processing lifecycles, and webhook events only parse core payload identifiers, avoiding mixed scopes.
 - **Liskov Substitution Principle (LSP)**: Any subclass of `TriggerStrategy` integrates cleanly without altering resolution behaviors.
 - **Dependency Inversion Principle (DIP)**: Abstract contracts (like `TriggerStrategy`) completely isolate database models from API routing and domain logic orchestration.

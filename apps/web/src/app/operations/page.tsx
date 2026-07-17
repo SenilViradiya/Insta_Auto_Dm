@@ -696,7 +696,7 @@ export default function OperationalControlCenterPage() {
               {accountsHealth.length === 0 ? (
                 <EmptyState
                   title="No Accounts Synchronized"
-                  description="Establish integration settings with at least one Meta Business page to verify channel metrics."
+                  description="Establish integration settings with at least one Instagram Professional Account to verify channel metrics."
                   icon={<UserCheck size={24} />}
                 />
               ) : (
@@ -946,8 +946,8 @@ export default function OperationalControlCenterPage() {
                               <span style={{ color: "var(--text-primary)" }}>
                                 {acc.assetHealth.lastSync
                                   ? new Date(
-                                      acc.assetHealth.lastSync,
-                                    ).toLocaleTimeString()
+                                    acc.assetHealth.lastSync,
+                                  ).toLocaleTimeString()
                                   : "Never"}
                               </span>
                             </div>
