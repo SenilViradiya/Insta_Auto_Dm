@@ -17,7 +17,7 @@ export interface MetaProfileData {
 export class ProfileService {
   private readonly logger = new Logger(ProfileService.name);
 
-  constructor(private readonly graphClient: GraphClient) {}
+  constructor(private readonly graphClient: GraphClient) { }
 
   async fetchProfile(
     instagramUserId: string,
@@ -28,7 +28,7 @@ export class ProfileService {
 
     const body = await this.graphClient.request({
       method: 'GET',
-      endpoint: instagramUserId,
+      endpoint: `https://graph.instagram.com/${instagramUserId}`,
       token: accessToken,
       params: { fields },
     });

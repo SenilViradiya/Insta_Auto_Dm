@@ -113,30 +113,27 @@ describe('PermissionService validation checks', () => {
   it('returns true for hasAllRequired if all scopes exist as granted', async () => {
     mockGraphClient.request.mockResolvedValue({
       data: [
-        { permission: 'instagram_basic', status: 'granted' },
-        { permission: 'instagram_manage_messages', status: 'granted' },
-        { permission: 'instagram_manage_comments', status: 'granted' },
-        { permission: 'pages_show_list', status: 'granted' },
-        { permission: 'pages_read_engagement', status: 'granted' },
-        { permission: 'business_management', status: 'granted' },
+        { permission: 'instagram_business_basic', status: 'granted' },
+        { permission: 'instagram_business_manage_messages', status: 'granted' },
+        { permission: 'instagram_business_manage_comments', status: 'granted' },
       ],
     });
 
     const result = await permissionService.validatePermissions('token');
     expect(result.hasAllRequired).toBe(true);
-    expect(result.scopes.instagram_basic).toBe(true);
+    expect(result.scopes.instagram_business_basic).toBe(true);
   });
 
   it('returns false for hasAllRequired if any scope is declined', async () => {
     mockGraphClient.request.mockResolvedValue({
       data: [
-        { permission: 'instagram_basic', status: 'granted' },
-        { permission: 'instagram_manage_messages', status: 'declined' },
+        { permission: 'instagram_business_basic', status: 'granted' },
+        { permission: 'instagram_business_manage_messages', status: 'declined' },
       ],
     });
 
     const result = await permissionService.validatePermissions('token');
     expect(result.hasAllRequired).toBe(false);
-    expect(result.scopes.instagram_manage_messages).toBe(false);
+    expect(result.scopes.instagram_business_manage_messages).toBe(false);
   });
 });

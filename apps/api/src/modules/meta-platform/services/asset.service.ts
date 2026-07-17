@@ -40,7 +40,7 @@ export class AssetService {
     }
 
     const { data: rawItems, nextCursor } = await this.graphClient.paginate<any>(
-      `${instagramUserId}/media`,
+      `https://graph.instagram.com/${instagramUserId}/media`,
       accessToken,
       params,
     );
@@ -76,7 +76,7 @@ export class AssetService {
     try {
       const response = await this.graphClient.request<any>({
         method: 'GET',
-        endpoint: `${instagramUserId}/stories`,
+        endpoint: `https://graph.instagram.com/${instagramUserId}/stories`,
         params: {
           fields: 'id,media_type,thumbnail_url,media_url,permalink,timestamp',
         },
