@@ -246,7 +246,7 @@ describe('MetaGraphClient', () => {
     expect(mockGraphClient.request).toHaveBeenCalledWith(
       expect.objectContaining({
         method: 'GET',
-        endpoint: 'me',
+        endpoint: 'https://graph.instagram.com/me',
         token: 'token',
       }),
     );

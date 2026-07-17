@@ -104,19 +104,24 @@ describe('GraphClient request dispatcher', () => {
 describe('PermissionService validation checks', () => {
   let mockGraphClient: any;
   let permissionService: PermissionService;
+  let mockConfig: any;
 
   beforeEach(() => {
     mockGraphClient = { request: jest.fn() };
-    permissionService = new PermissionService(mockGraphClient);
+    mockConfig = { appId: 'app-id', appSecret: 'app-secret' };
+    permissionService = new PermissionService(mockGraphClient, mockConfig);
   });
 
   it('returns true for hasAllRequired if all scopes exist as granted', async () => {
     mockGraphClient.request.mockResolvedValue({
-      data: [
-        { permission: 'instagram_business_basic', status: 'granted' },
-        { permission: 'instagram_business_manage_messages', status: 'granted' },
-        { permission: 'instagram_business_manage_comments', status: 'granted' },
-      ],
+      data: {
+        scopes: [
+          'instagram_business_basic',
+          'instagram_business_manage_messages',
+          'instagram_business_manage_comments',
+        ],
+        is_valid: true,
+      },
     });
 
     const result = await permissionService.validatePermissions('token');
@@ -126,10 +131,12 @@ describe('PermissionService validation checks', () => {
 
   it('returns false for hasAllRequired if any scope is declined', async () => {
     mockGraphClient.request.mockResolvedValue({
-      data: [
-        { permission: 'instagram_business_basic', status: 'granted' },
-        { permission: 'instagram_business_manage_messages', status: 'declined' },
-      ],
+      data: {
+        scopes: [
+          'instagram_business_basic',
+        ],
+        is_valid: true,
+      },
     });
 
     const result = await permissionService.validatePermissions('token');

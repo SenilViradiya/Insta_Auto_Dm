@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GraphClient } from '../clients/graph.client';
 import { REQUIRED_PERMISSIONS } from '../constants/permission.constants';
+import { MetaPlatformConfig } from '../config/meta-platform.config';
 
 export interface PermissionStatus {
   hasAllRequired: boolean;
@@ -17,26 +18,28 @@ export class PermissionService {
   private readonly logger = new Logger(PermissionService.name);
   private readonly requiredPermissions = [...REQUIRED_PERMISSIONS];
 
-  constructor(private readonly graphClient: GraphClient) { }
+  constructor(
+    private readonly graphClient: GraphClient,
+    private readonly config: MetaPlatformConfig,
+  ) { }
 
   async validatePermissions(accessToken: string): Promise<PermissionStatus> {
     try {
       const response = await this.graphClient.request<{
-        data: Array<{ permission: string; status: 'granted' | 'declined' }>;
+        data: {
+          scopes: string[];
+          is_valid: boolean;
+        };
       }>({
         method: 'GET',
-        endpoint: 'https://graph.instagram.com/me/permissions',
-        token: accessToken,
+        endpoint: 'debug_token',
+        token: `${this.config.appId}|${this.config.appSecret}`,
+        params: {
+          input_token: accessToken,
+        },
       });
 
-      const grantedPermissions = new Set<string>();
-      if (Array.isArray(response?.data)) {
-        response.data.forEach((item) => {
-          if (item.status === 'granted') {
-            grantedPermissions.add(item.permission);
-          }
-        });
-      }
+      const grantedPermissions = new Set<string>(response?.data?.scopes || []);
 
       const scopes: Record<string, boolean> = {};
       this.requiredPermissions.forEach((perm) => {
