@@ -10,10 +10,8 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { MetaService } from './meta.service';
-import { InstagramLoginService } from './instagram-login.service';
 import { TokenService } from '../modules/meta-platform/services/token.service';
 import { PermissionService } from '../modules/meta-platform/services/permission.service';
-import { MetaPlatformConfig } from '../modules/meta-platform/config/meta-platform.config';
 import { z } from 'zod';
 
 const DisconnectSchema = z.object({
@@ -24,18 +22,14 @@ const DisconnectSchema = z.object({
 export class MetaController {
   constructor(
     private readonly metaService: MetaService,
-    private readonly instagramLoginService: InstagramLoginService,
     private readonly tokenService: TokenService,
     private readonly permissionService: PermissionService,
-    private readonly config: MetaPlatformConfig,
   ) { }
 
   @Get('login')
   @Redirect()
   login() {
-    const url = this.config.useInstagramLogin
-      ? this.instagramLoginService.getLoginUrl()
-      : this.metaService.getLoginUrl();
+    const url = this.metaService.getLoginUrl();
     return { url };
   }
 
@@ -64,38 +58,6 @@ export class MetaController {
     } catch (e) {
       const errMsg =
         e instanceof Error ? e.message : 'Failed to complete Meta integration';
-      if (res) {
-        return res.redirect(`${nextUrl}?error=${encodeURIComponent(errMsg)}`);
-      }
-      throw new BadRequestException(errMsg);
-    }
-  }
-
-  @Get('instagram-callback')
-  async instagramCallback(
-    @Query('code') code?: string,
-    @Query('error') error?: string,
-    @Res() res?: Response,
-  ) {
-    const nextUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-
-    if (error || !code) {
-      const errMsg = error || 'Authorization code not provided';
-      if (res) {
-        return res.redirect(`${nextUrl}?error=${encodeURIComponent(errMsg)}`);
-      }
-      throw new BadRequestException(errMsg);
-    }
-
-    try {
-      await this.instagramLoginService.exchangeCodeAndConnect(code);
-      if (res) {
-        return res.redirect(`${nextUrl}?connected=true`);
-      }
-      return { success: true };
-    } catch (e) {
-      const errMsg =
-        e instanceof Error ? e.message : 'Failed to complete Instagram Login integration';
       if (res) {
         return res.redirect(`${nextUrl}?error=${encodeURIComponent(errMsg)}`);
       }
