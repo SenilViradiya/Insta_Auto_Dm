@@ -83,18 +83,16 @@ export class MetaService {
   async fetchLongLivedToken(
     shortToken: string,
   ): Promise<{ access_token: string; expires_in?: number }> {
-    const appId = this.getEnvOrThrow('META_APP_ID');
     const appSecret = this.getEnvOrThrow('META_APP_SECRET');
 
     try {
       return await this.graphClient.request({
         method: 'GET',
-        endpoint: 'oauth/access_token',
+        endpoint: 'https://graph.instagram.com/access_token',
         params: {
-          grant_type: 'fb_exchange_token',
-          client_id: appId,
+          grant_type: 'ig_exchange_token',
           client_secret: appSecret,
-          fb_exchange_token: shortToken,
+          access_token: shortToken,
         },
       });
     } catch (e: any) {
@@ -111,7 +109,7 @@ export class MetaService {
     try {
       return await this.graphClient.request({
         method: 'GET',
-        endpoint: 'me',
+        endpoint: 'https://graph.instagram.com/me',
         params: {
           fields: 'id,username,name,profile_picture_url',
         },
