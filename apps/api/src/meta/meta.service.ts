@@ -169,6 +169,22 @@ export class MetaService {
       },
     });
 
+    // Enable webhook subscriptions for Instagram account
+    this.logger.log('Enabling webhook subscriptions for Instagram account');
+    try {
+      await this.graphClient.request({
+        method: 'POST',
+        endpoint: 'https://graph.instagram.com/me/subscribed_apps',
+        params: {
+          subscribed_fields: 'comments,messages',
+        },
+        token: longToken,
+      });
+      this.logger.log('Successfully enabled Instagram webhook subscriptions');
+    } catch (e: any) {
+      this.logger.error(`Failed to register webhook subscriptions: ${e.message}`);
+    }
+
     this.logger.log(
       `Successfully registered/updated Instagram Login Account: ${profile.id} (@${profile.username})`,
     );
