@@ -205,3 +205,17 @@ With the completion of **Execution Engine V2**, we have established a fully deco
 ### F. Visual Workflow Nodes
 
 - By mapping visual builder nodes directly to `ActionType` and edges to the order database records index list, any flowchart layout compiles straight to the DB schema. No changes to execution runner or queue loaders are required!
+
+---
+
+## 5. Instagram Login Coexistence (Phase B)
+
+The platform supports both the legacy Facebook Login flow and the new Instagram Login for Business architecture in parallel.
+
+### Key Architecture Components:
+- **`InstagramLoginService`**: Handles generating direct Instagram Business OAuth links, exchanging short-lived redirect callback authorization codes for long-lived tokens, retrieving user profiles directly from the `/me` Graph API nodes, and persisting `InstagramAccount` and `InstagramProfile` configurations.
+- **Dynamic Routing Callback**:
+  - Legacy redirect callback endpoint: `/meta/callback`
+  - Direct Instagram redirect callback endpoint: `/meta/instagram-callback`
+- **Asset/Stories Integration**: Media and Profile synchronizations bypass Facebook page configurations by querying endpoints using `instagramUserId`. Active stories are compiled natively from the `/{instagram_user_id}/stories` endpoint to supplement Posts, Reels, and Carousel items.
+- **Feature Flag Control**: Built upon `USE_INSTAGRAM_LOGIN=true|false` configuration loaders to seamlessly toggle the callback entry redirection for authorization requests.

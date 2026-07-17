@@ -21,7 +21,7 @@ export interface MetaMediaListResult {
 export class AssetService {
   private readonly logger = new Logger(AssetService.name);
 
-  constructor(private readonly graphClient: GraphClient) {}
+  constructor(private readonly graphClient: GraphClient) { }
 
   async fetchMediaList(
     instagramUserId: string,
@@ -67,5 +67,37 @@ export class AssetService {
     });
 
     return { items, nextCursor };
+  }
+
+  async fetchStoriesList(
+    instagramUserId: string,
+    accessToken: string,
+  ): Promise<MetaMediaItemData[]> {
+    try {
+      const response = await this.graphClient.request<any>({
+        method: 'GET',
+        endpoint: `${instagramUserId}/stories`,
+        params: {
+          fields: 'id,media_type,thumbnail_url,media_url,permalink,timestamp',
+        },
+        token: accessToken,
+      });
+
+      const rawItems = response?.data || [];
+      return rawItems.map((raw: any) => {
+        return {
+          instagramMediaId: raw.id,
+          caption: 'Story Media',
+          mediaType: raw.media_type,
+          mediaUrl: raw.media_url,
+          thumbnailUrl: raw.thumbnail_url,
+          permalink: raw.permalink,
+          timestamp: raw.timestamp ? new Date(raw.timestamp) : new Date(),
+        };
+      });
+    } catch (e: any) {
+      this.logger.warn(`Failed to fetch stories: ${e.message}`);
+      return [];
+    }
   }
 }

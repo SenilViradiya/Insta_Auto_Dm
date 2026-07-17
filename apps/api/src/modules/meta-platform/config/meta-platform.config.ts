@@ -39,4 +39,8 @@ export class MetaPlatformConfig {
   get webhookVerifyToken(): string {
     return process.env.META_VERIFY_TOKEN || '';
   }
+
+  get useInstagramLogin(): boolean {
+    return process.env.USE_INSTAGRAM_LOGIN === 'true';
+  }
 }
