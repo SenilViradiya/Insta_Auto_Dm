@@ -23,15 +23,14 @@ export class MetaService {
   getLoginUrl(): string {
     const appId = this.getEnvOrThrow('META_APP_ID');
     const redirectUri = this.getEnvOrThrow('META_REDIRECT_URI');
-    const version = process.env.META_GRAPH_API_VERSION ?? 'v20.0';
 
     const scopes = [
       'instagram_business_basic',
-      'instagram_business_manage_comments',
       'instagram_business_manage_messages',
+      'instagram_business_manage_comments',
     ];
 
-    const url = new URL(`https://www.facebook.com/${version}/dialog/oauth`);
+    const url = new URL('https://www.instagram.com/oauth/authorize');
     url.searchParams.append('client_id', appId);
     url.searchParams.append('redirect_uri', redirectUri);
     url.searchParams.append('scope', scopes.join(','));

@@ -107,7 +107,7 @@ describe('MetaController (e2e)', () => {
         .expect(302);
 
       expect(res.headers.location).toContain(
-        'https://www.facebook.com/v20.0/dialog/oauth',
+        'https://www.instagram.com/oauth/authorize',
       );
       expect(res.headers.location).toContain('client_id=test-app-id');
     });

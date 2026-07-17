@@ -58,9 +58,9 @@ describe('MetaService', () => {
   describe('getLoginUrl', () => {
     it('should generate a valid Meta Direct Instagram OAuth URL with appropriate scopes', () => {
       const url = service.getLoginUrl();
-      expect(url).toContain('https://www.facebook.com/v20.0/dialog/oauth');
+      expect(url).toContain('https://www.instagram.com/oauth/authorize');
       expect(url).toContain('client_id=test-app-id');
-      expect(url).toContain('scope=instagram_business_basic%2Cinstagram_business_manage_comments%2Cinstagram_business_manage_messages');
+      expect(url).toContain('scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments');
     });
   });
 
