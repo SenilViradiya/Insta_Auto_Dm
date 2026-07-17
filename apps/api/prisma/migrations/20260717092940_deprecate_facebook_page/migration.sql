@@ -10,7 +10,7 @@
 
 */
 -- AlterEnum
-ALTER TYPE "ActionType" ADD VALUE 'REPLY_COMMENT';
+ALTER TYPE "ActionType" ADD VALUE IF NOT EXISTS 'REPLY_COMMENT';
 
 -- AlterTable
 ALTER TABLE "InstagramAccount" DROP COLUMN "accessTokenEncrypted",
