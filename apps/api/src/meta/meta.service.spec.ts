@@ -91,9 +91,9 @@ describe('MetaService', () => {
       expect(res.access_token).toBe('long-token');
       expect(graphClientMock.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          endpoint: 'oauth/access_token',
+          endpoint: 'https://graph.instagram.com/access_token',
           params: expect.objectContaining({
-            grant_type: 'fb_exchange_token',
+            grant_type: 'ig_exchange_token',
           }),
         }),
       );
@@ -108,7 +108,7 @@ describe('MetaService', () => {
       expect(res.username).toBe('ig_user');
       expect(graphClientMock.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          endpoint: 'me',
+          endpoint: 'https://graph.instagram.com/me',
           token: 'token',
         }),
       );
