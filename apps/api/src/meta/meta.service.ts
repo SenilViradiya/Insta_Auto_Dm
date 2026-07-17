@@ -23,15 +23,14 @@ export class MetaService {
   getLoginUrl(): string {
     const appId = this.getEnvOrThrow('META_APP_ID');
     const redirectUri = this.getEnvOrThrow('META_REDIRECT_URI');
-    const version = process.env.META_GRAPH_API_VERSION ?? 'v20.0';
 
     const scopes = [
-      'instagram_basic',
-      'instagram_manage_messages',
-      'instagram_manage_comments',
+      'instagram_business_basic',
+      'instagram_business_manage_messages',
+      'instagram_business_manage_comments',
     ];
 
-    const url = new URL(`https://www.facebook.com/${version}/dialog/oauth`);
+    const url = new URL('https://www.instagram.com/oauth/authorize');
     url.searchParams.append('client_id', appId);
     url.searchParams.append('redirect_uri', redirectUri);
     url.searchParams.append('scope', scopes.join(','));
@@ -125,27 +124,18 @@ export class MetaService {
       ? new Date(Date.now() + expires_in * 1000)
       : null;
 
-    // Check if account already exists to preserve legacy details
-    const existingAccount = await this.prisma.instagramAccount.findUnique({
-      where: { instagramUserId: profile.id },
-    });
-
-    const pageId = existingAccount ? existingAccount.pageId : 'instagram_login';
-    const pageName = existingAccount ? existingAccount.pageName : profile.username;
-
     // Save/Update account details
     const account = await this.prisma.instagramAccount.upsert({
       where: { instagramUserId: profile.id },
       create: {
         instagramUserId: profile.id,
-        pageId,
-        pageName,
-        accessTokenEncrypted,
-        tokenExpiresAt,
+        username: profile.username,
+        accessToken: accessTokenEncrypted,
+        expiresAt: tokenExpiresAt,
       },
       update: {
-        accessTokenEncrypted,
-        tokenExpiresAt,
+        accessToken: accessTokenEncrypted,
+        expiresAt: tokenExpiresAt,
       },
     });
 
@@ -174,20 +164,18 @@ export class MetaService {
     Array<{
       id: string;
       instagramUserId: string;
-      pageId: string;
-      pageName: string;
+      username: string;
       connectedAt: Date;
-      tokenExpiresAt: Date | null;
+      expiresAt: Date | null;
     }>
   > {
     return this.prisma.instagramAccount.findMany({
       select: {
         id: true,
         instagramUserId: true,
-        pageId: true,
-        pageName: true,
+        username: true,
         connectedAt: true,
-        tokenExpiresAt: true,
+        expiresAt: true,
       },
     });
   }

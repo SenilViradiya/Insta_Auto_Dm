@@ -29,8 +29,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 interface InstagramAccount {
   id: string;
   instagramUserId: string;
-  pageId: string;
-  pageName: string;
+  username: string;
   connectedAt: string;
   tokenExpiresAt?: string | null;
 }
@@ -129,7 +128,7 @@ export function AccountSwitcher({
             whiteSpace: "nowrap",
           }}
         >
-          {selectedAccount ? selectedAccount.pageName : "Select Account"}
+          {selectedAccount ? selectedAccount.username : "Select Account"}
         </span>
         <ChevronDown
           size={14}
@@ -237,7 +236,7 @@ export function AccountSwitcher({
                         flexShrink: 0,
                       }}
                     >
-                      {acc.pageName.slice(0, 2).toUpperCase()}
+                      {acc.username.slice(0, 2).toUpperCase()}
                     </div>
                     <div
                       style={{
@@ -256,7 +255,7 @@ export function AccountSwitcher({
                           textOverflow: "ellipsis",
                         }}
                       >
-                        {acc.pageName}
+                        {acc.username}
                       </span>
                       <span
                         style={{
@@ -922,7 +921,7 @@ export function WorkspaceHeader({
 }) {
   const avatarUrl = profile?.profilePictureUrl || "";
   const usernameStr = profile?.username || account.instagramUserId;
-  const nameStr = profile?.name || account.pageName;
+  const nameStr = profile?.name || account.username;
   const followersCount = profile?.followers || 0;
   const followingCount = profile?.following || 0;
   const mediaCount = profile?.mediaCount || 0;

@@ -51,15 +51,15 @@ export class TokenService implements OnModuleDestroy {
     }
 
     // 3. Expiry Check
-    if (account.tokenExpiresAt && account.tokenExpiresAt < new Date()) {
+    if (account.expiresAt && account.expiresAt < new Date()) {
       throw new TokenExpiredException(
-        `Token expired at ${account.tokenExpiresAt.toISOString()} for account ${instagramAccountId}`,
+        `Token expired at ${account.expiresAt.toISOString()} for account ${instagramAccountId}`,
       );
     }
 
     // 4. Decrypt
     const decrypted = decryptToken(
-      account.accessTokenEncrypted,
+      account.accessToken,
       this.config.tokenEncryptionKey,
     );
 

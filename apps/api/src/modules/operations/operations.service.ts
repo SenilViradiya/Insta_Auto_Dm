@@ -21,7 +21,7 @@ export class OperationsService {
     @Optional()
     @InjectQueue('automation-dlq')
     private readonly dlqQueue?: Queue,
-  ) {}
+  ) { }
 
   async getSystemHealth(): Promise<SystemHealthResponseDto> {
     const timestamp = new Date().toISOString();
@@ -149,7 +149,7 @@ export class OperationsService {
         Number(
           await redisClient.get('operations:webhook:duplicate_payloads'),
         ) || 0;
-    } catch {}
+    } catch { }
 
     const webhookStatus = lastWebhookReceived ? 'Healthy' : 'Offline';
     const verificationStatus = process.env.META_VERIFY_TOKEN
@@ -301,9 +301,9 @@ export class OperationsService {
       let daysRemaining = 999;
       let reconnectRequired = false;
 
-      if (acc.tokenExpiresAt) {
-        tokenExpiryStr = acc.tokenExpiresAt.toISOString();
-        const diffMs = acc.tokenExpiresAt.getTime() - Date.now();
+      if (acc.expiresAt) {
+        tokenExpiryStr = acc.expiresAt.toISOString();
+        const diffMs = acc.expiresAt.getTime() - Date.now();
         daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
         tokenValid = diffMs > 0;
         reconnectRequired = !tokenValid;
@@ -395,20 +395,19 @@ export class OperationsService {
             'delayed',
             'failed',
           );
-        } catch {}
+        } catch { }
       }
 
       results.push({
         id: acc.id,
-        instagramName: acc.pageName || 'Unknown Instagram User',
+        instagramName: acc.username || 'Unknown Instagram User',
         instagramBusinessId: acc.instagramUserId,
-        facebookPage: acc.pageName || 'Unknown Page',
         connectionStatus: tokenValid
           ? permissionsResult?.hasAllRequired
             ? 'Healthy'
             : 'Degraded'
           : 'Disconnected',
-        tokenStatus: acc.accessTokenEncrypted
+        tokenStatus: acc.accessToken
           ? tokenValid
             ? 'Valid'
             : 'Expired'
@@ -426,7 +425,7 @@ export class OperationsService {
 
         // Breakdowns
         tokenHealth: {
-          encryptedTokenExists: !!acc.accessTokenEncrypted,
+          encryptedTokenExists: !!acc.accessToken,
           tokenValid,
           tokenExpiry: tokenExpiryStr,
           daysRemaining,

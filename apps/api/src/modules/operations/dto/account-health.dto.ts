@@ -53,7 +53,6 @@ export class AccountHealthResponseDto {
   id!: string;
   instagramName!: string;
   instagramBusinessId!: string;
-  facebookPage!: string;
   connectionStatus!: 'Healthy' | 'Degraded' | 'Disconnected';
   tokenStatus!: 'Valid' | 'Expired' | 'Missing';
   tokenExpiry!: string | null;

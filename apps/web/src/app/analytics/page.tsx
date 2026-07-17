@@ -22,8 +22,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 interface InstagramAccount {
   id: string;
   instagramUserId: string;
-  pageId: string;
-  pageName: string;
+  username: string;
   connectedAt: string;
 }
 
@@ -343,9 +342,9 @@ export default function AnalyticsDashboardPage() {
     const avgResponseTimeMs =
       successes.length > 0
         ? successes.reduce(
-            (acc: number, cur: any) => acc + (cur.durationMs || 0),
-            0,
-          ) / successes.length
+          (acc: number, cur: any) => acc + (cur.durationMs || 0),
+          0,
+        ) / successes.length
         : messagingMetrics?.averageSendTimeMs || 1000;
 
     // Leaderboard calculations for active automations runs
@@ -650,7 +649,7 @@ export default function AnalyticsDashboardPage() {
                   Active Profile:{" "}
                   <strong style={{ color: "var(--text-primary)" }}>
                     {statusData.accounts.find((a) => a.id === selectedAccountId)
-                      ?.pageName || ""}
+                      ?.username || ""}
                   </strong>
                 </span>
               </div>
@@ -958,12 +957,12 @@ export default function AnalyticsDashboardPage() {
                       const successHeight =
                         day.total > 0
                           ? Math.max(
-                              6,
-                              Math.min(
-                                100,
-                                (day.success / day.total) * totalHeight,
-                              ),
-                            )
+                            6,
+                            Math.min(
+                              100,
+                              (day.success / day.total) * totalHeight,
+                            ),
+                          )
                           : 0;
 
                       return (

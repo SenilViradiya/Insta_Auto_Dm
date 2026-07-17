@@ -12,8 +12,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 interface InstagramAccount {
   id: string;
   instagramUserId: string;
-  pageId: string;
-  pageName: string;
+  username: string;
   connectedAt: string;
 }
 
@@ -259,7 +258,7 @@ export default function AssetsPage() {
               <span>
                 Active Profile:{" "}
                 <strong style={{ color: "var(--text-primary)" }}>
-                  {selectedAccount.pageName}
+                  {selectedAccount.username}
                 </strong>
               </span>
             </div>
@@ -296,7 +295,7 @@ export default function AssetsPage() {
           <AssetLibrary
             instagramAccountId={selectedAccountId}
             selectedMediaId=""
-            onSelectMedia={() => {}} // No-op selector callback for active view mode
+            onSelectMedia={() => { }} // No-op selector callback for active view mode
           />
         ) : (
           <div style={{ padding: "var(--space-8)", textAlign: "center" }}>

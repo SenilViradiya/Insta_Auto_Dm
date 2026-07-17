@@ -13,16 +13,15 @@ model User {
 }
 
 model InstagramAccount {
-  id                   String            @id @default(uuid())
-  instagramUserId      String            @unique
-  pageId               String
-  pageName             String
-  accessTokenEncrypted String
-  tokenExpiresAt       DateTime?
-  connectedAt          DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
-  assets               InstagramAsset[]
-  profile              InstagramProfile?
+  id              String            @id @default(uuid())
+  instagramUserId String            @unique
+  username        String
+  accessToken     String
+  expiresAt       DateTime?
+  connectedAt     DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  assets          InstagramAsset[]
+  profile         InstagramProfile?
 }
 
 enum TriggerType {
