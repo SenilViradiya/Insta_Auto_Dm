@@ -124,7 +124,8 @@ describe('MetaService', () => {
 
       graphClientMock.request
         .mockResolvedValueOnce({ access_token: 'long-token', expires_in: 3600 })
-        .mockResolvedValueOnce({ id: 'ig-1', username: 'ig_user', name: 'John Doe', profile_picture_url: 'pic' });
+        .mockResolvedValueOnce({ id: 'ig-1', username: 'ig_user', name: 'John Doe', profile_picture_url: 'pic' })
+        .mockResolvedValueOnce({ success: true });
 
       await service.exchangeCodeAndConnect('my-code');
 
