@@ -153,33 +153,16 @@ describe('MetaController (e2e)', () => {
                 }),
             } as any);
           }
-          if (urlStr.includes('/me/accounts')) {
+          if (urlStr.includes('/me') || urlStr.includes('/me?')) {
             return Promise.resolve({
               ok: true,
               headers: { get: () => 'application/json' },
               json: () =>
                 Promise.resolve({
-                  data: [
-                    {
-                      id: 'page-123',
-                      name: 'Meta Page One',
-                      access_token: 'page-access-token-123',
-                    },
-                  ],
-                }),
-            } as any);
-          }
-          if (urlStr.includes('/page-123')) {
-            return Promise.resolve({
-              ok: true,
-              headers: { get: () => 'application/json' },
-              json: () =>
-                Promise.resolve({
-                  id: 'page-123',
-                  name: 'Meta Page One',
-                  instagram_business_account: {
-                    id: 'ig-biz-account-321',
-                  },
+                  id: 'ig-biz-account-321',
+                  username: 'ig_tester_user',
+                  name: 'Test Instagram Account',
+                  profile_picture_url: 'http://pic.url',
                 }),
             } as any);
           }
@@ -200,8 +183,8 @@ describe('MetaController (e2e)', () => {
       const dbAccounts = await mockPrisma.instagramAccount.findMany();
       expect(dbAccounts).toHaveLength(1);
       expect(dbAccounts[0].instagramUserId).toBe('ig-biz-account-321');
-      expect(dbAccounts[0].pageName).toBe('Meta Page One');
-      expect(dbAccounts[0].pageId).toBe('page-123');
+      expect(dbAccounts[0].pageName).toBe('ig_tester_user');
+      expect(dbAccounts[0].pageId).toBe('instagram_login');
       expect(dbAccounts[0].accessTokenEncrypted).toContain(':');
     });
   });

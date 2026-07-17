@@ -2,7 +2,6 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { encryptToken } from '../modules/meta-platform/utils/crypto.utils';
 import { GraphClient } from '../modules/meta-platform/clients/graph.client';
-import { REQUIRED_PERMISSIONS } from '../modules/meta-platform/constants/permission.constants';
 
 @Injectable()
 export class MetaService {
@@ -26,14 +25,18 @@ export class MetaService {
     const redirectUri = this.getEnvOrThrow('META_REDIRECT_URI');
     const version = process.env.META_GRAPH_API_VERSION ?? 'v20.0';
 
-    const scopes = [...REQUIRED_PERMISSIONS];
+    const scopes = [
+      'instagram_basic',
+      'instagram_manage_messages',
+      'instagram_manage_comments',
+    ];
 
     const url = new URL(`https://www.facebook.com/${version}/dialog/oauth`);
     url.searchParams.append('client_id', appId);
     url.searchParams.append('redirect_uri', redirectUri);
     url.searchParams.append('scope', scopes.join(','));
     url.searchParams.append('response_type', 'code');
-    url.searchParams.append('state', 'instagram_dm_auth');
+    url.searchParams.append('state', 'instagram_login_direct');
 
     return url.toString();
   }
@@ -57,8 +60,8 @@ export class MetaService {
         },
       });
     } catch (e: any) {
-      this.logger.error(`Meta API code exchange failed: ${e.message}`);
-      throw new BadRequestException('Failed to exchange code with Meta');
+      this.logger.error(`Meta/Instagram code exchange failed: ${e.message}`);
+      throw new BadRequestException('Failed to exchange code with Meta/Instagram');
     }
   }
 
@@ -81,144 +84,90 @@ export class MetaService {
       });
     } catch (e: any) {
       this.logger.error(
-        `Meta API long-lived token exchange failed: ${e.message}`,
+        `Meta/Instagram long-lived token exchange failed: ${e.message}`,
       );
       throw new BadRequestException('Failed to obtain long-lived token');
     }
   }
 
-  async fetchUserPages(
-    longToken: string,
-  ): Promise<Array<{ id: string; name: string; access_token: string }>> {
-    try {
-      const response = await this.graphClient.request<{
-        data?: Array<{ id: string; name: string; access_token: string }>;
-      }>({
-        method: 'GET',
-        endpoint: 'me/accounts',
-        token: longToken,
-      });
-      return response.data ?? [];
-    } catch (e: any) {
-      this.logger.error(`Meta API me/accounts failed: ${e.message}`);
-      throw new BadRequestException('Failed to retrieve connected Instagram Professional Accounts');
-    }
-  }
-
-  async fetchPageInstagramAccount(
-    pageId: string,
-    pageToken: string,
-  ): Promise<{
-    instagram_business_account?: { id: string };
-    name: string;
-  } | null> {
+  async fetchInstagramProfile(
+    accessToken: string,
+  ): Promise<{ id: string; username: string; name?: string; profile_picture_url?: string }> {
     try {
       return await this.graphClient.request({
         method: 'GET',
-        endpoint: pageId,
+        endpoint: 'me',
         params: {
-          fields: 'instagram_business_account,name',
+          fields: 'id,username,name,profile_picture_url',
         },
-        token: pageToken,
+        token: accessToken,
       });
     } catch (e: any) {
-      this.logger.warn(`Failed to inspect page ${pageId}: ${e.message}`);
-      return null;
+      this.logger.error(`Instagram profile query failed: ${e.message}`);
+      throw new BadRequestException('Failed to retrieve Instagram profile information');
     }
   }
 
   async exchangeCodeAndConnect(code: string): Promise<void> {
-    this.logger.log('Initiating OAuth process with authorization code');
+    this.logger.log('Initiating direct Instagram Login process');
     const { access_token: shortToken } = await this.fetchShortLivedToken(code);
 
     this.logger.log('Exchanging short-lived token for long-lived User token');
     const { access_token: longToken, expires_in } =
       await this.fetchLongLivedToken(shortToken);
 
-    this.logger.log('Fetching Instagram Professional Accounts list');
-    const pages = await this.fetchUserPages(longToken);
+    this.logger.log('Retrieving Instagram user profile directly');
+    const profile = await this.fetchInstagramProfile(longToken);
 
-    if (pages.length === 0) {
-      throw new BadRequestException(
-        'No Instagram Professional Accounts associated with this account',
-      );
-    }
-
-    let connectedCount = 0;
     const encryptionKey = this.getEnvOrThrow('TOKEN_ENCRYPTION_KEY');
-
-    // Calculate expiry date if expires_in is provided
+    const accessTokenEncrypted = encryptToken(longToken, encryptionKey);
     const tokenExpiresAt = expires_in
       ? new Date(Date.now() + expires_in * 1000)
       : null;
 
-    // Encrypt the long-lived token before storage
-    const accessTokenEncrypted = encryptToken(longToken, encryptionKey);
+    // Check if account already exists to preserve legacy details
+    const existingAccount = await this.prisma.instagramAccount.findUnique({
+      where: { instagramUserId: profile.id },
+    });
 
-    for (const page of pages) {
-      const pageDetails = await this.fetchPageInstagramAccount(
-        page.id,
-        page.access_token,
-      );
-      if (pageDetails?.instagram_business_account?.id) {
-        const instagramUserId = pageDetails.instagram_business_account.id;
+    const pageId = existingAccount ? existingAccount.pageId : 'instagram_login';
+    const pageName = existingAccount ? existingAccount.pageName : profile.username;
 
-        // Automatically register Webhook App Subscription for this connected Instagram Professional Account.
-        //
-        // IMPORTANT: Instagram comment/mention events are configured in the Meta App Dashboard
-        // (Webhooks → Instagram object → subscribe to 'comments','mentions' fields).
-        // This subscribed_apps API call only activates the Page-level subscription so
-        // Meta will route any Page events (DMs, postbacks) through our webhook URL.
-        // "instagram_manage_comments" is an OAuth scope, NOT a valid subscribed_field.
-        try {
-          this.logger.log(`Registering webhook app subscription for page ${page.id}...`);
-          await this.graphClient.request({
-            method: 'POST',
-            endpoint: `${page.id}/subscribed_apps`,
-            params: {
-              // Valid Page-level webhook fields only.
-              // Instagram-level fields (comments, mentions) are managed in App Dashboard.
-              subscribed_fields: 'messages,messaging_postbacks,mention',
-              access_token: page.access_token,
-            },
-          });
-          this.logger.log(`Successfully registered webhook app subscription for page ${page.id}`);
-        } catch (subErr: any) {
-          this.logger.warn(
-            `Failed to register webhook app subscription for page ${page.id}: ${subErr.message}`,
-          );
-        }
+    // Save/Update account details
+    const account = await this.prisma.instagramAccount.upsert({
+      where: { instagramUserId: profile.id },
+      create: {
+        instagramUserId: profile.id,
+        pageId,
+        pageName,
+        accessTokenEncrypted,
+        tokenExpiresAt,
+      },
+      update: {
+        accessTokenEncrypted,
+        tokenExpiresAt,
+      },
+    });
 
-        // Upsert connected Account in database
-        await this.prisma.instagramAccount.upsert({
-          where: { instagramUserId },
-          create: {
-            instagramUserId,
-            pageId: page.id,
-            pageName: pageDetails.name,
-            accessTokenEncrypted,
-            tokenExpiresAt,
-          },
-          update: {
-            pageId: page.id,
-            pageName: pageDetails.name,
-            accessTokenEncrypted,
-            tokenExpiresAt,
-          },
-        });
+    // Save/Update associated profile details
+    await this.prisma.instagramProfile.upsert({
+      where: { instagramAccountId: account.id },
+      create: {
+        instagramAccountId: account.id,
+        username: profile.username,
+        name: profile.name || profile.username,
+        profilePictureUrl: profile.profile_picture_url || null,
+      },
+      update: {
+        username: profile.username,
+        name: profile.name || profile.username,
+        profilePictureUrl: profile.profile_picture_url || null,
+      },
+    });
 
-        this.logger.log(
-          `Successfully connected Instagram Business Account: ${instagramUserId}`,
-        );
-        connectedCount++;
-      }
-    }
-
-    if (connectedCount === 0) {
-      throw new BadRequestException(
-        'No Instagram Professional Accounts with linked Instagram Business accounts were found',
-      );
-    }
+    this.logger.log(
+      `Successfully registered/updated Instagram Login Account: ${profile.id} (@${profile.username})`,
+    );
   }
 
   async getStatus(): Promise<

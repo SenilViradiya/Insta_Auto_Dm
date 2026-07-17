@@ -8,9 +8,6 @@ export interface PermissionStatus {
     instagram_basic: boolean;
     instagram_manage_messages: boolean;
     instagram_manage_comments: boolean;
-    pages_show_list: boolean;
-    pages_read_engagement: boolean;
-    business_management: boolean;
     [key: string]: boolean;
   };
 }

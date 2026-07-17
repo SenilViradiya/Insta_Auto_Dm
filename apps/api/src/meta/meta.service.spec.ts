@@ -16,9 +16,13 @@ describe('MetaService', () => {
   beforeEach(async () => {
     prismaMock = {
       instagramAccount: {
-        upsert: jest.fn().mockResolvedValue({}),
+        findUnique: jest.fn().mockResolvedValue(null),
+        upsert: jest.fn().mockResolvedValue({ id: 'acc-uuid' }),
         findMany: jest.fn().mockResolvedValue([]),
         delete: jest.fn().mockResolvedValue({}),
+      },
+      instagramProfile: {
+        upsert: jest.fn().mockResolvedValue({}),
       },
     };
 
@@ -52,11 +56,87 @@ describe('MetaService', () => {
   });
 
   describe('getLoginUrl', () => {
-    it('should generate a valid Meta OAuth URL with appropriate scopes', () => {
+    it('should generate a valid Meta Direct Instagram OAuth URL with appropriate scopes', () => {
       const url = service.getLoginUrl();
       expect(url).toContain('https://www.facebook.com/v20.0/dialog/oauth');
       expect(url).toContain('client_id=test-app-id');
-      expect(url).toContain('scope=instagram_basic');
+      expect(url).toContain('scope=instagram_basic%2Cinstagram_manage_messages%2Cinstagram_manage_comments');
+    });
+  });
+
+  describe('fetchShortLivedToken', () => {
+    it('should exchange code for short token', async () => {
+      graphClientMock.request.mockResolvedValue({ access_token: 'short-token' });
+      const res = await service.fetchShortLivedToken('code');
+      expect(res.access_token).toBe('short-token');
+      expect(graphClientMock.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          endpoint: 'oauth/access_token',
+        }),
+      );
+    });
+  });
+
+  describe('fetchLongLivedToken', () => {
+    it('should exchange short token for long lived token', async () => {
+      graphClientMock.request.mockResolvedValue({ access_token: 'long-token', expires_in: 3600 });
+      const res = await service.fetchLongLivedToken('short-token');
+      expect(res.access_token).toBe('long-token');
+      expect(graphClientMock.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          endpoint: 'oauth/access_token',
+          params: expect.objectContaining({
+            grant_type: 'fb_exchange_token',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('fetchInstagramProfile', () => {
+    it('should request profile for active me node', async () => {
+      graphClientMock.request.mockResolvedValue({ id: 'ig-1', username: 'ig_user' });
+      const res = await service.fetchInstagramProfile('token');
+      expect(res.id).toBe('ig-1');
+      expect(res.username).toBe('ig_user');
+      expect(graphClientMock.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          endpoint: 'me',
+          token: 'token',
+        }),
+      );
+    });
+  });
+
+  describe('exchangeCodeAndConnect', () => {
+    it('should exchange and register direct Instagram profile', async () => {
+      graphClientMock.request
+        .mockResolvedValueOnce({ access_token: 'short-token' })
+        .mockResolvedValueOnce({ access_token: 'long-token', expires_in: 3600 })
+        .mockResolvedValueOnce({ id: 'ig-1', username: 'ig_user', name: 'John Doe', profile_picture_url: 'pic' });
+
+      await service.exchangeCodeAndConnect('my-code');
+
+      expect(prismaMock.instagramAccount.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { instagramUserId: 'ig-1' },
+          create: expect.objectContaining({
+            pageId: 'instagram_login',
+            pageName: 'ig_user',
+          }),
+        }),
+      );
+
+      expect(prismaMock.instagramProfile.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { instagramAccountId: 'acc-uuid' },
+          create: expect.objectContaining({
+            username: 'ig_user',
+            name: 'John Doe',
+            profilePictureUrl: 'pic',
+          }),
+        }),
+      );
     });
   });
 

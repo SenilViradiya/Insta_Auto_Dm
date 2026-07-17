@@ -1,19 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MetaController } from './meta.controller';
 import { MetaService } from './meta.service';
-import { InstagramLoginService } from './instagram-login.service';
 import { TokenService } from '../modules/meta-platform/services/token.service';
 import { PermissionService } from '../modules/meta-platform/services/permission.service';
-import { MetaPlatformConfig } from '../modules/meta-platform/config/meta-platform.config';
 import { BadRequestException } from '@nestjs/common';
 
 describe('MetaController', () => {
   let controller: MetaController;
   let metaServiceMock: any;
-  let instagramLoginServiceMock: any;
   let tokenServiceMock: any;
   let permissionServiceMock: any;
-  let metaPlatformConfigMock: any;
 
   beforeEach(async () => {
     metaServiceMock = {
@@ -21,11 +17,6 @@ describe('MetaController', () => {
       exchangeCodeAndConnect: jest.fn().mockResolvedValue(undefined),
       getStatus: jest.fn().mockResolvedValue([]),
       disconnect: jest.fn().mockResolvedValue(undefined),
-    };
-
-    instagramLoginServiceMock = {
-      getLoginUrl: jest.fn().mockReturnValue('https://instagram.oauth.url'),
-      exchangeCodeAndConnect: jest.fn().mockResolvedValue(undefined),
     };
 
     tokenServiceMock = {
@@ -36,18 +27,12 @@ describe('MetaController', () => {
       validatePermissions: jest.fn(),
     };
 
-    metaPlatformConfigMock = {
-      useInstagramLogin: false,
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MetaController],
       providers: [
         { provide: MetaService, useValue: metaServiceMock },
-        { provide: InstagramLoginService, useValue: instagramLoginServiceMock },
         { provide: TokenService, useValue: tokenServiceMock },
         { provide: PermissionService, useValue: permissionServiceMock },
-        { provide: MetaPlatformConfig, useValue: metaPlatformConfigMock },
       ],
     }).compile();
 
@@ -64,18 +49,10 @@ describe('MetaController', () => {
   });
 
   describe('login', () => {
-    it('should return login URL for redirect decorators (legacy)', () => {
-      metaPlatformConfigMock.useInstagramLogin = false;
+    it('should return login URL for redirect decorators', () => {
       const result = controller.login();
       expect(result).toEqual({ url: 'https://meta.oauth.url' });
       expect(metaServiceMock.getLoginUrl).toHaveBeenCalled();
-    });
-
-    it('should return login URL for redirect decorators (instagram login)', () => {
-      metaPlatformConfigMock.useInstagramLogin = true;
-      const result = controller.login();
-      expect(result).toEqual({ url: 'https://instagram.oauth.url' });
-      expect(instagramLoginServiceMock.getLoginUrl).toHaveBeenCalled();
     });
   });
 
@@ -106,46 +83,17 @@ describe('MetaController', () => {
         'http://localhost:3000?connected=true',
       );
     });
-  });
 
-  describe('instagramCallback', () => {
-    it('should redirect back to frontend with error if authorization code is missing', async () => {
+    it('should redirect with error parameter when service processing fails', async () => {
       const mockRes: any = { redirect: jest.fn() };
-      await controller.instagramCallback(undefined, undefined, mockRes);
+      metaServiceMock.exchangeCodeAndConnect.mockRejectedValue(
+        new Error('OAuth Exchange Failed'),
+      );
+      await controller.callback('auth-code-value', undefined, mockRes);
       expect(mockRes.redirect).toHaveBeenCalledWith(
-        'http://localhost:3000?error=Authorization%20code%20not%20provided',
+        'http://localhost:3000?error=OAuth%20Exchange%20Failed',
       );
     });
-
-    it('should redirect back to frontend with error if Instagram returns an error', async () => {
-      const mockRes: any = { redirect: jest.fn() };
-      await controller.instagramCallback(undefined, 'access_denied', mockRes);
-      expect(mockRes.redirect).toHaveBeenCalledWith(
-        'http://localhost:3000?error=access_denied',
-      );
-    });
-
-    it('should process code, exchange for token, store profile & redirect with connected=true', async () => {
-      const mockRes: any = { redirect: jest.fn() };
-      await controller.instagramCallback('auth-code-value', undefined, mockRes);
-      expect(instagramLoginServiceMock.exchangeCodeAndConnect).toHaveBeenCalledWith(
-        'auth-code-value',
-      );
-      expect(mockRes.redirect).toHaveBeenCalledWith(
-        'http://localhost:3000?connected=true',
-      );
-    });
-  });
-
-  it('should redirect with error parameter when service processing fails', async () => {
-    const mockRes: any = { redirect: jest.fn() };
-    metaServiceMock.exchangeCodeAndConnect.mockRejectedValue(
-      new Error('OAuth Exchange Failed'),
-    );
-    await controller.callback('auth-code-value', undefined, mockRes);
-    expect(mockRes.redirect).toHaveBeenCalledWith(
-      'http://localhost:3000?error=OAuth%20Exchange%20Failed',
-    );
   });
 
   describe('status', () => {
