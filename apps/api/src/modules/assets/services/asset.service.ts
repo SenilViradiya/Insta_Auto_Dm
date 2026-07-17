@@ -27,7 +27,7 @@ export class AssetService {
     private readonly prisma: PrismaService,
     private readonly assetRepo: AssetRepository,
     private readonly metaClient: MetaAssetClient,
-  ) {}
+  ) { }
 
   private getEncryptionKey(): string {
     const key = process.env.TOKEN_ENCRYPTION_KEY;
@@ -120,6 +120,20 @@ export class AssetService {
           keepFetching = false;
         }
       }
+
+      // Sync active Stories if available
+      try {
+        const stories = await this.metaClient.fetchStoriesList(
+          account.instagramUserId,
+          decryptedToken,
+        );
+        if (stories && stories.length > 0) {
+          mediaItems.push(...stories);
+        }
+      } catch (storiesErr: any) {
+        this.logger.warn(`Failed to sync active stories: ${storiesErr.message}`);
+      }
+
     } catch (e: any) {
       throw new AssetSyncException(
         `Failed to fetch Instagram asset list: ${e.message}`,

@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { encryptToken } from '../modules/meta-platform/utils/crypto.utils';
 import { GraphClient } from '../modules/meta-platform/clients/graph.client';
+import { REQUIRED_PERMISSIONS } from '../modules/meta-platform/constants/permission.constants';
 
 @Injectable()
 export class MetaService {
@@ -10,7 +11,7 @@ export class MetaService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly graphClient: GraphClient,
-  ) {}
+  ) { }
 
   private getEnvOrThrow(key: string): string {
     const value = process.env[key];
@@ -25,14 +26,7 @@ export class MetaService {
     const redirectUri = this.getEnvOrThrow('META_REDIRECT_URI');
     const version = process.env.META_GRAPH_API_VERSION ?? 'v20.0';
 
-    const scopes = [
-      'instagram_basic',
-      'instagram_manage_messages',
-      'instagram_manage_comments',
-      'pages_show_list',
-      'business_management',
-      'pages_read_engagement',
-    ];
+    const scopes = [...REQUIRED_PERMISSIONS];
 
     const url = new URL(`https://www.facebook.com/${version}/dialog/oauth`);
     url.searchParams.append('client_id', appId);
@@ -107,7 +101,7 @@ export class MetaService {
       return response.data ?? [];
     } catch (e: any) {
       this.logger.error(`Meta API me/accounts failed: ${e.message}`);
-      throw new BadRequestException('Failed to retrieve connected Meta Pages');
+      throw new BadRequestException('Failed to retrieve connected Instagram Professional Accounts');
     }
   }
 
@@ -141,12 +135,12 @@ export class MetaService {
     const { access_token: longToken, expires_in } =
       await this.fetchLongLivedToken(shortToken);
 
-    this.logger.log('Fetching Meta pages list');
+    this.logger.log('Fetching Instagram Professional Accounts list');
     const pages = await this.fetchUserPages(longToken);
 
     if (pages.length === 0) {
       throw new BadRequestException(
-        'No Meta Pages associated with this account',
+        'No Instagram Professional Accounts associated with this account',
       );
     }
 
@@ -169,7 +163,7 @@ export class MetaService {
       if (pageDetails?.instagram_business_account?.id) {
         const instagramUserId = pageDetails.instagram_business_account.id;
 
-        // Automatically register Webhook App Subscription for this connected Page.
+        // Automatically register Webhook App Subscription for this connected Instagram Professional Account.
         //
         // IMPORTANT: Instagram comment/mention events are configured in the Meta App Dashboard
         // (Webhooks → Instagram object → subscribe to 'comments','mentions' fields).
@@ -222,7 +216,7 @@ export class MetaService {
 
     if (connectedCount === 0) {
       throw new BadRequestException(
-        'No pages with linked Instagram Business accounts were found',
+        'No Instagram Professional Accounts with linked Instagram Business accounts were found',
       );
     }
   }

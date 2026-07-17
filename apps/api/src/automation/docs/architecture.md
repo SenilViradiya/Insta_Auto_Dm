@@ -122,7 +122,7 @@ The Automation Engine uses a polymorphic trigger-driven strategy framework. This
 
 ## 4. SOLID & Framework Extensibility
 
-- **Open-Closed Principle (OCP)**: Adding new triggers or support for future platform integrations (e.g. WhatsApp / Facebook) requires no modification of existing code. You write a self-contained strategy class conforming to the registry contracts.
+- **Open-Closed Principle (OCP)**: Adding new triggers or support for future platform integrations (e.g. WhatsApp / Instagram Login) requires no modification of existing code. You write a self-contained strategy class conforming to the registry contracts.
 - **Single Responsibility Principle (SRP)**: The Asset Module only manages synchronization and asset mapping. The Automation Engine manages processing lifecycles, and webhook events only parse core payload identifiers, avoiding mixed scopes.
 - **Liskov Substitution Principle (LSP)**: Any subclass of `TriggerStrategy` integrates cleanly without altering resolution behaviors.
 - **Dependency Inversion Principle (DIP)**: Abstract contracts (like `TriggerStrategy`) completely isolate database models from API routing and domain logic orchestration.
@@ -205,3 +205,17 @@ With the completion of **Execution Engine V2**, we have established a fully deco
 ### F. Visual Workflow Nodes
 
 - By mapping visual builder nodes directly to `ActionType` and edges to the order database records index list, any flowchart layout compiles straight to the DB schema. No changes to execution runner or queue loaders are required!
+
+---
+
+## 5. Instagram Login Coexistence (Phase B)
+
+The platform supports both the legacy Facebook Login flow and the new Instagram Login for Business architecture in parallel.
+
+### Key Architecture Components:
+- **`InstagramLoginService`**: Handles generating direct Instagram Business OAuth links, exchanging short-lived redirect callback authorization codes for long-lived tokens, retrieving user profiles directly from the `/me` Graph API nodes, and persisting `InstagramAccount` and `InstagramProfile` configurations.
+- **Dynamic Routing Callback**:
+  - Legacy redirect callback endpoint: `/meta/callback`
+  - Direct Instagram redirect callback endpoint: `/meta/instagram-callback`
+- **Asset/Stories Integration**: Media and Profile synchronizations bypass Facebook page configurations by querying endpoints using `instagramUserId`. Active stories are compiled natively from the `/{instagram_user_id}/stories` endpoint to supplement Posts, Reels, and Carousel items.
+- **Feature Flag Control**: Built upon `USE_INSTAGRAM_LOGIN=true|false` configuration loaders to seamlessly toggle the callback entry redirection for authorization requests.

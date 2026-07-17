@@ -108,6 +108,11 @@ describe('Reel Comment to DM Integration E2E', () => {
 
     mockLockService = {
       runWithLock: jest.fn().mockImplementation((key, ttl, fn) => fn()),
+      getRedisClient: jest.fn().mockReturnValue({
+        set: jest.fn().mockResolvedValue('OK'),
+        get: jest.fn().mockResolvedValue(null),
+        incr: jest.fn().mockResolvedValue(1),
+      }),
     };
 
     mockMetricsService = {

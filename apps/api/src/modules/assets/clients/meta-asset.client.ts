@@ -16,7 +16,7 @@ export class MetaAssetClient {
   constructor(
     private readonly profileService: ProfileService,
     private readonly assetService: AssetService,
-  ) {}
+  ) { }
 
   async fetchProfile(
     instagramUserId: string,
@@ -37,5 +37,12 @@ export class MetaAssetClient {
       limit,
       after,
     );
+  }
+
+  async fetchStoriesList(
+    instagramUserId: string,
+    accessToken: string,
+  ): Promise<MetaMediaItemData[]> {
+    return this.assetService.fetchStoriesList(instagramUserId, accessToken);
   }
 }
