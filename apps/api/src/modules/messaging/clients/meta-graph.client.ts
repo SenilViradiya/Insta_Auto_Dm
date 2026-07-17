@@ -8,7 +8,7 @@ export class MetaGraphClient {
   constructor(
     private readonly metaMessagingService: MetaMessagingService,
     private readonly graphClient: GraphClient,
-  ) {}
+  ) { }
 
   async sendMessage(
     recipientId: string,
@@ -42,7 +42,7 @@ export class MetaGraphClient {
     try {
       const response = await this.graphClient.request({
         method: 'GET',
-        endpoint: 'me',
+        endpoint: 'https://graph.instagram.com/me',
         token: accessToken,
         params: { fields: 'id' },
       });
