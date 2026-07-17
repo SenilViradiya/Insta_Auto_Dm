@@ -48,16 +48,32 @@ export class MetaService {
     const redirectUri = this.getEnvOrThrow('META_REDIRECT_URI');
 
     try {
-      return await this.graphClient.request({
-        method: 'GET',
-        endpoint: 'oauth/access_token',
-        params: {
+      const response = await fetch('https://api.instagram.com/oauth/access_token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
           client_id: appId,
           client_secret: appSecret,
+          grant_type: 'authorization_code',
           redirect_uri: redirectUri,
           code,
-        },
+        }).toString(),
       });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        this.logger.error(
+          `Meta/Instagram code exchange status non-ok: ${response.status} - ${errText}`,
+        );
+        throw new Error(errText || `HTTP ${response.status}`);
+      }
+
+      const data = (await response.json()) as { access_token: string; user_id?: number };
+      return {
+        access_token: data.access_token,
+      };
     } catch (e: any) {
       this.logger.error(`Meta/Instagram code exchange failed: ${e.message}`);
       throw new BadRequestException('Failed to exchange code with Meta/Instagram');
