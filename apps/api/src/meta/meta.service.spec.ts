@@ -66,14 +66,21 @@ describe('MetaService', () => {
 
   describe('fetchShortLivedToken', () => {
     it('should exchange code for short token', async () => {
-      graphClientMock.request.mockResolvedValue({ access_token: 'short-token' });
+      const mockFetch = jest.spyOn(global, 'fetch').mockResolvedValue({
+        ok: true,
+        json: async () => ({ access_token: 'short-token' }),
+      } as any);
+
       const res = await service.fetchShortLivedToken('code');
       expect(res.access_token).toBe('short-token');
-      expect(graphClientMock.request).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.instagram.com/oauth/access_token',
         expect.objectContaining({
-          endpoint: 'oauth/access_token',
+          method: 'POST',
+          body: expect.stringContaining('code=code'),
         }),
       );
+      mockFetch.mockRestore();
     });
   });
 
@@ -110,8 +117,12 @@ describe('MetaService', () => {
 
   describe('exchangeCodeAndConnect', () => {
     it('should exchange and register direct Instagram profile', async () => {
+      const mockFetch = jest.spyOn(global, 'fetch').mockResolvedValue({
+        ok: true,
+        json: async () => ({ access_token: 'short-token' }),
+      } as any);
+
       graphClientMock.request
-        .mockResolvedValueOnce({ access_token: 'short-token' })
         .mockResolvedValueOnce({ access_token: 'long-token', expires_in: 3600 })
         .mockResolvedValueOnce({ id: 'ig-1', username: 'ig_user', name: 'John Doe', profile_picture_url: 'pic' });
 
@@ -136,6 +147,8 @@ describe('MetaService', () => {
           }),
         }),
       );
+
+      mockFetch.mockRestore();
     });
   });
 
