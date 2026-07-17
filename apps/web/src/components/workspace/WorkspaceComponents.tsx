@@ -326,12 +326,9 @@ export function AccountSwitcher({
 export interface PermissionStatus {
   hasAllRequired: boolean;
   scopes: {
-    instagram_basic: boolean;
-    instagram_manage_messages: boolean;
-    instagram_manage_comments: boolean;
-    pages_show_list: boolean;
-    pages_read_engagement: boolean;
-    business_management: boolean;
+    instagram_business_basic: boolean;
+    instagram_business_manage_messages: boolean;
+    instagram_business_manage_comments: boolean;
     [key: string]: boolean;
   };
 }
@@ -352,34 +349,19 @@ export function ConnectionHealth({
 
   const scopes = [
     {
-      name: "instagram_manage_messages",
+      name: "instagram_business_manage_messages",
       description: "Read & trigger DM automated replies",
-      active: !!permissions?.scopes?.instagram_manage_messages,
+      active: !!permissions?.scopes?.instagram_business_manage_messages,
     },
     {
-      name: "instagram_manage_comments",
+      name: "instagram_business_manage_comments",
       description: "Listen & filter comment text fields",
-      active: !!permissions?.scopes?.instagram_manage_comments,
+      active: !!permissions?.scopes?.instagram_business_manage_comments,
     },
     {
-      name: "instagram_basic",
+      name: "instagram_business_basic",
       description: "Access Instagram profile handle/stats",
-      active: !!permissions?.scopes?.instagram_basic,
-    },
-    {
-      name: "pages_show_list",
-      description: "Link and sync workspace content",
-      active: !!permissions?.scopes?.pages_show_list,
-    },
-    {
-      name: "pages_read_engagement",
-      description: "Examine story replies and message posts",
-      active: !!permissions?.scopes?.pages_read_engagement,
-    },
-    {
-      name: "business_management",
-      description: "Meta business setup management access",
-      active: !!permissions?.scopes?.business_management,
+      active: !!permissions?.scopes?.instagram_business_basic,
     },
   ];
 
@@ -582,33 +564,18 @@ export function PermissionHealth({
   const permissionsList = [
     {
       title: "Inbox Messenger Read/Write",
-      spec: "instagram_manage_messages",
-      ok: !!permissions?.scopes?.instagram_manage_messages,
+      spec: "instagram_business_manage_messages",
+      ok: !!permissions?.scopes?.instagram_business_manage_messages,
     },
     {
       title: "Direct Comments Read/Write",
-      spec: "instagram_manage_comments",
-      ok: !!permissions?.scopes?.instagram_manage_comments,
-    },
-    {
-      title: "Story Mention Capture",
-      spec: "instagram_basic",
-      ok: !!permissions?.scopes?.instagram_basic,
+      spec: "instagram_business_manage_comments",
+      ok: !!permissions?.scopes?.instagram_business_manage_comments,
     },
     {
       title: "Instagram Content Sync",
-      spec: "pages_show_list",
-      ok: !!permissions?.scopes?.pages_show_list,
-    },
-    {
-      title: "Page Engagement Telemetry",
-      spec: "pages_read_engagement",
-      ok: !!permissions?.scopes?.pages_read_engagement,
-    },
-    {
-      title: "Meta Settings Management",
-      spec: "business_management",
-      ok: !!permissions?.scopes?.business_management,
+      spec: "instagram_business_basic",
+      ok: !!permissions?.scopes?.instagram_business_basic,
     },
   ];
 

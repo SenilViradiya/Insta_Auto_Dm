@@ -5,9 +5,9 @@ import { REQUIRED_PERMISSIONS } from '../constants/permission.constants';
 export interface PermissionStatus {
   hasAllRequired: boolean;
   scopes: {
-    instagram_basic: boolean;
-    instagram_manage_messages: boolean;
-    instagram_manage_comments: boolean;
+    instagram_business_basic: boolean;
+    instagram_business_manage_messages: boolean;
+    instagram_business_manage_comments: boolean;
     [key: string]: boolean;
   };
 }
@@ -25,7 +25,7 @@ export class PermissionService {
         data: Array<{ permission: string; status: 'granted' | 'declined' }>;
       }>({
         method: 'GET',
-        endpoint: 'me/permissions',
+        endpoint: 'https://graph.instagram.com/me/permissions',
         token: accessToken,
       });
 
