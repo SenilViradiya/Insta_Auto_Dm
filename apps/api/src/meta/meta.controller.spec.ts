@@ -98,7 +98,7 @@ describe('MetaController', () => {
 
   describe('status', () => {
     it('should return list of connected accounts', async () => {
-      const mockAccounts = [{ id: 'id-1', pageName: 'Demo Page' }];
+      const mockAccounts = [{ id: 'id-1', username: 'Demo Page' }];
       metaServiceMock.getStatus.mockResolvedValue(mockAccounts);
       const result = await controller.status();
       expect(result).toEqual({ accounts: mockAccounts });

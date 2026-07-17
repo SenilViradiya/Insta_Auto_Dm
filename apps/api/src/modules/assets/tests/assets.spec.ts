@@ -153,7 +153,7 @@ describe('Asset Management Module', () => {
       const mockAccount = {
         id: 'acc-1',
         instagramUserId: 'insta-usr-id',
-        accessTokenEncrypted: encrypted,
+        accessToken: encrypted,
       };
       mockPrismaService.instagramAccount.findUnique.mockResolvedValue(
         mockAccount,

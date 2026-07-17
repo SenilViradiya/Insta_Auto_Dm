@@ -66,6 +66,10 @@ class MockPrismaService {
       return Promise.resolve(deleted);
     }),
   };
+
+  instagramProfile = {
+    upsert: jest.fn().mockImplementation(() => Promise.resolve({})),
+  };
 }
 
 describe('MetaController (e2e)', () => {
@@ -183,9 +187,8 @@ describe('MetaController (e2e)', () => {
       const dbAccounts = await mockPrisma.instagramAccount.findMany();
       expect(dbAccounts).toHaveLength(1);
       expect(dbAccounts[0].instagramUserId).toBe('ig-biz-account-321');
-      expect(dbAccounts[0].pageName).toBe('ig_tester_user');
-      expect(dbAccounts[0].pageId).toBe('instagram_login');
-      expect(dbAccounts[0].accessTokenEncrypted).toContain(':');
+      expect(dbAccounts[0].username).toBe('ig_tester_user');
+      expect(dbAccounts[0].accessToken).toContain(':');
     });
   });
 

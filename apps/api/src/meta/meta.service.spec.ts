@@ -60,7 +60,7 @@ describe('MetaService', () => {
       const url = service.getLoginUrl();
       expect(url).toContain('https://www.facebook.com/v20.0/dialog/oauth');
       expect(url).toContain('client_id=test-app-id');
-      expect(url).toContain('scope=instagram_basic%2Cinstagram_manage_messages%2Cinstagram_manage_comments');
+      expect(url).toContain('scope=instagram_business_basic%2Cinstagram_business_manage_comments%2Cinstagram_business_manage_messages');
     });
   });
 
@@ -121,8 +121,7 @@ describe('MetaService', () => {
         expect.objectContaining({
           where: { instagramUserId: 'ig-1' },
           create: expect.objectContaining({
-            pageId: 'instagram_login',
-            pageName: 'ig_user',
+            username: 'ig_user',
           }),
         }),
       );
@@ -146,10 +145,9 @@ describe('MetaService', () => {
         {
           id: '1',
           instagramUserId: 'ig-123',
-          pageId: 'pg-123',
-          pageName: 'My page',
+          username: 'ig_user',
           connectedAt: new Date(),
-          tokenExpiresAt: null,
+          expiresAt: null,
         },
       ];
       prismaMock.instagramAccount.findMany.mockResolvedValue(mockResult);

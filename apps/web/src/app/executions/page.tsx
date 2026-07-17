@@ -21,8 +21,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 interface InstagramAccount {
   id: string;
   instagramUserId: string;
-  pageId: string;
-  pageName: string;
+  username: string;
   connectedAt: string;
 }
 
@@ -495,7 +494,7 @@ export default function ExecutionsPage() {
                     <span>
                       Active Profile:{" "}
                       <strong style={{ color: "var(--text-primary)" }}>
-                        {acc.pageName}
+                        {acc.username}
                       </strong>
                     </span>
                   </div>
@@ -1343,8 +1342,8 @@ export default function ExecutionsPage() {
                             <span style={{ color: "var(--text-primary)" }}>
                               {selectedExecution.completedAt
                                 ? new Date(
-                                    selectedExecution.completedAt,
-                                  ).toLocaleString()
+                                  selectedExecution.completedAt,
+                                ).toLocaleString()
                                 : "—"}
                             </span>
                           </div>
@@ -1380,7 +1379,7 @@ export default function ExecutionsPage() {
                                 color: "var(--text-primary)",
                               }}
                             >
-                              {activeAccount ? activeAccount.pageName : "—"}
+                              {activeAccount ? activeAccount.username : "—"}
                             </span>
                           </div>
                         </div>
@@ -1659,21 +1658,21 @@ export default function ExecutionsPage() {
                             l.level === "WARN" ||
                             l.message.toLowerCase().includes("retry"),
                         ).length === 0 && (
-                          <div
-                            style={{
-                              textAlign: "center",
-                              padding: "30px",
-                              border: "1px dashed var(--border)",
-                              borderRadius: "var(--radius-lg)",
-                              color: "var(--text-muted)",
-                            }}
-                          >
-                            <p style={{ fontSize: "12px", margin: 0 }}>
-                              No warning or retry incidents recorded for this
-                              execution.
-                            </p>
-                          </div>
-                        )}
+                            <div
+                              style={{
+                                textAlign: "center",
+                                padding: "30px",
+                                border: "1px dashed var(--border)",
+                                borderRadius: "var(--radius-lg)",
+                                color: "var(--text-muted)",
+                              }}
+                            >
+                              <p style={{ fontSize: "12px", margin: 0 }}>
+                                No warning or retry incidents recorded for this
+                                execution.
+                              </p>
+                            </div>
+                          )}
                       </div>
                     </div>
                   )}

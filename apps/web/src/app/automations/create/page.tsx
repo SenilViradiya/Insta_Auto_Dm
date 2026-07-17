@@ -150,7 +150,7 @@ function CreateAutomationContent() {
         accounts: Array<{
           id: string;
           instagramUserId: string;
-          pageName: string;
+          username: string;
         }>;
       }>;
     },
@@ -283,14 +283,14 @@ function CreateAutomationContent() {
               }}
             >
               <Instagram size={14} />
-              Scope: {activeAccount.pageName}
+              Scope: {activeAccount.username}
             </div>
           )}
         </div>
 
         <AutomationBuilder
           instagramAccountId={activeAccountId}
-          activeAccountName={activeAccount?.pageName || "Default Account"}
+          activeAccountName={activeAccount?.username || "Default Account"}
           onSave={handleSave}
           isSaving={saveMutation.isPending}
         />

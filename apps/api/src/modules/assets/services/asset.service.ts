@@ -61,7 +61,7 @@ export class AssetService {
     let decryptedToken: string;
     try {
       decryptedToken = decryptToken(
-        account.accessTokenEncrypted,
+        account.accessToken,
         this.getEncryptionKey(),
       );
     } catch (e: any) {

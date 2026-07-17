@@ -65,9 +65,8 @@ describe('Reel Comment to DM Integration E2E', () => {
       data: {
         id: 'instagram_account_123',
         instagramUserId: 'instagram_user_123',
-        pageId: 'page_123',
-        pageName: 'My page',
-        accessTokenEncrypted: 'xyz123',
+        username: 'my_page',
+        accessToken: 'xyz123',
       },
     });
 
