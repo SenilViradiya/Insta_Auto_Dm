@@ -74,19 +74,6 @@ const TRIGGER_META: Record<
   },
 };
 
-/* ── Seeded Helper for Stable Mock Metrics ── */
-const getSeededMetrics = (id: string) => {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const runs = Math.abs(hash % 450) + 18;
-  const successPct = 96 + Math.abs(hash % 4);
-  const runIntervals = ["2m ago", "15m ago", "1h ago", "4h ago", "Yesterday"];
-  const lastRun = runIntervals[Math.abs(hash % runIntervals.length)];
-  return { runs, success: `${successPct}%`, lastRun };
-};
-
 /* ── Loading Skeleton Cards ── */
 function AutomationsSkeleton() {
   return (
@@ -1076,9 +1063,7 @@ function AutomationsContent() {
         );
       }
       if (sortBy === "EXECUTIONS") {
-        const metricsA = getSeededMetrics(a.id);
-        const metricsB = getSeededMetrics(b.id);
-        return metricsB.runs - metricsA.runs;
+        return (b.metrics?.runs || 0) - (a.metrics?.runs || 0);
       }
       // Default: CREATED_DESC
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
