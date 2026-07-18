@@ -33,7 +33,7 @@ export class PermissionService {
       }>({
         method: 'GET',
         endpoint: 'debug_token',
-        token: `${this.config.instagramAppId}|${this.config.appSecret}`,
+        token: `${this.config.instagramAppId}|${this.config.instagramAppSecret}`,
         params: {
           input_token: accessToken,
         },
