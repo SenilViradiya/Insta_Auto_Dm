@@ -44,7 +44,7 @@ export class MetaService {
     code: string,
   ): Promise<{ access_token: string; expires_in?: number }> {
     const appId = this.getEnvOrThrow('INSTAGRAM_APP_ID');
-    const appSecret = this.getEnvOrThrow('META_APP_SECRET');
+    const appSecret = this.getEnvOrThrow('INSTAGRAM_APP_SECRET');
     const redirectUri = this.getEnvOrThrow('META_REDIRECT_URI');
 
     try {
@@ -83,7 +83,7 @@ export class MetaService {
   async fetchLongLivedToken(
     shortToken: string,
   ): Promise<{ access_token: string; expires_in?: number }> {
-    const appSecret = this.getEnvOrThrow('META_APP_SECRET');
+    const appSecret = this.getEnvOrThrow('INSTAGRAM_APP_SECRET');
 
     try {
       return await this.graphClient.request({

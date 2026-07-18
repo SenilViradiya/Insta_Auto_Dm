@@ -58,6 +58,7 @@ const envSchema = z
     META_APP_ID: z.string().min(1, 'META_APP_ID is required'),
     META_APP_SECRET: z.string().min(1, 'META_APP_SECRET is required'),
     INSTAGRAM_APP_ID: z.string().min(1, 'INSTAGRAM_APP_ID is required'),
+    INSTAGRAM_APP_SECRET: z.string().min(1, 'INSTAGRAM_APP_SECRET is required'),
     META_REDIRECT_URI: z.string().url('META_REDIRECT_URI must be a valid URL'),
     META_VERIFY_TOKEN: z.string().min(1, 'META_VERIFY_TOKEN is required'),
   })
