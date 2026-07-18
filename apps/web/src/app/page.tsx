@@ -132,17 +132,32 @@ function WorkspaceDashboardContent() {
   const connectedParam = searchParams.get("connected");
   const errorParam = searchParams.get("error");
   const [messageApi, contextHolder] = message.useMessage();
+  const toastShownRef = React.useRef(false);
 
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
     null,
   );
 
   useEffect(() => {
+    if (toastShownRef.current) return;
+
     if (connectedParam === "true") {
+      toastShownRef.current = true;
       messageApi.success("Instagram Business account connected successfully.");
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("connected");
+        window.history.replaceState({}, "", url.pathname + url.search);
+      }
       router.replace("/");
     } else if (errorParam) {
+      toastShownRef.current = true;
       messageApi.error(`Connection failed: ${decodeURIComponent(errorParam)}`);
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("error");
+        window.history.replaceState({}, "", url.pathname + url.search);
+      }
       router.replace("/");
     }
   }, [connectedParam, errorParam, router, messageApi]);
