@@ -3,6 +3,7 @@ import { MetaController } from './meta.controller';
 import { MetaService } from './meta.service';
 import { TokenService } from '../modules/meta-platform/services/token.service';
 import { PermissionService } from '../modules/meta-platform/services/permission.service';
+import { GraphClient } from '../modules/meta-platform/clients/graph.client';
 import { BadRequestException } from '@nestjs/common';
 
 describe('MetaController', () => {
@@ -27,12 +28,17 @@ describe('MetaController', () => {
       validatePermissions: jest.fn(),
     };
 
+    const graphClientMock = {
+      request: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MetaController],
       providers: [
         { provide: MetaService, useValue: metaServiceMock },
         { provide: TokenService, useValue: tokenServiceMock },
         { provide: PermissionService, useValue: permissionServiceMock },
+        { provide: GraphClient, useValue: graphClientMock },
       ],
     }).compile();
 
