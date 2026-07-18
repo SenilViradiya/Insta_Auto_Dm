@@ -79,9 +79,21 @@ export class WebhookController {
       }
 
       const expectedSignature = parts[1];
-      const appSecret = process.env.META_APP_SECRET;
-      if (!appSecret) {
-        this.logger.error('META_APP_SECRET is not configured');
+
+      // Meta signs webhook payloads with the App Secret of the app that
+      // delivers the event. When using a separate Instagram Login App,
+      // real Instagram webhook events (user-agent: facebookexternalua) are
+      // signed with INSTAGRAM_APP_SECRET, while test events sent from the
+      // Meta Developer Dashboard are signed with META_APP_SECRET.
+      // We must verify against both to support the dual-app architecture.
+      const secrets: string[] = [];
+      if (process.env.META_APP_SECRET) secrets.push(process.env.META_APP_SECRET);
+      if (process.env.INSTAGRAM_APP_SECRET && process.env.INSTAGRAM_APP_SECRET !== process.env.META_APP_SECRET) {
+        secrets.push(process.env.INSTAGRAM_APP_SECRET);
+      }
+
+      if (secrets.length === 0) {
+        this.logger.error('No webhook signing secrets configured (META_APP_SECRET / INSTAGRAM_APP_SECRET)');
         throw new ForbiddenException('Server configuration error');
       }
 
@@ -91,12 +103,30 @@ export class WebhookController {
         throw new ForbiddenException('Verification error');
       }
 
-      const hmac = crypto.createHmac('sha256', appSecret);
-      hmac.update(rawBody);
-      const calculatedSignature = hmac.digest('hex');
+      // Use timing-safe comparison as recommended by Meta documentation
+      // to prevent timing-based side-channel attacks.
+      const expectedBuf = Buffer.from(expectedSignature, 'hex');
+      let verified = false;
 
-      if (calculatedSignature !== expectedSignature) {
-        this.logger.error('HMAC signature mismatch');
+      for (const secret of secrets) {
+        const hmac = crypto.createHmac('sha256', secret);
+        hmac.update(rawBody);
+        const calculatedBuf = hmac.digest();
+
+        if (
+          expectedBuf.length === calculatedBuf.length &&
+          crypto.timingSafeEqual(calculatedBuf, expectedBuf)
+        ) {
+          verified = true;
+          break;
+        }
+      }
+
+      if (!verified) {
+        this.logger.error(
+          `HMAC signature verification failed. Tried ${secrets.length} signing secret(s). ` +
+          `Ensure META_APP_SECRET and INSTAGRAM_APP_SECRET match the values in your Meta Developer Dashboard.`,
+        );
         try {
           await redis.incr('operations:webhook:invalid_signatures');
         } catch { }
