@@ -10,6 +10,10 @@ export class MetaPlatformConfig {
     return process.env.META_APP_SECRET || '';
   }
 
+  get instagramAppId(): string {
+    return process.env.INSTAGRAM_APP_ID || '';
+  }
+
   get redirectUri(): string {
     return process.env.META_REDIRECT_URI || '';
   }

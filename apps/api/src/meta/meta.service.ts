@@ -21,7 +21,7 @@ export class MetaService {
   }
 
   getLoginUrl(): string {
-    const appId = this.getEnvOrThrow('META_APP_ID');
+    const appId = this.getEnvOrThrow('INSTAGRAM_APP_ID');
     const redirectUri = this.getEnvOrThrow('META_REDIRECT_URI');
 
     const scopes = [
@@ -43,7 +43,7 @@ export class MetaService {
   async fetchShortLivedToken(
     code: string,
   ): Promise<{ access_token: string; expires_in?: number }> {
-    const appId = this.getEnvOrThrow('META_APP_ID');
+    const appId = this.getEnvOrThrow('INSTAGRAM_APP_ID');
     const appSecret = this.getEnvOrThrow('META_APP_SECRET');
     const redirectUri = this.getEnvOrThrow('META_REDIRECT_URI');
 
