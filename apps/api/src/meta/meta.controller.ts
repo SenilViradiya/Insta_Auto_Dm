@@ -70,7 +70,14 @@ export class MetaController {
       }
     }
 
-    return results;
+    return {
+      env: {
+        META_APP_ID: process.env.META_APP_ID || 'not set',
+        INSTAGRAM_APP_ID: process.env.INSTAGRAM_APP_ID || 'not set',
+        META_GRAPH_API_VERSION: process.env.META_GRAPH_API_VERSION || 'not set',
+      },
+      results,
+    };
   }
 
   @Get('login')
