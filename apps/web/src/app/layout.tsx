@@ -15,8 +15,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body style={{ fontFamily: "var(--font-sans)" }}>
+    <html lang="en" suppressHydrationWarning>
+      <body style={{ fontFamily: "var(--font-sans)" }} suppressHydrationWarning>
         <AntdRegistry>
           <Providers>{children}</Providers>
         </AntdRegistry>
