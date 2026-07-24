@@ -116,9 +116,9 @@ export default function AppShell({ children }: AppShellProps) {
                 src="/logo.png"
                 alt="Flow mint Logo"
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: "var(--radius-md)",
+                  height: 44,
+                  width: "auto",
+                  borderRadius: "var(--radius-sm)",
                   objectFit: "contain",
                 }}
               />
