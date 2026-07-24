@@ -114,7 +114,7 @@ export default function AppShell({ children }: AppShellProps) {
             >
               <img
                 src="/logo.png"
-                alt="Flow mint"
+                alt="Flow mint Logo"
                 style={{
                   width: 32,
                   height: 32,
@@ -122,16 +122,6 @@ export default function AppShell({ children }: AppShellProps) {
                   objectFit: "contain",
                 }}
               />
-              <span
-                style={{
-                  fontSize: 17,
-                  fontWeight: 600,
-                  color: "var(--text-primary)",
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                Flow mint
-              </span>
             </Link>
 
             {statusData?.accounts && statusData.accounts.length > 0 && (
