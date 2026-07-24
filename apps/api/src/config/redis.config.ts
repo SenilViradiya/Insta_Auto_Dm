@@ -20,6 +20,9 @@ export function getRedisConfig(options: RedisOptions = {}): RedisOptions {
   validateRedisEnv();
 
   const redisUrl = process.env.REDIS_URL;
+  const defaultRetryStrategy = (times: number) => {
+    return Math.min(times * 1000 + 1000, 15000);
+  };
 
   if (redisUrl) {
     try {
@@ -33,6 +36,7 @@ export function getRedisConfig(options: RedisOptions = {}): RedisOptions {
         username: parsed.username
           ? decodeURIComponent(parsed.username)
           : undefined,
+        retryStrategy: defaultRetryStrategy,
         ...options,
       };
 
@@ -60,6 +64,7 @@ export function getRedisConfig(options: RedisOptions = {}): RedisOptions {
     host,
     port,
     password,
+    retryStrategy: defaultRetryStrategy,
     ...options,
   };
 }
@@ -67,10 +72,25 @@ export function getRedisConfig(options: RedisOptions = {}): RedisOptions {
 export function createRedisClient(options: RedisOptions = {}): Redis {
   validateRedisEnv();
   const redisUrl = process.env.REDIS_URL;
-  const config = getRedisConfig(options);
 
-  if (redisUrl) {
-    return new Redis(redisUrl, config);
-  }
-  return new Redis(config);
+  // Sensible exponential backoff to avoid spamming Upstash/Redis on connection drop or limit block
+  const retryStrategy = (times: number) => {
+    const delay = Math.min(times * 1000 + 1000, 15000);
+    logger.warn(`Redis connection retry attempt #${times}. Reconnecting in ${delay}ms...`);
+    return delay;
+  };
+
+  const config = getRedisConfig({
+    retryStrategy,
+    ...options,
+  });
+
+  const client = redisUrl ? new Redis(redisUrl, config) : new Redis(config);
+
+  // Safeguard: Register error listener to avoid 'Unhandled error event' throwing and crashing
+  client.on('error', (err) => {
+    logger.error(`Redis Client connection error: ${err.message}`);
+  });
+
+  return client;
 }

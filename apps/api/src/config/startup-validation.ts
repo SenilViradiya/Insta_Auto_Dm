@@ -48,18 +48,25 @@ export async function validateStartup(): Promise<void> {
       redis = new Redis(redisConfig);
     }
 
+    // Safe fallback: prevent unhandled Redis error occurrences during startup verification
+    redis.on('error', (err) => {
+      logger.error(`Redis startup verification client error: ${err.message}`);
+    });
+
     const pingResult = await redis.ping();
     if (pingResult !== 'PONG') {
       throw new Error(`Unexpected ping response: ${pingResult}`);
     }
     logger.log('Redis verification succeeded.');
   } catch (error) {
-    const errorMsg = `REDIS REACHABILITY ERROR: Could not connect to Redis. Please verify your REDIS_URL or REDIS_HOST/REDIS_PORT settings, and make sure Redis is running. Detail: ${(error as Error).message}`;
-    logger.error(errorMsg);
-    process.exit(1);
+    const errorMsg = `REDIS REACHABILITY WARNING (Non-Fatal): Could not connect to Redis. Please verify your REDIS_URL or REDIS_HOST/REDIS_PORT settings. Detail: ${(error as Error).message}`;
+    logger.warn(errorMsg);
+    // Don't kill the process so the container stays alive and serves degraded status info.
   } finally {
     if (redis) {
-      await redis.quit().catch(() => {});
+      await redis.quit().catch(() => {
+        if (redis) redis.disconnect();
+      });
     }
   }
 }
