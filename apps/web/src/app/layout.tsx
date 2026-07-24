@@ -4,7 +4,7 @@ import Providers from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AutoDM — Instagram Automation Platform",
+  title: "Flow mint — Instagram Automation Platform",
   description:
     "Enterprise-grade Instagram DM automation. Connect accounts, build keyword triggers, and automate messaging workflows at scale.",
 };

@@ -90,7 +90,7 @@ function EmptyState({ onConnect }: { onConnect: () => void }) {
         }}
       >
         Welcome! Connect your business Instagram professional profiles. Once
-        connected, AutoDM will auto-monitor webhook feeds, evaluate Keyword
+        connected, Flow mint will auto-monitor webhook feeds, evaluate Keyword
         Conditions and auto-reply to DMs.
       </p>
       <button

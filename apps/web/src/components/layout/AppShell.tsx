@@ -112,19 +112,16 @@ export default function AppShell({ children }: AppShellProps) {
               }}
               aria-label="Home"
             >
-              <div
+              <img
+                src="/logo.png"
+                alt="Flow mint"
                 style={{
                   width: 32,
                   height: 32,
                   borderRadius: "var(--radius-md)",
-                  background: "var(--primary)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  objectFit: "contain",
                 }}
-              >
-                <Zap size={18} color="#fff" strokeWidth={2.5} />
-              </div>
+              />
               <span
                 style={{
                   fontSize: 17,
@@ -133,7 +130,7 @@ export default function AppShell({ children }: AppShellProps) {
                   letterSpacing: "-0.02em",
                 }}
               >
-                AutoDM
+                Flow mint
               </span>
             </Link>
 

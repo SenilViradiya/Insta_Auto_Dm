@@ -56,7 +56,7 @@ export default function PrivacyPolicyPage() {
       <header className={styles.headerSection}>
         <div className={styles.headerInner}>
           <div className={styles.headerBreadcrumb}>
-            <a href="/">AutoDM</a>
+            <a href="/">Flow mint</a>
             <span>›</span>
             <a href="/legal/privacy">Legal</a>
             <span>›</span>
@@ -132,10 +132,10 @@ export default function PrivacyPolicyPage() {
             {/* Introduction */}
             <div className={styles.introBlock}>
               <p className={styles.introText}>
-                At AutoDM (&quot;AutoDM&quot;, &quot;we&quot;, &quot;us&quot;), we consider the privacy and security of personal data
+                At Flow mint (&quot;Flow mint&quot;, &quot;we&quot;, &quot;us&quot;), we consider the privacy and security of personal data
                 to be of the utmost importance. We process personal data for (1) our own purposes and (2) under
-                the instructions of our customers who utilize the AutoDM service (the &quot;Service&quot;, encompassing
-                any product or service provided by AutoDM), upload and maintain certain information in accordance
+                the instructions of our customers who utilize the Flow mint service (the &quot;Service&quot;, encompassing
+                any product or service provided by Flow mint), upload and maintain certain information in accordance
                 with applicable data protection laws and regulations. In the latter case, we strictly adhere to
                 customer instructions and do not use data for any purposes other than providing the Service.
               </p>
@@ -152,12 +152,12 @@ export default function PrivacyPolicyPage() {
               </ul>
               <p className={styles.introText}>
                 It covers information collected through the Service, on our website, or other websites administered
-                by AutoDM where this Privacy Policy is posted (the &quot;Site&quot;), in our mobile applications, and
+                by Flow mint where this Privacy Policy is posted (the &quot;Site&quot;), in our mobile applications, and
                 from other sources.
               </p>
               <p className={styles.introText}>
                 If you have any questions or suggestions regarding our privacy practices, please email us at{" "}
-                <a href="mailto:privacy@autodm.io">privacy@autodm.io</a>. Please also contact us if you would
+                <a href="mailto:privacy@flowmint.io">privacy@flowmint.io</a>. Please also contact us if you would
                 like to request data access or deletion, or to exercise other rights as a data subject.
               </p>
             </div>
@@ -168,11 +168,11 @@ export default function PrivacyPolicyPage() {
               <h2 className={styles.sectionTitle}>1. How We Collect Personal Data</h2>
               <p className={styles.sectionText}>
                 What personal data we collect depends largely on the interaction that takes place between you and
-                AutoDM. Most of our data collection can be categorized as follows:
+                Flow mint. Most of our data collection can be categorized as follows:
               </p>
               <ul className={styles.bulletList}>
                 <li className={styles.bulletItem}>
-                  <strong>When you use the AutoDM Service or interact with an entity that uses AutoDM.</strong>{" "}
+                  <strong>When you use the Flow mint Service or interact with an entity that uses Flow mint.</strong>{" "}
                   When you use the Service, we store all the content you provide, including information related to
                   you as a customer or an end user. We gather this information from you directly when you enter it,
                   or from integrations that you have linked to the Service (such as Instagram, Facebook, etc.). In
@@ -356,7 +356,7 @@ export default function PrivacyPolicyPage() {
                   with this Privacy Policy.
                 </li>
                 <li className={styles.bulletItem}>
-                  <strong>Compliance with Laws and Law Enforcement.</strong> AutoDM may disclose information about
+                  <strong>Compliance with Laws and Law Enforcement.</strong> Flow mint may disclose information about
                   you to government or law enforcement officials or private parties as required by law, and as we
                   believe necessary to comply with legal processes, enforce our terms, protect our rights, and
                   deter fraudulent or illegal activity.
@@ -371,14 +371,14 @@ export default function PrivacyPolicyPage() {
             <section className={styles.policySection} id="your-rights">
               <h2 className={styles.sectionTitle}>5. Your Data Protection Rights &amp; Choices</h2>
               <p className={styles.sectionText}>
-                You, including any data subject whose personal data is processed by AutoDM in its capacity as a
+                You, including any data subject whose personal data is processed by Flow mint in its capacity as a
                 data controller, may have the following rights depending on the applicable legislation in your
                 jurisdiction:
               </p>
               <ul className={styles.bulletList}>
                 <li className={styles.bulletItem}>
                   If you wish to confirm the existence of processing of your personal data or access the personal
-                  data that AutoDM collects, you can do so at any time by contacting us.
+                  data that Flow mint collects, you can do so at any time by contacting us.
                 </li>
                 <li className={styles.bulletItem}>
                   You can also contact us to update, correct incomplete, inaccurate, or outdated data, or delete
@@ -416,7 +416,7 @@ export default function PrivacyPolicyPage() {
               </ul>
               <p className={styles.sectionText}>
                 You may submit your request by sending an email to{" "}
-                <a href="mailto:privacy@autodm.io">privacy@autodm.io</a>. We will respond to all requests in
+                <a href="mailto:privacy@flowmint.io">privacy@flowmint.io</a>. We will respond to all requests in
                 accordance with applicable data protection laws.
               </p>
               <h3 className={styles.subsectionTitle}>Access to Data Controlled by Our Customers</h3>
@@ -457,7 +457,7 @@ export default function PrivacyPolicyPage() {
             <section className={styles.policySection} id="international-transfers">
               <h2 className={styles.sectionTitle}>7. International Data Transfers</h2>
               <p className={styles.sectionText}>
-                AutoDM implements preventive and protective controls for international data transfers, including
+                Flow mint implements preventive and protective controls for international data transfers, including
                 the use of Standard Contractual Clauses (SCCs) approved by competent authorities such as the
                 European Commission and other relevant regulatory bodies. Where applicable, we also employ other
                 contractual or organizational safeguards to ensure an adequate level of data protection.
@@ -479,14 +479,14 @@ export default function PrivacyPolicyPage() {
                 EU–US Data Privacy Framework, UK Extension, and Swiss–US Data Privacy Framework
               </h3>
               <p className={styles.sectionText}>
-                AutoDM complies with the EU–US Data Privacy Framework program (EU–US DPF), the UK Extension to
+                Flow mint complies with the EU–US Data Privacy Framework program (EU–US DPF), the UK Extension to
                 the EU–US DPF, and the Swiss–US Data Privacy Framework program (Swiss–US DPF) as set forth by the
-                US Department of Commerce. AutoDM has certified that it adheres to the EU–US Data Privacy Framework
+                US Department of Commerce. Flow mint has certified that it adheres to the EU–US Data Privacy Framework
                 Principles with regard to the processing of personal data received from the European Union,
                 the United Kingdom (and Gibraltar), and Switzerland respectively.
               </p>
               <p className={styles.sectionText}>
-                In compliance with the EU–US DPF, the Swiss–US DPF, and the UK Extension, AutoDM commits to refer
+                In compliance with the EU–US DPF, the Swiss–US DPF, and the UK Extension, Flow mint commits to refer
                 unresolved complaints concerning our handling of personal data to an alternative dispute resolution
                 provider. If you do not receive timely acknowledgment of your complaint from us, or if we have not
                 addressed your complaint to your satisfaction, please visit{" "}
@@ -496,12 +496,12 @@ export default function PrivacyPolicyPage() {
                 for more information or to file a complaint.
               </p>
               <p className={styles.sectionText}>
-                AutoDM is subject to the investigatory and enforcement powers of the Federal Trade Commission
+                Flow mint is subject to the investigatory and enforcement powers of the Federal Trade Commission
                 (FTC) with respect to its compliance with the provisions of the EU–US DPF, the UK Extension to
                 the EU–US DPF, and the Swiss–US DPF.
               </p>
               <p className={styles.sectionText}>
-                AutoDM is committed to protecting the privacy and personal data in accordance with the provisions
+                Flow mint is committed to protecting the privacy and personal data in accordance with the provisions
                 of the LGPD. If the customer&#39;s applicable data protection laws include the LGPD, international
                 data transfers will be made in accordance with the International Data Transfer Regulation as
                 approved by ANPD.
@@ -515,7 +515,7 @@ export default function PrivacyPolicyPage() {
                 We believe it is important to provide added protection for children online. We encourage parents
                 and guardians to spend time online with their children to observe, participate in, and monitor
                 their online activity. The Site and the Service are not intended for use by anyone under the age
-                of 18, nor does AutoDM knowingly collect or solicit personal data from anyone under the age of 18.
+                of 18, nor does Flow mint knowingly collect or solicit personal data from anyone under the age of 18.
               </p>
               <p className={styles.sectionText}>
                 If you are under 18, you may not attempt to register for the Service or send any information about
@@ -526,7 +526,7 @@ export default function PrivacyPolicyPage() {
               <p className={styles.sectionText}>
                 If you are a parent or legal guardian of a child under 18 and believe that we might have any
                 information from or about such a child, please contact us at{" "}
-                <a href="mailto:privacy@autodm.io">privacy@autodm.io</a>.
+                <a href="mailto:privacy@flowmint.io">privacy@flowmint.io</a>.
               </p>
             </section>
 
@@ -552,7 +552,7 @@ export default function PrivacyPolicyPage() {
               </p>
               <p className={styles.sectionText}>
                 If you have any questions about the security of your personal data, you may contact us at{" "}
-                <a href="mailto:privacy@autodm.io">privacy@autodm.io</a>.
+                <a href="mailto:privacy@flowmint.io">privacy@flowmint.io</a>.
               </p>
               <h3 className={styles.subsectionTitle}>Notice of Breach of Security</h3>
               <p className={styles.sectionText}>
@@ -612,7 +612,7 @@ export default function PrivacyPolicyPage() {
               <p className={styles.sectionText}>
                 If you have questions about the legal basis on which we collect and use your personal data, you
                 may contact us at{" "}
-                <a href="mailto:privacy@autodm.io">privacy@autodm.io</a>.
+                <a href="mailto:privacy@flowmint.io">privacy@flowmint.io</a>.
               </p>
             </section>
 
@@ -623,7 +623,7 @@ export default function PrivacyPolicyPage() {
                 If you are a resident of California, California Civil Code Section 1798.83 permits you to request
                 information regarding how we disclosed your personal data to third parties for such parties&#39;
                 direct marketing purposes during the preceding calendar year. To request this information, please
-                contact us at <a href="mailto:privacy@autodm.io">privacy@autodm.io</a>. We will respond to such
+                contact us at <a href="mailto:privacy@flowmint.io">privacy@flowmint.io</a>. We will respond to such
                 requests within 30 days.
               </p>
               <p className={styles.sectionText}>
@@ -668,7 +668,7 @@ export default function PrivacyPolicyPage() {
               <h3 className={styles.subsectionTitle}>4. Methods for Submitting Requests &amp; Our Response</h3>
               <p className={styles.sectionText}>
                 You may submit a request for access or deletion of personal data via email at{" "}
-                <a href="mailto:privacy@autodm.io">privacy@autodm.io</a>. Upon receipt of a request, we may ask
+                <a href="mailto:privacy@flowmint.io">privacy@flowmint.io</a>. Upon receipt of a request, we may ask
                 you for additional information to verify your identity. Any additional information you provide will
                 be used only for verification purposes.
               </p>
@@ -722,15 +722,15 @@ export default function PrivacyPolicyPage() {
               <p className={styles.sectionText}>
                 If you require any more information or have any questions about our Privacy Policy, please feel
                 free to contact us by email at{" "}
-                <a href="mailto:privacy@autodm.io">privacy@autodm.io</a>.
+                <a href="mailto:privacy@flowmint.io">privacy@flowmint.io</a>.
               </p>
               <p className={styles.sectionText}>
                 For data protection inquiries, you may also write to us at:
               </p>
               <div className={styles.calloutBox}>
-                AutoDM, Inc.<br />
+                Flow mint, Inc.<br />
                 Attn: Privacy Team<br />
-                Email: <a href="mailto:privacy@autodm.io" style={{ color: "#1e40af" }}>privacy@autodm.io</a>
+                Email: <a href="mailto:privacy@flowmint.io" style={{ color: "#1e40af" }}>privacy@flowmint.io</a>
               </div>
             </section>
           </div>
@@ -744,8 +744,8 @@ export default function PrivacyPolicyPage() {
             {/* Brand Col */}
             <div className={styles.footerBrand}>
               <div className={styles.footerLogo}>
-                <div className={styles.footerLogoIcon}>A</div>
-                AutoDM
+                <div className={styles.footerLogoIcon}>F</div>
+                Flow mint
               </div>
               <p className={styles.footerDesc}>
                 Enterprise-grade Instagram DM automation. Connect accounts, build keyword triggers,
@@ -778,8 +778,8 @@ export default function PrivacyPolicyPage() {
             <div>
               <h5 className={styles.footerColTitle}>Support</h5>
               <div className={styles.footerLinks}>
-                <a href="mailto:privacy@autodm.io" className={styles.footerLink}>Contact Us</a>
-                <a href="mailto:support@autodm.io" className={styles.footerLink}>Help Center</a>
+                <a href="mailto:privacy@flowmint.io" className={styles.footerLink}>Contact Us</a>
+                <a href="mailto:support@flowmint.io" className={styles.footerLink}>Help Center</a>
               </div>
             </div>
           </div>
@@ -788,7 +788,7 @@ export default function PrivacyPolicyPage() {
 
           <div className={styles.footerBottom}>
             <p className={styles.footerCopy}>
-              © {new Date().getFullYear()} AutoDM, Inc. All rights reserved.
+              © {new Date().getFullYear()} Flow mint, Inc. All rights reserved.
             </p>
             <div className={styles.footerSocials}>
               <a href="#" className={styles.footerSocialLink} aria-label="Twitter">
