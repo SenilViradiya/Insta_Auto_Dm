@@ -28,7 +28,11 @@ interface ActionWorkerJobData {
   correlationId?: string;
 }
 
-@Processor('automation', { concurrency: concurrencyValue })
+@Processor('automation', {
+  concurrency: concurrencyValue,
+  stalledInterval: 300000, // Check for stalled jobs every 5 minutes (instead of 30s) to save Upstash requests
+  drainDelay: 30,          // Wait 30s (instead of 5s) before idle polling when queue is empty
+})
 @Injectable()
 export class ActionWorker extends WorkerHost {
   private readonly logger = new Logger(ActionWorker.name);
